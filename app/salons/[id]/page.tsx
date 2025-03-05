@@ -80,7 +80,7 @@ const salonData = {
       specialties: ["Haircuts", "Treatments"],
     },
   ],
-  reviews: [
+  reviewList: [
     {
       id: 1,
       user: "Jane Doe",
@@ -121,7 +121,7 @@ export default function SalonPage({ params }: { params: { id: string } }) {
               <div className="flex items-center mt-2">
                 <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                 <span className="ml-1 font-medium">{salonData.rating}</span>
-                <span className="ml-1 text-gray-300">({salonData.reviews} reviews)</span>
+                <span className="ml-1 text-gray-300">({salonData.reviewList.length} reviews)</span>
                 <MapPin className="ml-4 h-5 w-5" />
                 <span className="ml-1">{salonData.contact.address}</span>
               </div>
@@ -205,7 +205,7 @@ export default function SalonPage({ params }: { params: { id: string } }) {
                             </div>
                             <div className="text-right">
                               <div className="font-medium">Rs. {service.price}</div>
-                              <Link href={`/services/${service.id}`}>
+                              <Link href={`/service/${service.id}`}>
                                 <Button size="sm" className="mt-2">
                                   Book Now
                                 </Button>
@@ -259,7 +259,7 @@ export default function SalonPage({ params }: { params: { id: string } }) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {salonData.reviews.map((review) => (
+                  {salonData.reviewList.map((review) => (
                     <div key={review.id}>
                       <div className="flex items-start gap-4">
                         <Image

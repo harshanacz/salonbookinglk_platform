@@ -1,0 +1,182 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { MapPin, Star } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useCheckoutStore } from "@/store/checkoutStore"
+
+// Sample service data (you would fetch this based on the ID in a real application)
+const serviceData = {
+  id: 1,
+  name: "Custom Hair Coloring And Highlights",
+  image: "/placeholder.svg?height=200&width=200",
+  price: 620,
+  duration: 120,
+  salon: {
+    name: "Salon Amandi",
+    rating: 4.9,
+    reviews: 325,
+    location: "Katubedda, Galle Road",
+  },
+}
+
+export default function BookingPage({ params }: { params: { id: string } }) {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const router = useRouter()
+  const addService = useCheckoutStore((state) => state.addService)
+
+  const handleBooking = () => {
+    // Add service to checkout store
+    addService({
+      id: serviceData.id,
+      name: serviceData.name,
+      price: serviceData.price,
+      image: serviceData.image,
+    })
+    // Redirect to checkout
+    router.push("/checkout")
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6">Book Your Appointment</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Date & Time</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border mb-4"
+                />
+                <div className="mb-4">
+                  <Label htmlFor="time">Select Time</Label>
+                  <Select onValueChange={setSelectedTime}>
+                    <SelectTrigger id="time">
+                      <SelectValue placeholder="Select a time slot" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Your Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input id="name" placeholder="Enter your full name" />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="Enter your email" />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input id="phone" placeholder="Enter your phone number" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Booking Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center mb-4">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden mr-4">
+                    <Image
+                      src={serviceData.image || "/placeholder.svg"}
+                      alt={serviceData.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{serviceData.name}</h3>
+                    <div className="text-sm text-gray-500">{serviceData.salon.name}</div>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Date</span>
+                    <span>{selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Not selected"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Time</span>
+                    <span>{selectedTime || "Not selected"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Duration</span>
+                    <span>{serviceData.duration} minutes</span>
+                  </div>
+                </div>
+                <Separator className="my-4" />
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span>Rs. {serviceData.price}</span>
+                </div>
+                <Button className="w-full mt-6" onClick={handleBooking}>
+                  Proceed to Checkout
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Salon Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center mb-2">
+                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  <span className="ml-1 font-medium">{serviceData.salon.rating}</span>
+                  <span className="ml-1 text-gray-500">({serviceData.salon.reviews} reviews)</span>
+                </div>
+                <div className="flex items-center text-gray-500">
+                  <MapPin className="h-5 w-5 mr-1" />
+                  <span>{serviceData.salon.location}</span>
+                </div>
+                <Link href={`/salons/${serviceData.id}`}>
+                  <Button variant="outline" className="w-full mt-4">
+                    View Salon Profile
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

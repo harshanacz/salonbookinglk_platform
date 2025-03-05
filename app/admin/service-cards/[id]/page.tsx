@@ -81,7 +81,7 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
         <div className="md:col-span-2 space-y-6">
           <div>
             <Link
-              href={`/services/${service.category.toLowerCase().replace(/\s+/g, "-")}`}
+              href={`/service/${service.category.toLowerCase().replace(/\s+/g, "-")}`}
               className="text-sm text-blue-600 hover:underline"
             >
               {service.category}

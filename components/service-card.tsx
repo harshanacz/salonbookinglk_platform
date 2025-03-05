@@ -18,7 +18,7 @@ interface ServiceCardProps {
 
 export function ServiceCard({ service }: ServiceCardProps) {
   return (
-    <Link href={`/services/${service.id}`}>
+    <Link href={`/service/${service.id}`}>
       <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
         <div className="relative h-48 w-full">
           <Image src={service.image || "/placeholder.svg"} alt={service.title} fill className="object-cover" />

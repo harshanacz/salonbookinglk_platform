@@ -80,7 +80,7 @@ export default function ServiceCategoryPage({ params }: { params: { category: st
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredServices.map((service) => (
             <Card key={service.id} className="overflow-hidden">
-              <Link href={`/services/${service.id}`}>
+              <Link href={`/service/${service.id}`}>
                 <div className="relative h-48">
                   <Image src={service.image || "/placeholder.svg"} alt={service.name} fill className="object-cover" />
                 </div>

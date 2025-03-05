@@ -237,8 +237,8 @@ export default function ServicePage({ params }: ServicePageProps) {
             </div>
 
             <div className="space-y-3">
-              <Link href="/checkout">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={handleBookNow}>
+              <Link href={`/service/${params.id}/book`}>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">
                   Book now
                 </Button>
               </Link>
