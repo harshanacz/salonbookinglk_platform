@@ -1,20 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { MapPin, Search, Star } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import dynamic from "next/dynamic"
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { MapPin, Search, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import dynamic from "next/dynamic";
 
 // Import map component dynamically to avoid SSR issues
-const Map = dynamic(() => import("@/components/map"), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>,
-})
+const Map = dynamic(
+  () => import("@/components/map").then((mod) => mod.default),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>
+    ),
+  }
+);
 
 // Sample salon data (you would fetch this from an API in a real application)
 const salons = [
@@ -72,7 +77,7 @@ const salons = [
     },
     isBestSeller: true,
   },
-]
+];
 
 const categories = [
   "Men Hair Cuts",
@@ -82,22 +87,22 @@ const categories = [
   "Brows & Lashes",
   "Makeup",
   "Waxing",
-]
+];
 
 export default function SearchPage() {
-  const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [mapCenter, setMapCenter] = useState({ lat: 6.9271, lng: 79.8612 }) // Colombo center
-  const [selectedSalon, setSelectedSalon] = useState<number | null>(null)
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 6.9271, lng: 79.8612 }); // Colombo center
+  const [selectedSalon, setSelectedSalon] = useState<number | null>(null);
 
   useEffect(() => {
-    const location = searchParams.get("location")
+    const location = searchParams.get("location");
     if (location) {
-      setSearchQuery(location)
+      setSearchQuery(location);
       // In a real application, you would geocode the location and update mapCenter
     }
-  }, [searchParams])
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,7 +165,12 @@ export default function SearchPage() {
                 <Link href={`/salons/${salon.id}`}>
                   <div className="flex gap-4">
                     <div className="relative w-24 h-24 rounded-lg overflow-hidden">
-                      <Image src={salon.image || "/placeholder.svg"} alt={salon.name} fill className="object-cover" />
+                      <Image
+                        src={salon.image || "/placeholder.svg"}
+                        alt={salon.name}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -171,8 +181,12 @@ export default function SearchPage() {
                         )}
                         <div className="flex items-center">
                           <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span className="ml-1 text-sm font-medium">{salon.rating}</span>
-                          <span className="ml-1 text-sm text-gray-500">({salon.reviews})</span>
+                          <span className="ml-1 text-sm font-medium">
+                            {salon.rating}
+                          </span>
+                          <span className="ml-1 text-sm text-gray-500">
+                            ({salon.reviews})
+                          </span>
                         </div>
                       </div>
                       <h3 className="font-medium mt-1">{salon.name}</h3>
@@ -181,9 +195,14 @@ export default function SearchPage() {
                         {salon.location.address}
                       </div>
                       {salon.services.map((service, index) => (
-                        <div key={index} className="mt-2 p-2 bg-gray-50 rounded-lg">
+                        <div
+                          key={index}
+                          className="mt-2 p-2 bg-gray-50 rounded-lg"
+                        >
                           <div className="font-medium">{service.name}</div>
-                          <div className="text-sm">From Rs. {service.price.toLocaleString()}</div>
+                          <div className="text-sm">
+                            From Rs. {service.price.toLocaleString()}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -210,6 +229,5 @@ export default function SearchPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

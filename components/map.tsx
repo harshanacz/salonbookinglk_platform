@@ -1,83 +1,46 @@
-"use client"
-
-import { useEffect } from "react"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
-
-// Fix Leaflet marker icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "/marker-icon-2x.png",
-  iconUrl: "/marker-icon.png",
-  shadowUrl: "/marker-shadow.png",
-})
+"use client";
 
 interface MapProps {
-  center: { lat: number; lng: number }
-  zoom: number
+  center: { lat: number; lng: number };
+  zoom: number;
   markers: Array<{
-    id: number
-    position: { lat: number; lng: number }
-    label: string
-    selected?: boolean
-  }>
-  onMarkerClick?: (id: number) => void
+    id: number;
+    position: { lat: number; lng: number };
+    label: string;
+    selected?: boolean;
+  }>;
+  onMarkerClick?: (id: number) => void;
 }
 
-// Custom marker icon
-const createCustomIcon = (label: string, selected = false) => {
-  return L.divIcon({
-    html: `
-      <div class="relative">
-        <div class="absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-full ${
-          selected ? "bg-primary" : "bg-white"
-        } shadow-lg border-2 border-white">
-          <span class="${selected ? "text-white" : "text-gray-900"} text-sm font-semibold">${label}</span>
+export default function Map({ center, markers, onMarkerClick }: MapProps) {
+  return (
+    <div className="w-full h-full bg-gray-100 rounded-lg relative">
+      {/* Placeholder map background */}
+      <div className="absolute inset-0 bg-gray-200 flex items-center justify-center">
+        <div className="text-gray-500 text-center">
+          <div className="text-sm mb-2">Map View</div>
+          <div className="text-xs">
+            Lat: {center.lat}, Lng: {center.lng}
+          </div>
         </div>
       </div>
-    `,
-    className: "custom-marker",
-  })
-}
 
-// Component to update map center
-function ChangeView({ center, zoom }: { center: L.LatLngExpression; zoom: number }) {
-  const map = useMap()
-  useEffect(() => {
-    map.setView(center, zoom)
-  }, [center, zoom, map])
-  return null
-}
-
-export default function Map({ center, zoom, markers, onMarkerClick }: MapProps) {
-  return (
-    <MapContainer
-      center={[center.lat, center.lng]}
-      zoom={zoom}
-      className="w-full h-full rounded-lg"
-      zoomControl={false}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <ChangeView center={[center.lat, center.lng]} zoom={zoom} />
+      {/* Markers */}
       {markers.map((marker) => (
-        <Marker
+        <div
           key={marker.id}
-          position={[marker.position.lat, marker.position.lng]}
-          icon={createCustomIcon(marker.label, marker.selected)}
-          eventHandlers={{
-            click: () => onMarkerClick?.(marker.id),
+          className={`absolute w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-110 ${
+            marker.selected ? "bg-primary text-white" : "bg-white text-gray-900"
+          } shadow-lg border-2 border-white`}
+          style={{
+            left: `${((marker.position.lng - center.lng) / 0.1) * 50 + 50}%`,
+            top: `${((marker.position.lat - center.lat) / 0.1) * 50 + 50}%`,
           }}
+          onClick={() => onMarkerClick?.(marker.id)}
         >
-          <Popup>
-            <div className="text-sm font-medium">Rating: {marker.label}</div>
-          </Popup>
-        </Marker>
+          <span className="text-sm font-semibold">{marker.label}</span>
+        </div>
       ))}
-    </MapContainer>
-  )
+    </div>
+  );
 }
-
