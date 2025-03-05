@@ -21,14 +21,6 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-const Map = dynamic(() => import("@/components/map"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-[300px] bg-gray-100 animate-pulse rounded-lg"></div>
-  ),
-});
 
 // Sample salon data (in a real app, you'd fetch this based on the ID)
 const salonData = {
@@ -118,6 +110,7 @@ export default function SalonPage({ params }: { params: { id: string } }) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
+  const [isMapLoading, setIsMapLoading] = useState(true);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -346,80 +339,49 @@ export default function SalonPage({ params }: { params: { id: string } }) {
           </div>
 
           <div className="space-y-6">
-            <Card className="sticky top-6 z-10 bg-white">
-              <CardHeader>
-                <CardTitle>Book an Appointment</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="w-full">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    className="rounded-md border w-full"
-                    classNames={{
-                      months:
-                        "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 w-full",
-                      month: "space-y-4 w-full",
-                      caption: "flex justify-center pt-1 relative items-center",
-                      caption_label: "text-sm font-medium",
-                      nav: "space-x-1 flex items-center",
-                      nav_button:
-                        "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-                      nav_button_previous: "absolute left-1",
-                      nav_button_next: "absolute right-1",
-                      table: "w-full border-collapse space-y-1",
-                      head_row: "flex w-full justify-between",
-                      head_cell:
-                        "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem] flex-1 text-center",
-                      row: "flex w-full mt-2 justify-between",
-                      cell: "text-center text-sm p-0 relative flex-1 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-                      day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100 mx-auto",
-                      day_selected:
-                        "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-                      day_today: "bg-accent text-accent-foreground",
-                      day_outside: "text-muted-foreground opacity-50",
-                      day_disabled: "text-muted-foreground opacity-50",
-                      day_range_middle:
-                        "aria-selected:bg-accent aria-selected:text-accent-foreground",
-                      day_hidden: "invisible",
-                    }}
-                  />
-                </div>
-                <div>
-                  <h3 className="font-medium mb-3">Available Time Slots</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    {["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"].map(
-                      (time) => (
-                        <Button key={time} variant="outline" className="w-full">
-                          {time}
-                        </Button>
-                      )
-                    )}
-                  </div>
-                </div>
-                <Button className="w-full">Book Now</Button>
-              </CardContent>
-            </Card>
-
             <Card className="relative z-0">
               <CardHeader>
                 <CardTitle>Location</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="h-[300px] rounded-lg overflow-hidden ring-2 ring-gray-100">
-                  <Map
-                    center={salonData.contact.coordinates}
-                    zoom={15}
-                    markers={[
-                      {
-                        id: salonData.id,
-                        position: salonData.contact.coordinates,
-                        label: salonData.rating.toString(),
-                        selected: true,
-                      },
-                    ]}
-                  />
+                <div className="relative rounded-lg overflow-hidden mapouter">
+                  {isMapLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <Clock className="h-8 w-8 animate-spin text-primary" />
+                        <span className="text-sm">Loading map...</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="gmap_canvas">
+                    <iframe
+                      className="gmap_iframe rounded-lg"
+                      width="100%"
+                      height="300"
+                      src="https://maps.google.com/maps?width=600&amp;height=300&amp;hl=en&amp;q=Bambalapitiya, Colombo, Sri Lanka&amp;t=&amp;z=14&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"
+                      style={{ border: "none" }}
+                      allowFullScreen
+                      loading="lazy"
+                      onLoad={() => setIsMapLoading(false)}
+                    />
+                  </div>
+                  <style jsx>{`
+                    .mapouter {
+                      position: relative;
+                      width: 100%;
+                      height: 300px;
+                    }
+                    .gmap_canvas {
+                      overflow: hidden;
+                      background: none !important;
+                      width: 100%;
+                      height: 300px;
+                    }
+                    .gmap_iframe {
+                      width: 100% !important;
+                      height: 300px !important;
+                    }
+                  `}</style>
                 </div>
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">Business Hours</h3>

@@ -5,21 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { MapPin, Search, Star } from "lucide-react";
+import { MapPin, Search, Star, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-// Import map component dynamically to avoid SSR issues
-const Map = dynamic(
-  () => import("@/components/map").then((mod) => mod.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-full bg-gray-100 animate-pulse rounded-lg"></div>
-    ),
-  }
-);
 
 // Sample salon data (you would fetch this from an API in a real application)
 const salons = [
@@ -93,14 +81,13 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [mapCenter, setMapCenter] = useState({ lat: 6.9271, lng: 79.8612 }); // Colombo center
   const [selectedSalon, setSelectedSalon] = useState<number | null>(null);
+  const [isMapLoading, setIsMapLoading] = useState(true);
 
   useEffect(() => {
     const location = searchParams.get("location");
     if (location) {
       setSearchQuery(location);
-      // In a real application, you would geocode the location and update mapCenter
     }
   }, [searchParams]);
 
@@ -213,18 +200,27 @@ export default function SearchPage() {
           </div>
 
           {/* Map */}
-          <div className="lg:sticky lg:top-32 h-[calc(100vh-8rem)]">
-            <Map
-              center={mapCenter}
-              zoom={12}
-              markers={salons.map((salon) => ({
-                id: salon.id,
-                position: salon.location.coordinates,
-                label: salon.rating.toString(),
-                selected: selectedSalon === salon.id,
-              }))}
-              onMarkerClick={(id) => setSelectedSalon(id)}
-            />
+          <div className="lg:h-[calc(100vh-8rem)] bg-white rounded-lg overflow-hidden">
+            <div className="relative h-full">
+              {isMapLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+                  <div className="flex flex-col items-center gap-2">
+                    <Clock className="h-8 w-8 animate-spin text-primary" />
+                    <span className="text-sm">Loading map...</span>
+                  </div>
+                </div>
+              )}
+              <div className="h-full">
+                <iframe
+                  className="w-full h-full rounded-lg"
+                  src="https://maps.google.com/maps?width=600&amp;height=800&amp;hl=en&amp;q=Colombo, Sri Lanka&amp;t=&amp;z=12&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"
+                  style={{ border: "none" }}
+                  allowFullScreen
+                  loading="lazy"
+                  onLoad={() => setIsMapLoading(false)}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
