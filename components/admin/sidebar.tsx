@@ -1,10 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { BarChart3, CalendarDays, Home, Settings, Users, Store, AlertTriangle, Scissors } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Image from "next/image"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  BarChart3,
+  CalendarDays,
+  Home,
+  Settings,
+  Users,
+  Store,
+  AlertTriangle,
+  Scissors,
+  Menu,
+  X,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useState } from "react";
 
 const sidebarItems = [
   {
@@ -47,39 +59,68 @@ const sidebarItems = [
     href: "/admin/settings",
     icon: Settings,
   },
-]
+];
 
 export function AdminSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   return (
-    <div className="w-64 min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-700">
-            <Image src="/placeholder.svg?height=40&width=40" alt="Admin" fill className="object-cover" />
-          </div>
-          <div>
-            <div className="font-medium">Super Admin</div>
+    <div className="relative">
+      {/* Hamburger Icon */}
+      <button
+        className="md:hidden p-4"
+        onClick={toggleSidebar}
+      >
+        {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      </button>
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "w-64 min-h-screen bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+        style={{ top: 0 }}
+      >
+        {/* Header Section */}
+        <div className="p-4 border-b border-[#D9D9D9]">
+          <div className="flex items-center gap-2">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=40&width=40"
+                alt="Admin"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <div className="font-medium text-sm">Super Admin</div>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex-1 py-6 flex flex-col gap-1">
-        {sidebarItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors",
-              pathname === item.href && "bg-gray-800 text-white",
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span>{item.title}</span>
-          </Link>
-        ))}
+
+        {/* Sidebar Links */}
+        <div className="flex-1 py-6 flex flex-col gap-1">
+          {sidebarItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center my-1 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
+                pathname === item.href && "bg-[#F3E5F5]"
+              )}
+            >
+              <item.icon className="h-5 w-5 mx-4" />
+              <span>{item.title}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,15 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Store, Users, Scissors, AlertTriangle } from "lucide-react"
-import Link from "next/link"
+"use client";
+import Overview from "@/components/admin/Overview";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Store, Users, Scissors, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-export default function AdminDashboard() {
+const Page = () => {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+    <div className="p-4 min-h-screen w-full space-y-6">
+      <div className="sticky top-0 z-10 bg-white rounded-2xl mt-6 md:mt-0">
+        <Overview />
       </div>
 
+      {/* Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -53,6 +56,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
+      {/* Recent Service Approvals and New Salons */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -112,6 +116,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
     </div>
-  )
-}
+  );
+};
 
+export default Page;

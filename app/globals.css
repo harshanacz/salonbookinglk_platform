@@ -13,10 +13,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 271 81% 56%;
+    --primary: 275 86% 36%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 282 44% 47%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
@@ -28,11 +28,32 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
+    --border: 291 32% 92%;
     --input: 214.3 31.8% 91.4%;
     --ring: 271 81% 56%;
 
     --radius: 0.5rem;
+
+    --primary2: #6a0dad;
+    --secondary2: #8e44ad;
+    --accent2: #ba68c8;
+    --superAccent: #f5f1f7;
+
+    --pageBackground: #fff5ff;
+    --backgroundWhite: #ffffff;
+    --darkPurple: #38024d;
+
+    --textColor: #000000;
+    --textPrimary: #2d2d2d;
+
+    --success: #4caf50;
+    --errorOrRedNotifications: #ff9800;
+    --warning: #f44336;
+
+    --blackColor: #000000;
+    --whiteColor: #ffffff;
+    --greyColor: #808080;
+    --lightGreyColor: #d3d3d3;
   }
 
   .dark {
@@ -74,4 +95,3 @@
     @apply bg-background text-foreground;
   }
 }
-

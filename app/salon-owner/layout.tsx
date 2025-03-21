@@ -14,10 +14,10 @@ export default function SalonOwnerLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[#FFF5FF]">
       <SalonOwnerSidebar />
       <div className="flex-1">
-        <main className="p-6">{children}</main>
+        <main>{children}</main>
       </div>
       <Toaster />
     </div>
