@@ -9,11 +9,11 @@ export default function UserProfile() {
   const [userData, setUserData] = useState({
     fullName: "Naduni Siriwardhane",
     email: "Naduni123@gmail.com", // This is the primary email
-    mobileNumber: "0778350764",
+    mobileNumber: "0712345678",
     gender: "Female",
     country: "Sri Lanka",
     emailUpdated: "1 month ago", // Last updated timestamp
-    address: "No. 123,\nPeradeniya road,\nNedipala.",
+    address: "No. 123,\nPeradeniya road,\nPiliyandala.",
   })
 
   const [editingField, setEditingField] = useState<string | null>(null)
