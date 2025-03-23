@@ -23,9 +23,14 @@ export default function DeactivateAccount() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#fdf4f8] p-4">
       <div className="w-full max-w-md">
-        <Button type="button" variant="ghost" className="mb-2 p-0 hover:bg-transparent" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          <span>Back</span>
+        <Button
+          type="button"
+          variant="ghost"
+          className="mb-2 p-2 hover:bg-transparent rounded-full"
+          onClick={() => router.back()}
+          aria-label="Go back"
+        >
+          <ArrowLeft className="h-5 w-5" />
         </Button>
 
         <h1 className="text-3xl font-medium text-red-600 text-center mt-4 mb-16">Deactivate my Account</h1>
@@ -81,3 +86,4 @@ export default function DeactivateAccount() {
     </div>
   )
 }
+
