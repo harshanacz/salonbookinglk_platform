@@ -13,6 +13,8 @@ import {
   Scissors,
   Menu,
   X,
+  BadgeCheck,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -23,6 +25,11 @@ const sidebarItems = [
     title: "Dashboard",
     href: "/admin",
     icon: Home,
+  },
+  {
+    title: "Verification",
+    href: "/admin/verification",
+    icon: BadgeCheck,
   },
   {
     title: "Service Cards",
@@ -45,8 +52,13 @@ const sidebarItems = [
     icon: Store,
   },
   {
-    title: "Complains",
-    href: "/admin/complains",
+    title: "Notifications",
+    href: "/admin/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Complaints",
+    href: "/admin/complaints",
     icon: AlertTriangle,
   },
   {
@@ -72,10 +84,7 @@ export function AdminSidebar() {
   return (
     <div className="relative">
       {/* Hamburger Icon */}
-      <button
-        className="md:hidden p-4"
-        onClick={toggleSidebar}
-      >
+      <button className="md:hidden p-4" onClick={toggleSidebar}>
         {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
@@ -87,6 +96,11 @@ export function AdminSidebar() {
         )}
         style={{ top: 0 }}
       >
+        {/* Close Button for Small Screens */}
+        <button className="md:hidden p-4 self-end" onClick={toggleSidebar}>
+          <X className="h-6 w-6" />
+        </button>
+
         {/* Header Section */}
         <div className="p-4 border-b border-[#D9D9D9]">
           <div className="flex items-center gap-2">
@@ -99,7 +113,7 @@ export function AdminSidebar() {
               />
             </div>
             <div>
-              <div className="font-medium text-sm">Super Admin</div>
+              <div className="font-medium text-sm">Admin</div>
             </div>
           </div>
         </div>
@@ -111,7 +125,7 @@ export function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center my-1 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
+                "flex items-center gap-2 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
                 pathname === item.href && "bg-[#F3E5F5]"
               )}
             >

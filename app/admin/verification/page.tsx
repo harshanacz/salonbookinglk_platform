@@ -39,8 +39,11 @@ const Page = () => {
   }, []);
 
   return (
-    <div className="w-full mx-auto md:w-5/6 my-10">
-      <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="space-y-6">
+      <div>
+      <h1 className="text-3xl font-bold">Verifications</h1>
+      </div>
+      <div className="bg-white rounded-lg shadow-sm p-6 ">
         <h2 className="text-xl font-medium mb-6">Pending Approval</h2>
 
         <div className="overflow-x-auto">

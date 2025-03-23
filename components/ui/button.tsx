@@ -22,6 +22,9 @@ const buttonVariants = cva(
           "bg-red-50 border border-red-600 hover:bg-red-100 text-red-500",
         Date:
           "rounded-sm border border-border",
+        outlineDate:
+          "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 rounded-sm",
+
       },
       size: {
         default: "h-8 px-4 py-2",

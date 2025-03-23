@@ -16,11 +16,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   const pathname = usePathname();
-  const isAdminPage = pathname.startsWith("/admin");
+  const isAdminPage = pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
 
   return (
     <html lang="en">
-    <body>
+    <body className="bg-[var(--pageBackground)]">
         {!isAdminPage && <Navbar />}
         <main>{children}</main>
         {!isAdminPage && <Footer />}
