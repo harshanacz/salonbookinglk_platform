@@ -1,0 +1,162 @@
+[
+  {
+    "notificationId": 1,
+    "userId": 101,
+    "userName": "john_doe",
+    "message": "Your appointment at Salon A has been confirmed.",
+    "dateSent": "2023-10-01T10:00:00Z",
+    "status": "read"
+  },
+  {
+    "notificationId": 2,
+    "userId": 102,
+    "userName": "jane_smith",
+    "message": "Your appointment at Salon B has been rescheduled.",
+    "dateSent": "2023-10-02T14:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 3,
+    "userId": 103,
+    "userName": "alice_jones",
+    "message": "Reminder: Your appointment at Salon C is tomorrow at 11:00 AM.",
+    "dateSent": "2023-10-03T09:15:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 4,
+    "userId": 104,
+    "userName": "bob_brown",
+    "message": "Special offer: 20% off on all services at Salon D this weekend!",
+    "dateSent": "2023-10-04T16:45:00Z",
+    "status": "read"
+  },
+  {
+    "notificationId": 5,
+    "userId": 105,
+    "userName": "charlie_davis",
+    "message": "Your payment for Salon E has been processed successfully.",
+    "dateSent": "2023-10-05T12:00:00Z",
+    "status": "read"
+  },
+  {
+    "notificationId": 6,
+    "userId": 106,
+    "userName": "diana_evans",
+    "message": "New salon added: Salon F. Book your appointment now!",
+    "dateSent": "2023-10-06T10:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 7,
+    "userId": 107,
+    "userName": "edward_frank",
+    "message": "Your appointment at Salon G has been cancelled.",
+    "dateSent": "2023-10-07T15:00:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 8,
+    "userId": 108,
+    "userName": "fiona_green",
+    "message": "Reminder: Your appointment at Salon H is today at 3:30 PM.",
+    "dateSent": "2023-10-08T11:45:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 9,
+    "userId": 109,
+    "userName": "george_harris",
+    "message": "Your appointment at Salon I has been confirmed.",
+    "dateSent": "2023-10-09T09:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 10,
+    "userId": 110,
+    "userName": "hannah_ivan",
+    "message": "Your appointment at Salon J has been rescheduled.",
+    "dateSent": "2023-10-10T13:45:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 11,
+    "userId": 111,
+    "userName": "ian_jackson",
+    "message": "Reminder: Your appointment at Salon K is tomorrow at 2:00 PM.",
+    "dateSent": "2023-10-11T10:15:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 12,
+    "userId": 112,
+    "userName": "julia_kent",
+    "message": "Special offer: 30% off on all services at Salon L this weekend!",
+    "dateSent": "2023-10-12T14:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 13,
+    "userId": 113,
+    "userName": "kevin_lee",
+    "message": "Your payment for Salon M has been processed successfully.",
+    "dateSent": "2023-10-13T12:00:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 14,
+    "userId": 114,
+    "userName": "linda_moore",
+    "message": "New salon added: Salon N. Book your appointment now!",
+    "dateSent": "2023-10-14T10:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 15,
+    "userId": 115,
+    "userName": "michael_nelson",
+    "message": "Your appointment at Salon O has been cancelled.",
+    "dateSent": "2023-10-15T15:00:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 16,
+    "userId": 116,
+    "userName": "nancy_owen",
+    "message": "Reminder: Your appointment at Salon P is today at 3:30 PM.",
+    "dateSent": "2023-10-16T11:45:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 17,
+    "userId": 117,
+    "userName": "oscar_perez",
+    "message": "Your appointment at Salon Q has been confirmed.",
+    "dateSent": "2023-10-17T09:30:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 18,
+    "userId": 118,
+    "userName": "paula_quinn",
+    "message": "Your appointment at Salon R has been rescheduled.",
+    "dateSent": "2023-10-18T13:45:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 19,
+    "userId": 119,
+    "userName": "quentin_ross",
+    "message": "Reminder: Your appointment at Salon S is tomorrow at 2:00 PM.",
+    "dateSent": "2023-10-19T10:15:00Z",
+    "status": "unread"
+  },
+  {
+    "notificationId": 20,
+    "userId": 120,
+    "userName": "rachel_smith",
+    "message": "Special offer: 40% off on all services at Salon T this weekend!",
+    "dateSent": "2023-10-20T14:30:00Z",
+    "status": "unread"
+  }
+]
