@@ -17,6 +17,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        // Just override the sans font family to use Montserrat
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -76,4 +80,3 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
-
