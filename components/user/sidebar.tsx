@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   LogOut,
+  CircleUserRound,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -96,16 +97,9 @@ export const UserSidebar = () => {
         {/* Header Section */}
         <div className="p-4 border-b border-[#D9D9D9]">
           <div className="flex items-center gap-2">
-            <div className="relative w-10 h-10 rounded-full overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=40&width=40"
-                alt="User"
-                fill
-                className="object-cover"
-              />
-            </div>
+            <CircleUserRound className="h-10 w-10 text-purple-700" />
             <div>
-              <div className="font-medium text-sm">User Profile</div>
+              <div className="font-medium text-sm">John Doe</div>
             </div>
           </div>
         </div>
