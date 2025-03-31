@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { usePathname } from "next/navigation";
@@ -15,19 +14,14 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "SalonBooking.lk - Book Your Salon, Anytime",
-  description: "Find and book the best salon services in Sri Lanka",
-  generator: "v0.dev",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isAdminPage = pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
+  const isAdminPage =
+    pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
 
   return (
     <html lang="en">
