@@ -1,7 +1,7 @@
 "use client";
 
-import NotificationForm from "@/components/admin/notificationForm";
-import NotificationHistory from "@/components/admin/notificationHistory";
+import NotificationForm from "@/components/admin/notification-form";
+import NotificationHistory from "@/components/admin/notification-history";
 import {
   Card,
   CardContent,
