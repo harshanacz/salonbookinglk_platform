@@ -9,7 +9,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
@@ -56,7 +62,9 @@ const Page = () => {
       <Card>
         <CardHeader>
           <CardTitle>Pending Approval</CardTitle>
-          <CardDescription>Manage and verify salon registrations</CardDescription>
+          <CardDescription>
+            Manage and verify salon registrations
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4 mb-6">

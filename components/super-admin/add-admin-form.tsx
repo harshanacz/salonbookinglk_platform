@@ -1,15 +1,22 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Checkbox } from "@/components/ui/checkbox"
-import { toast } from "@/components/ui/use-toast"
-import { Loader2 } from "lucide-react"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 // Form validation schema - removed role field
 const formSchema = z.object({
@@ -18,16 +25,20 @@ const formSchema = z.object({
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters" })
-    .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
-    .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
     .regex(/[0-9]/, { message: "Password must contain at least one number" }),
   sendInvitation: z.boolean().default(true),
-})
+});
 
-type FormValues = z.infer<typeof formSchema>
+type FormValues = z.infer<typeof formSchema>;
 
 export function AddAdminForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -37,35 +48,36 @@ export function AddAdminForm() {
       password: "",
       sendInvitation: true,
     },
-  })
+  });
 
   const onSubmit = async (data: FormValues) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // In a real app, you would call an API to create the admin
-      console.log("Form data:", data)
+      console.log("Form data:", data);
 
       toast({
         title: "Admin created successfully",
         description: `An invitation email has been sent to ${data.email}`,
-      })
+      });
 
       // Reset form
-      form.reset()
+      form.reset();
     } catch (error) {
       toast({
         title: "Error creating admin",
-        description: "There was an error creating the admin account. Please try again.",
+        description:
+          "There was an error creating the admin account. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <Form {...form}>
@@ -91,7 +103,11 @@ export function AddAdminForm() {
             <FormItem>
               <FormLabel>Email Address</FormLabel>
               <FormControl>
-                <Input placeholder="john.doe@example.com" type="email" {...field} />
+                <Input
+                  placeholder="john.doe@example.com"
+                  type="email"
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -120,5 +136,5 @@ export function AddAdminForm() {
         </div>
       </form>
     </Form>
-  )
+  );
 }

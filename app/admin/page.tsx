@@ -6,21 +6,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Store,
-  Users,
-  Scissors,
-  AlertTriangle,
-} from "lucide-react";
+import { Store, Users, Scissors, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 const Page = () => {
   return (
-    <div className="min-h-screen w-full space-y-6">     
-        <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        </div>
+    <div className="min-h-screen w-full space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      </div>
       {/* Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>

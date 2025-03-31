@@ -1,20 +1,22 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { useToast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ServiceApprovalPageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
-export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps) {
-  const { toast } = useToast()
+export default function ServiceApprovalPage({
+  params,
+}: ServiceApprovalPageProps) {
+  const { toast } = useToast();
 
   // In a real app, you would fetch this data based on the ID
   const service = {
@@ -39,32 +41,56 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
       "Use a deep conditioner or hair mask to hydrate your hair. This helps protect it from the chemicals in the dye.",
     ],
     staffMembers: [
-      { id: 1, name: "Staff Member 1", image: "/placeholder.svg?height=100&width=100" },
-      { id: 2, name: "Staff Member 2", image: "/placeholder.svg?height=100&width=100" },
-      { id: 3, name: "Staff Member 3", image: "/placeholder.svg?height=100&width=100" },
-      { id: 4, name: "Staff Member 4", image: "/placeholder.svg?height=100&width=100" },
-      { id: 5, name: "Staff Member 5", image: "/placeholder.svg?height=100&width=100" },
-      { id: 6, name: "Staff Member 6", image: "/placeholder.svg?height=100&width=100" },
+      {
+        id: 1,
+        name: "Staff Member 1",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 2,
+        name: "Staff Member 2",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 3,
+        name: "Staff Member 3",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 4,
+        name: "Staff Member 4",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 5,
+        name: "Staff Member 5",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 6,
+        name: "Staff Member 6",
+        image: "/placeholder.svg?height=100&width=100",
+      },
     ],
     updates: ["PRICE", "INSTRUCTIONS"],
-  }
+  };
 
   const handleApprove = () => {
     toast({
       title: "Service approved",
       description: "The service has been approved and is now active.",
-    })
+    });
     // In a real app, you would submit this to your backend
-  }
+  };
 
   const handleReject = () => {
     toast({
       title: "Service rejected",
       description: "The service has been rejected.",
       variant: "destructive",
-    })
+    });
     // In a real app, you would submit this to your backend
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -81,7 +107,9 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
         <div className="md:col-span-2 space-y-6">
           <div>
             <Link
-              href={`/service/${service.category.toLowerCase().replace(/\s+/g, "-")}`}
+              href={`/service/${service.category
+                .toLowerCase()
+                .replace(/\s+/g, "-")}`}
               className="text-sm text-blue-600 hover:underline"
             >
               {service.category}
@@ -91,14 +119,21 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
 
           <div className="grid grid-cols-3 gap-4">
             {service.images.map((image, index) => (
-              <div key={index} className="relative aspect-[4/3] rounded-lg overflow-hidden">
+              <div
+                key={index}
+                className="relative aspect-[4/3] rounded-lg overflow-hidden"
+              >
                 <Image
                   src={image || "/placeholder.svg"}
                   alt={`Service image ${index + 1}`}
                   fill
                   className="object-cover"
                 />
-                <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-6 w-6 opacity-80">
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6 opacity-80"
+                >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -129,9 +164,16 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
               {service.staffMembers.map((staff) => (
                 <div key={staff.id} className="flex flex-col items-center">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
-                    <Image src={staff.image || "/placeholder.svg"} alt={staff.name} fill className="object-cover" />
+                    <Image
+                      src={staff.image || "/placeholder.svg"}
+                      alt={staff.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <span className="text-xs text-center text-gray-600">Staff Member</span>
+                  <span className="text-xs text-center text-gray-600">
+                    Staff Member
+                  </span>
                 </div>
               ))}
             </div>
@@ -151,7 +193,9 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
                   />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                  <h3 className="font-semibold text-lg">
+                    {service.salon.name}
+                  </h3>
                   {service.salon.isBestSeller && (
                     <div className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full inline-block">
                       Best Seller
@@ -163,7 +207,9 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Price:</span>
-                  <span className="font-semibold">From LKR {service.price}.00</span>
+                  <span className="font-semibold">
+                    From LKR {service.price}.00
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Started Date:</span>
@@ -179,7 +225,10 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
                 <h4 className="font-medium">Updates:</h4>
                 <div className="flex flex-wrap gap-2">
                   {service.updates.map((update, index) => (
-                    <div key={index} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
+                    <div
+                      key={index}
+                      className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full"
+                    >
                       {update}
                     </div>
                   ))}
@@ -187,7 +236,10 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleApprove}>
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={handleApprove}
+                >
                   Approve
                 </Button>
                 <Button
@@ -203,6 +255,5 @@ export default function ServiceApprovalPage({ params }: ServiceApprovalPageProps
         </div>
       </div>
     </div>
-  )
+  );
 }
-

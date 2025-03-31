@@ -85,7 +85,11 @@ export function AdminSidebar() {
     <div className="relative">
       {/* Hamburger Icon */}
       <button className="md:hidden p-4" onClick={toggleSidebar}>
-        {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        {isSidebarOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Menu className="h-6 w-6" />
+        )}
       </button>
 
       {/* Sidebar */}

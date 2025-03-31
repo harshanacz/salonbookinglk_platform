@@ -1,7 +1,13 @@
-import Image from 'next/image'
-import { Search } from 'lucide-react'
+import Image from "next/image";
+import { Search } from "lucide-react";
 
-const categories = ['Hair Cuts', 'Nail Arts', 'Skin Cares', 'Brows & Lashes', 'Makeup']
+const categories = [
+  "Hair Cuts",
+  "Nail Arts",
+  "Skin Cares",
+  "Brows & Lashes",
+  "Makeup",
+];
 
 export default function Header() {
   return (
@@ -14,7 +20,7 @@ export default function Header() {
         priority
       />
 
-<div className="absolute inset-0 bg-purple-900 bg-opacity-60" />
+      <div className="absolute inset-0 bg-purple-900 bg-opacity-60" />
 
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-white">
@@ -43,5 +49,5 @@ export default function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

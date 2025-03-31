@@ -1,8 +1,15 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,9 +18,9 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Search, Calendar } from "lucide-react"
-import { format } from "date-fns"
+} from "@/components/ui/select";
+import { Search, Calendar } from "lucide-react";
+import { format } from "date-fns";
 
 // Mock data for activity logs
 const mockActivities = [
@@ -73,56 +80,58 @@ const mockActivities = [
     timestamp: new Date(2023, 2, 8, 10, 0),
     details: "Successful login from IP 192.168.1.5",
   },
-]
+];
 
 type ActivityLogsProps = {
-  adminId: string | null
-}
+  adminId: string | null;
+};
 
 export function ActivityLogs({ adminId }: ActivityLogsProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [actionFilter, setActionFilter] = useState("all")
-  const [dateFilter, setDateFilter] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
 
   const filteredActivities = mockActivities
     .filter((activity) => {
       // Filter by admin if adminId is provided
       if (adminId && activity.adminId !== adminId) {
-        return false
+        return false;
       }
 
       // Filter by search query
       const matchesSearch =
         activity.adminName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         activity.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.details.toLowerCase().includes(searchQuery.toLowerCase())
+        activity.details.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Filter by action type
-      const matchesAction = actionFilter === "all" || activity.action.toLowerCase().includes(actionFilter.toLowerCase())
+      const matchesAction =
+        actionFilter === "all" ||
+        activity.action.toLowerCase().includes(actionFilter.toLowerCase());
 
       // Filter by date
-      let matchesDate = true
-      const today = new Date()
-      const activityDate = new Date(activity.timestamp)
+      let matchesDate = true;
+      const today = new Date();
+      const activityDate = new Date(activity.timestamp);
 
       if (dateFilter === "today") {
         matchesDate =
           activityDate.getDate() === today.getDate() &&
           activityDate.getMonth() === today.getMonth() &&
-          activityDate.getFullYear() === today.getFullYear()
+          activityDate.getFullYear() === today.getFullYear();
       } else if (dateFilter === "week") {
-        const weekAgo = new Date()
-        weekAgo.setDate(today.getDate() - 7)
-        matchesDate = activityDate >= weekAgo
+        const weekAgo = new Date();
+        weekAgo.setDate(today.getDate() - 7);
+        matchesDate = activityDate >= weekAgo;
       } else if (dateFilter === "month") {
-        const monthAgo = new Date()
-        monthAgo.setMonth(today.getMonth() - 1)
-        matchesDate = activityDate >= monthAgo
+        const monthAgo = new Date();
+        monthAgo.setMonth(today.getMonth() - 1);
+        matchesDate = activityDate >= monthAgo;
       }
 
-      return matchesSearch && matchesAction && matchesDate
+      return matchesSearch && matchesAction && matchesDate;
     })
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()) // Sort by most recent
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()); // Sort by most recent
 
   return (
     <div className="space-y-4">
@@ -185,14 +194,19 @@ export function ActivityLogs({ adminId }: ActivityLogsProps) {
           <TableBody>
             {filteredActivities.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-6 text-muted-foreground"
+                >
                   No activities found matching your filters
                 </TableCell>
               </TableRow>
             ) : (
               filteredActivities.map((activity) => (
                 <TableRow key={activity.id}>
-                  <TableCell className="font-medium">{activity.adminName}</TableCell>
+                  <TableCell className="font-medium">
+                    {activity.adminName}
+                  </TableCell>
                   <TableCell>{activity.action}</TableCell>
                   <TableCell>
                     <div className="flex items-center">
@@ -208,6 +222,5 @@ export function ActivityLogs({ adminId }: ActivityLogsProps) {
         </Table>
       </div>
     </div>
-  )
+  );
 }
-
