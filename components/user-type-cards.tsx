@@ -42,8 +42,8 @@ export function UserTypeCards() {
             List your salon and services to reach more customers and grow your
             business
           </p>
-          <Link href="/for-business">
-            <Button variant="outline">Grow Business</Button>
+          <Link href="/sign-up">
+            <Button variant="default">Grow Business</Button>
           </Link>
         </div>
       </div>

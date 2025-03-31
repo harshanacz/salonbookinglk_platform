@@ -55,13 +55,6 @@ export function Navbar() {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-              <NavigationMenuItem>
-                <Link href="/for-business" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    For Business
-                  </NavigationMenuLink>
-                </Link>
-              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
         </div>
@@ -116,9 +109,6 @@ export function Navbar() {
                 </Link>
                 <Link href="/services/makeup" onClick={() => setIsOpen(false)}>
                   Makeup
-                </Link>
-                <Link href="/for-business" onClick={() => setIsOpen(false)}>
-                  For Business
                 </Link>
                 <hr className="my-2" />
                 <Link href="/sign-in" onClick={() => setIsOpen(false)}>
