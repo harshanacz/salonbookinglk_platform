@@ -14,9 +14,9 @@ export default function UserLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen">
+    <div className="h-screen flex overflow-hidden">
       <UserSidebar />
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto">
         <main className="p-6">{children}</main>
       </div>
       <Toaster />
