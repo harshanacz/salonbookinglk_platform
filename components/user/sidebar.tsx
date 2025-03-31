@@ -10,7 +10,11 @@ import {
   MessageSquare,
   Star,
   Clock,
+  Menu,
+  X,
 } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 const routes = [
   {
@@ -53,31 +57,66 @@ const routes = [
 
 export const UserSidebar = () => {
   const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   return (
-    <div className="space-y-4 py-4 flex flex-col h-full bg-[#FFF5FF] text-black border-r">
-      <div className="px-3 py-2 flex-1">
-        <Link href="/user" className="flex items-center pl-3 mb-14">
-          <h1 className="text-2xl font-bold">
-            Salon<span className="text-purple-600">Booking</span>
-          </h1>
-        </Link>
-        <div className="space-y-1">
+    <div className="relative">
+      {/* Hamburger Icon */}
+      <button className="md:hidden p-4" onClick={toggleSidebar}>
+        {isSidebarOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Menu className="h-6 w-6" />
+        )}
+      </button>
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "w-64 min-h-screen bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+        style={{ top: 0 }}
+      >
+        {/* Close Button for Small Screens */}
+        <button className="md:hidden p-4 self-end" onClick={toggleSidebar}>
+          <X className="h-6 w-6" />
+        </button>
+
+        {/* Header Section */}
+        <div className="p-4 border-b border-[#D9D9D9]">
+          <div className="flex items-center gap-2">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden">
+              <Image
+                src="/placeholder.svg?height=40&width=40"
+                alt="User"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div>
+              <div className="font-medium text-sm">User Profile</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Links */}
+        <div className="flex-1 py-6 flex flex-col gap-1">
           {routes.map((route) => (
             <Link
               key={route.href}
               href={route.href}
               className={cn(
-                "text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-purple-600 hover:bg-purple-100/50 rounded-lg transition",
-                pathname === route.href
-                  ? "text-purple-600 bg-purple-100"
-                  : "text-zinc-600"
+                "flex items-center gap-2 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
+                pathname === route.href && "bg-[#F3E5F5]"
               )}
             >
-              <div className="flex items-center flex-1">
-                <route.icon className={cn("h-5 w-5 mr-3", route.color)} />
-                {route.label}
-              </div>
+              <route.icon className={cn("h-5 w-5 mx-4", route.color)} />
+              <span>{route.label}</span>
             </Link>
           ))}
         </div>
