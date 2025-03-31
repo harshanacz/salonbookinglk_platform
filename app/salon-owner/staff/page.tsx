@@ -97,13 +97,15 @@ export default function StaffManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Staff Management</h1>
-        <Button asChild>
-          <Link href="/salon-owner/staff/create">
-            <Plus className="mr-2 h-4 w-4" /> Add Staff Member
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto" asChild>
+            <Link href="/salon-owner/staff/create">
+              <Plus className="mr-2 h-4 w-4" /> Add Staff Member
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -114,13 +116,13 @@ export default function StaffManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center mb-6">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search staff..."
-                className="pl-8"
+                className="pl-8 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

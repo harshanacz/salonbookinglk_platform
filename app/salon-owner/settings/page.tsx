@@ -99,11 +99,13 @@ export default function SalonSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Salon Settings</h1>
-        <Button onClick={saveSettings}>
-          <Save className="mr-2 h-4 w-4" /> Save Changes
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto" onClick={saveSettings}>
+            <Save className="mr-2 h-4 w-4" /> Save Changes
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="general">
