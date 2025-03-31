@@ -23,13 +23,14 @@ export default function RootLayout({
   const isAdminPage =
     pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
   const isUserPage = pathname.startsWith("/user");
+  const isSalonOwnerPage = pathname.startsWith("/salon-owner");
 
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        {!isAdminPage && <Navbar />}
+        {!isAdminPage && !isSalonOwnerPage && <Navbar />}
         <main>{children}</main>
-        {!isAdminPage && !isUserPage && <Footer />}
+        {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
         <Toaster />
       </body>
     </html>
