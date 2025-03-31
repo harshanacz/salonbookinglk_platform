@@ -12,9 +12,11 @@ import {
   Clock,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const routes = [
   {
@@ -61,6 +63,11 @@ export const UserSidebar = () => {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleLogout = () => {
+    // Add logout logic here
+    console.log("Logging out...");
   };
 
   return (
@@ -118,6 +125,18 @@ export const UserSidebar = () => {
               <span>{route.label}</span>
             </Link>
           ))}
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-[#D9D9D9]">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </div>

@@ -66,13 +66,13 @@ export default function SalonOwnerDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <Button asChild>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto" asChild>
             <Link href="/salon-owner/services/create">Add New Service</Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button className="w-full sm:w-auto" variant="outline" asChild>
             <Link href="/salon-owner/staff/create">Add Staff Member</Link>
           </Button>
         </div>
