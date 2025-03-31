@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
 
 export function UserTypeCards() {
   return (
@@ -15,10 +15,16 @@ export function UserTypeCards() {
               className="object-contain"
             />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Find & Book an Appointment</h3>
-          <p className="text-gray-600 mb-4">Easily find salons and book your next beauty appointment in minutes</p>
-          <Link href="/join">
-            <Button className="bg-purple-600 hover:bg-purple-700">Register</Button>
+          <h3 className="text-xl font-semibold mb-2">
+            Find & Book an Appointment
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Easily find salons and book your next beauty appointment in minutes
+          </p>
+          <Link href="/sign-up">
+            <Button className="bg-purple-600 hover:bg-purple-700">
+              Register
+            </Button>
           </Link>
         </div>
 
@@ -33,7 +39,8 @@ export function UserTypeCards() {
           </div>
           <h3 className="text-xl font-semibold mb-2">Grow Your Business</h3>
           <p className="text-gray-600 mb-4">
-            List your salon and services to reach more customers and grow your business
+            List your salon and services to reach more customers and grow your
+            business
           </p>
           <Link href="/for-business">
             <Button variant="outline">Grow Business</Button>
@@ -41,6 +48,5 @@ export function UserTypeCards() {
         </div>
       </div>
     </section>
-  )
+  );
 }
-
