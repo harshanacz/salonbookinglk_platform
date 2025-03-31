@@ -41,7 +41,7 @@ export default function SignInPage() {
             </h2>
             <p className="mt-2 text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link href="/join" className="text-primary hover:underline">
+              <Link href="/sign-up" className="text-primary hover:underline">
                 Create one now
               </Link>
             </p>
