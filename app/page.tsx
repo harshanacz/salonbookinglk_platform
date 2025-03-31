@@ -11,7 +11,7 @@ import { PromoBanner } from "@/components/promo-banner";
 import { StylesGallery } from "@/components/styles-gallery";
 import { UserTypeCards } from "@/components/user-type-cards";
 import { useRouter } from "next/navigation";
-import HeroSection from "@/components/user/Home/Hero/HeroSection";
+import HeroSection from "@/components/user/home/hero/hero-section";
 
 // ... (keep existing imports and data)
 
