@@ -23,30 +23,30 @@ const routes = [
     href: "/user",
     color: "text-sky-500",
   },
-  {
-    label: "My Appointments",
-    icon: Calendar,
-    href: "/user/appointments",
-    color: "text-violet-500",
-  },
-  {
-    label: "My Reviews",
-    icon: Star,
-    href: "/user/reviews",
-    color: "text-pink-700",
-  },
-  {
-    label: "My Messages",
-    icon: MessageSquare,
-    href: "/user/messages",
-    color: "text-orange-700",
-  },
-  {
-    label: "History",
-    icon: Clock,
-    href: "/user/history",
-    color: "text-green-700",
-  },
+  // {
+  //   label: "My Appointments",
+  //   icon: Calendar,
+  //   href: "/user/appointments",
+  //   color: "text-violet-500",
+  // },
+  // {
+  //   label: "My Reviews",
+  //   icon: Star,
+  //   href: "/user/reviews",
+  //   color: "text-pink-700",
+  // },
+  // {
+  //   label: "My Messages",
+  //   icon: MessageSquare,
+  //   href: "/user/messages",
+  //   color: "text-orange-700",
+  // },
+  // {
+  //   label: "History",
+  //   icon: Clock,
+  //   href: "/user/history",
+  //   color: "text-green-700",
+  // },
   {
     label: "Settings",
     icon: Settings,
@@ -77,10 +77,9 @@ export const UserSidebar = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-64 min-h-screen bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50",
+          "w-64 h-[calc(100vh-4rem)] bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50 top-16 md:top-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
-        style={{ top: 0 }}
       >
         {/* Close Button for Small Screens */}
         <button className="md:hidden p-4 self-end" onClick={toggleSidebar}>
@@ -105,7 +104,7 @@ export const UserSidebar = () => {
         </div>
 
         {/* Sidebar Links */}
-        <div className="flex-1 py-6 flex flex-col gap-1">
+        <div className="flex-1 py-6 flex flex-col gap-1 overflow-y-auto">
           {routes.map((route) => (
             <Link
               key={route.href}
@@ -123,4 +122,4 @@ export const UserSidebar = () => {
       </div>
     </div>
   );
-}; 
+};
