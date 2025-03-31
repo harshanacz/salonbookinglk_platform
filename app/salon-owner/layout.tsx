@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Salon Owner Dashboard - SalonBooking.lk",
-  description: "Manage your salon services and staff",
+  description: "Manage your salon services and appointments",
 };
 
 export default function SalonOwnerLayout({
@@ -14,10 +14,10 @@ export default function SalonOwnerLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen bg-[#FFF5FF]">
+    <div className="h-screen flex overflow-hidden">
       <SalonOwnerSidebar />
-      <div className="flex-1">
-        <main>{children}</main>
+      <div className="flex-1 overflow-auto">
+        <main className="p-6">{children}</main>
       </div>
       <Toaster />
     </div>
