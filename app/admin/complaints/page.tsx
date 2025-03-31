@@ -1,14 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Search } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Search } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const complaints = [
   {
@@ -61,17 +79,17 @@ const complaints = [
     priority: "Medium",
     avatar: "/placeholder.svg?height=40&width=40",
   },
-]
+];
 
 export default function ComplaintsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredComplaints = complaints.filter(
     (complaint) =>
       complaint.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       complaint.salon.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      complaint.subject.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      complaint.subject.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -123,7 +141,9 @@ export default function ComplaintsPage() {
                   </TableCell>
                   <TableCell>{complaint.salon}</TableCell>
                   <TableCell>{complaint.subject}</TableCell>
-                  <TableCell>{new Date(complaint.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {new Date(complaint.date).toLocaleDateString()}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -131,8 +151,8 @@ export default function ComplaintsPage() {
                         complaint.status === "Open"
                           ? "bg-red-100 text-red-800"
                           : complaint.status === "In Progress"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
                       }
                     >
                       {complaint.status}
@@ -145,8 +165,8 @@ export default function ComplaintsPage() {
                         complaint.priority === "High"
                           ? "bg-red-100 text-red-800"
                           : complaint.priority === "Medium"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-blue-100 text-blue-800"
                       }
                     >
                       {complaint.priority}
@@ -176,6 +196,5 @@ export default function ComplaintsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

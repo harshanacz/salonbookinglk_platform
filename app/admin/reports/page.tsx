@@ -1,15 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Download } from "lucide-react"
-import { format, subDays } from "date-fns"
-import { Bar, Line, Pie } from "react-chartjs-2"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, Download } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { Bar, Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,18 +37,28 @@ import {
   Title,
   Tooltip,
   Legend,
-} from "chart.js"
+} from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function AdminReportsPage() {
   const [dateRange, setDateRange] = useState<{
-    from: Date
-    to: Date | undefined
+    from: Date;
+    to: Date | undefined;
   }>({
     from: subDays(new Date(), 30),
     to: new Date(),
-  })
+  });
 
   const revenueData = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
@@ -43,7 +69,7 @@ export default function AdminReportsPage() {
         backgroundColor: "rgba(75, 192, 192, 0.6)",
       },
     ],
-  }
+  };
 
   const appointmentsData = {
     labels: ["Confirmed", "Pending", "Completed", "Cancelled"],
@@ -53,7 +79,7 @@ export default function AdminReportsPage() {
         backgroundColor: ["#4CAF50", "#FFC107", "#2196F3", "#F44336"],
       },
     ],
-  }
+  };
 
   const popularServicesData = {
     labels: ["Haircut", "Coloring", "Manicure", "Pedicure", "Facial"],
@@ -65,7 +91,7 @@ export default function AdminReportsPage() {
         tension: 0.1,
       },
     ],
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -80,12 +106,16 @@ export default function AdminReportsPage() {
       <div className="flex items-center space-x-4">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[300px] justify-start text-left font-normal">
+            <Button
+              variant="outline"
+              className="w-[300px] justify-start text-left font-normal"
+            >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateRange.from ? (
                 dateRange.to ? (
                   <>
-                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                    {format(dateRange.from, "LLL dd, y")} -{" "}
+                    {format(dateRange.to, "LLL dd, y")}
                   </>
                 ) : (
                   format(dateRange.from, "LLL dd, y")
@@ -101,7 +131,11 @@ export default function AdminReportsPage() {
               mode="range"
               defaultMonth={dateRange.from}
               selected={dateRange}
-              onSelect={setDateRange}
+              onSelect={(range) => {
+                if (range?.from && range?.to) {
+                  setDateRange({ from: range.from, to: range.to });
+                }
+              }}
               numberOfMonths={2}
             />
           </PopoverContent>
@@ -126,16 +160,22 @@ export default function AdminReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">LKR 123,456</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +20.1% from last month
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Appointments
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+15% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +15% from last month
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -149,11 +189,15 @@ export default function AdminReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Customer Satisfaction
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">4.8/5</div>
-            <p className="text-xs text-muted-foreground">Based on 1,023 reviews</p>
+            <p className="text-xs text-muted-foreground">
+              Based on 1,023 reviews
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -168,7 +212,9 @@ export default function AdminReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Monthly revenue across all salons</CardDescription>
+              <CardDescription>
+                Monthly revenue across all salons
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Bar data={revenueData} />
@@ -179,7 +225,9 @@ export default function AdminReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Appointment Statistics</CardTitle>
-              <CardDescription>Distribution of appointments by status</CardDescription>
+              <CardDescription>
+                Distribution of appointments by status
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Pie data={appointmentsData} />
@@ -199,6 +247,5 @@ export default function AdminReportsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

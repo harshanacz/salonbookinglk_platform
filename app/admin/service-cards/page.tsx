@@ -1,14 +1,27 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Search, Eye } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Search, Eye } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 // Sample services data
 const services = [
@@ -57,16 +70,16 @@ const services = [
     startedDate: "-",
     updatedDate: "Dec 13",
   },
-]
+];
 
 export default function ServiceCards() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredServices = services.filter(
     (service) =>
       service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.salon.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      service.salon.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -119,15 +132,21 @@ export default function ServiceCards() {
                           />
                         </div>
                         <div>
-                          <div className="font-medium line-clamp-1">{service.title}</div>
-                          <div className="text-sm text-gray-500">{service.salon}</div>
+                          <div className="font-medium line-clamp-1">
+                            {service.title}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {service.salon}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge
                         className={
-                          service.status === "NEW" ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"
+                          service.status === "NEW"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }
                       >
                         {service.status}
@@ -150,6 +169,5 @@ export default function ServiceCards() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

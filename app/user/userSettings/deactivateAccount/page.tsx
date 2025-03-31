@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function DeactivateAccount() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Handle deactivation logic here
-    console.log("Account deactivation requested for:", email)
-  }
+    console.log("Account deactivation requested for:", email);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#fdf4f8] p-4">
@@ -33,7 +33,9 @@ export default function DeactivateAccount() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
 
-        <h1 className="text-3xl font-medium text-red-600 text-center mt-4 mb-16">Deactivate my Account</h1>
+        <h1 className="text-3xl font-medium text-red-600 text-center mt-4 mb-16">
+          Deactivate my Account
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <h2 className="text-base font-medium mb-8">Deactivate my account</h2>
@@ -67,7 +69,8 @@ export default function DeactivateAccount() {
           </div>
 
           <div className="text-sm text-gray-600 mt-2 ml-[140px]">
-            You can recover your profile within 30 days after deactivation by login again
+            You can recover your profile within 30 days after deactivation by
+            login again
           </div>
 
           <div className="flex justify-between items-center mt-8">
@@ -84,6 +87,5 @@ export default function DeactivateAccount() {
         </form>
       </div>
     </div>
-  )
+  );
 }
-

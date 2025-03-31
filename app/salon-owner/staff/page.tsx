@@ -1,15 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 // Sample staff data
 const staffMembers = [
@@ -63,17 +81,19 @@ const staffMembers = [
     availability: "Full-time",
     joinedDate: "May 18, 2023",
   },
-]
+];
 
 export default function StaffManagement() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredStaff = staffMembers.filter(
     (staff) =>
       staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       staff.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.services.some((service) => service.toLowerCase().includes(searchQuery.toLowerCase())),
-  )
+      staff.services.some((service) =>
+        service.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+  );
 
   return (
     <div className="space-y-6">
@@ -89,7 +109,9 @@ export default function StaffManagement() {
       <Card>
         <CardHeader>
           <CardTitle>Staff Members</CardTitle>
-          <CardDescription>Manage your salon staff and their service assignments</CardDescription>
+          <CardDescription>
+            Manage your salon staff and their service assignments
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center mb-6">
@@ -123,7 +145,12 @@ export default function StaffManagement() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                        <Image src={staff.image || "/placeholder.svg"} alt={staff.name} fill className="object-cover" />
+                        <Image
+                          src={staff.image || "/placeholder.svg"}
+                          alt={staff.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                       <div className="font-medium">{staff.name}</div>
                     </div>
@@ -140,9 +167,13 @@ export default function StaffManagement() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={staff.status === "Active" ? "default" : "secondary"}
+                      variant={
+                        staff.status === "Active" ? "default" : "secondary"
+                      }
                       className={
-                        staff.status === "Active" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+                        staff.status === "Active"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
                       }
                     >
                       {staff.status}
@@ -159,7 +190,9 @@ export default function StaffManagement() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/${staff.id}`}>View Details</Link>
+                          <Link href={`/salon-owner/staff/${staff.id}`}>
+                            View Details
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link href={`/salon-owner/staff/${staff.id}/edit`}>
@@ -179,6 +212,5 @@ export default function StaffManagement() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

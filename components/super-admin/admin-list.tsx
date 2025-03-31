@@ -1,7 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,9 +16,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,9 +28,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { MoreVertical, Search, Eye, Trash2 } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
+} from "@/components/ui/alert-dialog";
+import { MoreVertical, Search, Eye, Trash2 } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 // Mock data for admins - Super Admin removed from the table
 const mockAdmins = [
@@ -55,38 +62,38 @@ const mockAdmins = [
     role: "Admin",
     lastActive: new Date(2023, 2, 8, 10, 0),
   },
-]
+];
 
 type AdminListProps = {
-  onSelectAdmin: (adminId: string | null) => void
-}
+  onSelectAdmin: (adminId: string | null) => void;
+};
 
 export function AdminList({ onSelectAdmin }: AdminListProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [adminToDelete, setAdminToDelete] = useState<string | null>(null)
-  const [admins, setAdmins] = useState(mockAdmins)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<string | null>(null);
+  const [admins, setAdmins] = useState(mockAdmins);
 
   const handleDeleteAdmin = (adminId: string) => {
-    setAdminToDelete(adminId)
-    setDeleteDialogOpen(true)
-  }
+    setAdminToDelete(adminId);
+    setDeleteDialogOpen(true);
+  };
 
   const confirmDelete = () => {
     if (adminToDelete) {
       // In a real app, you would call an API to delete the admin
-      setAdmins(admins.filter((admin) => admin.id !== adminToDelete))
-      setDeleteDialogOpen(false)
-      setAdminToDelete(null)
+      setAdmins(admins.filter((admin) => admin.id !== adminToDelete));
+      setDeleteDialogOpen(false);
+      setAdminToDelete(null);
     }
-  }
+  };
 
   const filteredAdmins = admins.filter((admin) => {
     return (
       admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       admin.email.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })
+    );
+  });
 
   return (
     <div className="space-y-4">
@@ -115,7 +122,10 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
           <TableBody>
             {filteredAdmins.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-6 text-muted-foreground"
+                >
                   No admins found matching your filters
                 </TableCell>
               </TableRow>
@@ -124,7 +134,9 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
                 <TableRow key={admin.id}>
                   <TableCell className="font-medium">{admin.name}</TableCell>
                   <TableCell>{admin.email}</TableCell>
-                  <TableCell>{formatDistanceToNow(admin.lastActive, { addSuffix: true })}</TableCell>
+                  <TableCell>
+                    {formatDistanceToNow(admin.lastActive, { addSuffix: true })}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -135,7 +147,9 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => onSelectAdmin(admin.id)}>
+                        <DropdownMenuItem
+                          onClick={() => onSelectAdmin(admin.id)}
+                        >
                           <Eye className="mr-2 h-4 w-4" />
                           View Activities
                         </DropdownMenuItem>
@@ -162,18 +176,21 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the admin account and remove their data from
-              our servers.
+              This action cannot be undone. This will permanently delete the
+              admin account and remove their data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

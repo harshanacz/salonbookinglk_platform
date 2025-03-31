@@ -24,11 +24,11 @@ const fetchSalonData = async (id: string) => {
   const data = await response.json();
 
   const salon = data.salons.find((salon: Salon) => salon.id === id);
-  return salon || data.salons[0]; 
+  return salon || data.salons[0];
 };
 
 export default function VerifyDocuments() {
-  const params = useParams(); 
+  const params = useParams();
   const id = params?.id as string;
 
   const [salon, setSalon] = React.useState<Salon | null>(null);
@@ -53,7 +53,9 @@ export default function VerifyDocuments() {
 
         <div className="bg-white rounded-lg p-6">
           <div className="flex items-center gap-4 mb-8">
-            <div className={`relative w-16 h-16 rounded-full overflow-hidden ${salon.logoColor}`}>
+            <div
+              className={`relative w-16 h-16 rounded-full overflow-hidden ${salon.logoColor}`}
+            >
               <Image
                 src="/placeholder.svg?height=64&width=64"
                 alt={`${salon.name} logo`}
@@ -87,12 +89,13 @@ export default function VerifyDocuments() {
                 <div className="text-gray-600">Salon Address :</div>
                 <div className="whitespace-pre-line">{salon.address}</div>
               </div>
-              
             </div>
 
             <div className="space-y-4">
               <div className="grid grid-cols-[150px_1fr] gap-4">
-                <div className="text-gray-600">Business Registration Number :</div>
+                <div className="text-gray-600">
+                  Business Registration Number :
+                </div>
                 <div>{salon.businessRegNo}</div>
               </div>
 
@@ -110,8 +113,14 @@ export default function VerifyDocuments() {
 
           <div className="mb-12">
             <div className="grid grid-cols-[200px_1fr] gap-4 items-center">
-              <div className="text-gray-600">Business Registration Certificate (PDF or Image)</div>
-              <Button variant="outline" size="icon" className="w-10 h-10 rounded-md">
+              <div className="text-gray-600">
+                Business Registration Certificate (PDF or Image)
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                className="w-10 h-10 rounded-md"
+              >
                 <Download className="h-5 w-5" />
               </Button>
             </div>
@@ -122,9 +131,7 @@ export default function VerifyDocuments() {
               <Button variant="success">Approve</Button>
             </Link>
             <Link href="/pending-verifications" className="w-full sm:w-80">
-              <Button variant="cancel">
-                Reject
-              </Button>
+              <Button variant="cancel">Reject</Button>
             </Link>
           </div>
         </div>

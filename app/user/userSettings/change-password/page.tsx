@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Settings } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Settings } from "lucide-react";
 
 export default function SettingsPage() {
-  const [currentPassword, setCurrentPassword] = useState("")
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Handle password change logic here
-    console.log("Password change submitted")
-  }
+    console.log("Password change submitted");
+  };
 
   return (
     <div className="bg-[#FFF5FF] min-h-screen w-full">
@@ -27,7 +27,9 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-12">
-          <h2 className="text-sm font-medium uppercase mb-6">Change Password</h2>
+          <h2 className="text-sm font-medium uppercase mb-6">
+            Change Password
+          </h2>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 max-w-md">
               <div className="grid grid-cols-3 items-center gap-4">
@@ -68,13 +70,17 @@ export default function SettingsPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                   <p className="text-xs text-gray-500 mt-2">
-                    8 characters or longer. Combine upper and lowercase letters and numbers.
+                    8 characters or longer. Combine upper and lowercase letters
+                    and numbers.
                   </p>
                 </div>
               </div>
 
               <div className="flex justify-end mt-6">
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Button
+                  type="submit"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
                   Save
                 </Button>
               </div>
@@ -83,11 +89,14 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-24 flex justify-center">
-          <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600">
+          <Button
+            variant="outline"
+            className="text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600"
+          >
             Deactivate my account
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

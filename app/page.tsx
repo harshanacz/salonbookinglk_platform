@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
-import Image from "next/image"
-import { ServiceCard } from "@/components/service-card"
-import { CategoryButton } from "@/components/category-button"
-import { PromoBanner } from "@/components/promo-banner"
-import { StylesGallery } from "@/components/styles-gallery"
-import { UserTypeCards } from "@/components/user-type-cards"
-import { useRouter } from "next/navigation"
-import HeroSection from "@/components/user/Home/Hero/HeroSection"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import Image from "next/image";
+import { ServiceCard } from "@/components/service-card";
+import { CategoryButton } from "@/components/category-button";
+import { PromoBanner } from "@/components/promo-banner";
+import { StylesGallery } from "@/components/styles-gallery";
+import { UserTypeCards } from "@/components/user-type-cards";
+import { useRouter } from "next/navigation";
+import HeroSection from "@/components/user/Home/Hero/HeroSection";
 
 // ... (keep existing imports and data)
 
@@ -43,15 +43,15 @@ const nearbySalons = [
     distance: 1.2,
     address: "789 Lake Rd, Colombo 06",
   },
-]
+];
 
 export default function Home() {
-  const [location, setLocation] = useState("")
-  const router = useRouter()
+  const [location, setLocation] = useState("");
+  const router = useRouter();
 
   const handleSearch = () => {
-    router.push(`/search?location=${encodeURIComponent(location)}`)
-  }
+    router.push(`/search?location=${encodeURIComponent(location)}`);
+  };
 
   // Sample data for services
   const popularServices = [
@@ -95,7 +95,7 @@ export default function Home() {
       reviews: 130,
       location: "Moipe Road, Moratuwa",
     },
-  ]
+  ];
 
   const categories = [
     { id: 1, name: "Hair Cuts", icon: "✂️" },
@@ -103,7 +103,7 @@ export default function Home() {
     { id: 3, name: "Skin Care", icon: "✨" },
     { id: 4, name: "Brows & Lashes", icon: "👁️" },
     { id: 5, name: "Makeup", icon: "💄" },
-  ]
+  ];
 
   return (
     <div className="flex flex-col min-h-screen lg-mx-5 mx-4">
@@ -184,14 +184,15 @@ export default function Home() {
       </section>
 
       {/* User Type Cards */}
-      <UserTypeCards /> 
+      <UserTypeCards />
 
       {/* Styles Gallery */}
       <section className="container mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold mb-6">New styles publish by salons</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          New styles publish by salons
+        </h2>
         <StylesGallery />
       </section>
     </div>
-  )
+  );
 }
-

@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Heart, MapPin, Share2, Star } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
-import { ServiceCard } from "@/components/service-card"
-import { useCheckoutStore } from "@/store/checkoutStore"
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Heart, MapPin, Share2, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ServiceCard } from "@/components/service-card";
+import { useCheckoutStore } from "@/store/checkoutStore";
 
 interface ServicePageProps {
   params: {
-    id: string
-  }
+    id: string;
+  };
 }
 
 export default function ServicePage({ params }: ServicePageProps) {
-  const addService = useCheckoutStore((state) => state.addService)
+  const addService = useCheckoutStore((state) => state.addService);
 
   // In a real app, you would fetch this data based on the ID
   const service = {
@@ -37,14 +37,38 @@ export default function ServicePage({ params }: ServicePageProps) {
       "Use a deep conditioner or hair mask to hydrate your hair. This helps protect it from the chemicals in the dye.",
     ],
     staff: [
-      { id: 1, name: "Staff Member 1", image: "/placeholder.svg?height=100&width=100" },
-      { id: 2, name: "Staff Member 2", image: "/placeholder.svg?height=100&width=100" },
-      { id: 3, name: "Staff Member 3", image: "/placeholder.svg?height=100&width=100" },
-      { id: 4, name: "Staff Member 4", image: "/placeholder.svg?height=100&width=100" },
-      { id: 5, name: "Staff Member 5", image: "/placeholder.svg?height=100&width=100" },
-      { id: 6, name: "Staff Member 6", image: "/placeholder.svg?height=100&width=100" },
+      {
+        id: 1,
+        name: "Staff Member 1",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 2,
+        name: "Staff Member 2",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 3,
+        name: "Staff Member 3",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 4,
+        name: "Staff Member 4",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 5,
+        name: "Staff Member 5",
+        image: "/placeholder.svg?height=100&width=100",
+      },
+      {
+        id: 6,
+        name: "Staff Member 6",
+        image: "/placeholder.svg?height=100&width=100",
+      },
     ],
-  }
+  };
 
   // Sample related services
   const relatedServices = [
@@ -88,7 +112,7 @@ export default function ServicePage({ params }: ServicePageProps) {
       reviews: 120,
       location: "Katubedda, Galle Road",
     },
-  ]
+  ];
 
   const handleBookNow = () => {
     addService({
@@ -96,8 +120,8 @@ export default function ServicePage({ params }: ServicePageProps) {
       name: service.title,
       price: service.price,
       image: service.image,
-    })
-  }
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -105,7 +129,10 @@ export default function ServicePage({ params }: ServicePageProps) {
         <div className="md:w-2/3">
           {/* Breadcrumb */}
           <nav className="text-sm mb-4">
-            <Link href="/services" className="text-gray-500 hover:text-gray-700">
+            <Link
+              href="/services"
+              className="text-gray-500 hover:text-gray-700"
+            >
               Main HairCuts
             </Link>
             <span className="mx-2 text-gray-400">/</span>
@@ -129,13 +156,28 @@ export default function ServicePage({ params }: ServicePageProps) {
           {/* Thumbnails */}
           <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
             <div className="relative w-20 h-20 rounded-md overflow-hidden border-2 border-purple-600">
-              <Image src={service.image || "/placeholder.svg"} alt={service.title} fill className="object-cover" />
+              <Image
+                src={service.image || "/placeholder.svg"}
+                alt={service.title}
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="relative w-20 h-20 rounded-md overflow-hidden">
-              <Image src="/placeholder.svg?height=100&width=100" alt="Thumbnail 2" fill className="object-cover" />
+              <Image
+                src="/placeholder.svg?height=100&width=100"
+                alt="Thumbnail 2"
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="relative w-20 h-20 rounded-md overflow-hidden">
-              <Image src="/placeholder.svg?height=100&width=100" alt="Thumbnail 3" fill className="object-cover" />
+              <Image
+                src="/placeholder.svg?height=100&width=100"
+                alt="Thumbnail 3"
+                fill
+                className="object-cover"
+              />
             </div>
           </div>
 
@@ -158,9 +200,16 @@ export default function ServicePage({ params }: ServicePageProps) {
               {service.staff.map((staff) => (
                 <div key={staff.id} className="flex flex-col items-center">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
-                    <Image src={staff.image || "/placeholder.svg"} alt={staff.name} fill className="object-cover" />
+                    <Image
+                      src={staff.image || "/placeholder.svg"}
+                      alt={staff.name}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
-                  <span className="text-xs text-center text-gray-600">Staff Member</span>
+                  <span className="text-xs text-center text-gray-600">
+                    Staff Member
+                  </span>
                 </div>
               ))}
             </div>
@@ -168,7 +217,9 @@ export default function ServicePage({ params }: ServicePageProps) {
 
           {/* Related Services */}
           <div>
-            <h2 className="text-xl font-semibold mb-4">Services you may like</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              Services you may like
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
               {relatedServices.map((service) => (
                 <ServiceCard key={service.id} service={service} />
@@ -193,9 +244,13 @@ export default function ServicePage({ params }: ServicePageProps) {
                 <div className="flex items-center">
                   <div className="flex items-center text-yellow-500 mr-1">
                     <Star className="h-4 w-4 fill-current" />
-                    <span className="ml-1 text-black">{service.salon.rating}</span>
+                    <span className="ml-1 text-black">
+                      {service.salon.rating}
+                    </span>
                   </div>
-                  <span className="text-sm text-gray-500">({service.salon.reviews})</span>
+                  <span className="text-sm text-gray-500">
+                    ({service.salon.reviews})
+                  </span>
                 </div>
               </div>
             </div>
@@ -208,7 +263,12 @@ export default function ServicePage({ params }: ServicePageProps) {
 
             <div className="flex items-center text-sm text-gray-700 mb-2">
               <div className="flex items-center mr-4">
-                <svg className="h-5 w-5 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg
+                  className="h-5 w-5 mr-1 text-gray-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -233,7 +293,9 @@ export default function ServicePage({ params }: ServicePageProps) {
 
             <div className="mb-6">
               <div className="text-gray-700 mb-1">From</div>
-              <div className="text-2xl font-bold mb-4">LKR {service.price}.00</div>
+              <div className="text-2xl font-bold mb-4">
+                LKR {service.price}.00
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -254,10 +316,12 @@ export default function ServicePage({ params }: ServicePageProps) {
               </div>
             </div>
 
-            <div className="text-xs text-gray-500 mt-4 text-center">Something went wrong</div>
+            <div className="text-xs text-gray-500 mt-4 text-center">
+              Something went wrong
+            </div>
           </Card>
         </div>
       </div>
     </div>
-  )
+  );
 }

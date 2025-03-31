@@ -1,23 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
-import { Save } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
+import { Save } from "lucide-react";
 
 export default function AdminSettingsPage() {
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const handleSave = () => {
     toast({
       title: "Settings saved",
       description: "Your changes have been successfully saved.",
-    })
-  }
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -38,7 +44,9 @@ export default function AdminSettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>General Settings</CardTitle>
-              <CardDescription>Manage your admin account settings</CardDescription>
+              <CardDescription>
+                Manage your admin account settings
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -47,7 +55,11 @@ export default function AdminSettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" defaultValue="admin@salonbooking.lk" />
+                <Input
+                  id="email"
+                  type="email"
+                  defaultValue="admin@salonbooking.lk"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
@@ -56,7 +68,6 @@ export default function AdminSettingsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
 
         <TabsContent value="security">
           <Card>
@@ -83,6 +94,5 @@ export default function AdminSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

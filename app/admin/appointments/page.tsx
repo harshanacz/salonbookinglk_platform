@@ -1,16 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, ChevronDown, Search } from "lucide-react"
-import { format } from "date-fns"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, ChevronDown, Search } from "lucide-react";
+import { format } from "date-fns";
 
 const appointments = [
   {
@@ -63,18 +86,18 @@ const appointments = [
     time: "9:00 AM",
     status: "Confirmed",
   },
-]
+];
 
 export default function AdminAppointmentsPage() {
-  const [date, setDate] = useState<Date>()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [date, setDate] = useState<Date>();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredAppointments = appointments.filter(
     (appointment) =>
       appointment.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       appointment.salon.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appointment.service.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      appointment.service.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -85,7 +108,9 @@ export default function AdminAppointmentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Appointments</CardTitle>
-          <CardDescription>View and manage appointments across all salons</CardDescription>
+          <CardDescription>
+            View and manage appointments across all salons
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4 mb-6">
@@ -100,13 +125,22 @@ export default function AdminAppointmentsPage() {
             </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="Date" size="lg" className="w-[240px] justify-start text-left font-normal">
+                <Button
+                  variant="Date"
+                  size="lg"
+                  className="w-[240px] justify-start text-left font-normal"
+                >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                <Calendar
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
               </PopoverContent>
             </Popover>
             <Select>
@@ -143,7 +177,8 @@ export default function AdminAppointmentsPage() {
                   <TableCell>{appointment.service}</TableCell>
                   <TableCell>{appointment.staff}</TableCell>
                   <TableCell>
-                    {format(new Date(appointment.date), "MMM d, yyyy")} at {appointment.time}
+                    {format(new Date(appointment.date), "MMM d, yyyy")} at{" "}
+                    {appointment.time}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -152,10 +187,10 @@ export default function AdminAppointmentsPage() {
                         appointment.status === "Confirmed"
                           ? "bg-green-100 text-green-800"
                           : appointment.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : appointment.status === "Completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : appointment.status === "Completed"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-red-100 text-red-800"
                       }
                     >
                       {appointment.status}
@@ -173,6 +208,5 @@ export default function AdminAppointmentsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

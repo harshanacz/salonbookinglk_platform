@@ -1,29 +1,42 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { useToast } from "@/components/ui/use-toast"
-import { ArrowRight, Check } from "lucide-react"
-import Image from "next/image"
-import dynamic from "next/dynamic"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowRight, Check } from "lucide-react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 
 const Map = dynamic(() => import("@/components/map"), {
   ssr: false,
-  loading: () => <div className="w-full h-[300px] bg-gray-100 animate-pulse rounded-lg"></div>,
-})
+  loading: () => (
+    <div className="w-full h-[300px] bg-gray-100 animate-pulse rounded-lg"></div>
+  ),
+});
 
 const plans = [
   {
     name: "Basic",
     price: "Free",
     description: "Perfect for getting started",
-    features: ["List your salon", "Basic appointment management", "Up to 5 services", "Email support"],
+    features: [
+      "List your salon",
+      "Basic appointment management",
+      "Up to 5 services",
+      "Email support",
+    ],
   },
   {
     name: "Professional",
@@ -50,20 +63,20 @@ const plans = [
       "Dedicated account manager",
     ],
   },
-]
+];
 
 export default function BusinessSignup() {
-  const [step, setStep] = useState(1)
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const { toast } = useToast()
-  const [location, setLocation] = useState({ lat: 6.9271, lng: 79.8612 })
+  const [step, setStep] = useState(1);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [location, setLocation] = useState({ lat: 6.9271, lng: 79.8612 });
 
   const handleSubmit = () => {
     toast({
       title: "Registration submitted",
       description: "We'll review your application and get back to you soon.",
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -78,9 +91,12 @@ export default function BusinessSignup() {
           />
         </div>
         <div className="relative z-10 container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Grow Your Salon Business</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Grow Your Salon Business
+          </h1>
           <p className="text-xl text-gray-200 max-w-2xl mx-auto">
-            Join thousands of salons using our platform to reach more customers and manage their business efficiently.
+            Join thousands of salons using our platform to reach more customers
+            and manage their business efficiently.
           </p>
         </div>
       </section>
@@ -105,15 +121,21 @@ export default function BusinessSignup() {
                     >
                       {plan.popular && (
                         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                          <span className="bg-primary text-white text-xs px-3 py-1 rounded-full">Most Popular</span>
+                          <span className="bg-primary text-white text-xs px-3 py-1 rounded-full">
+                            Most Popular
+                          </span>
                         </div>
                       )}
                       <div className="text-center">
                         <h3 className="text-lg font-semibold">{plan.name}</h3>
                         <div className="mt-2">
-                          <span className="text-2xl font-bold">{plan.price}</span>
+                          <span className="text-2xl font-bold">
+                            {plan.price}
+                          </span>
                         </div>
-                        <p className="mt-2 text-sm text-gray-500">{plan.description}</p>
+                        <p className="mt-2 text-sm text-gray-500">
+                          {plan.description}
+                        </p>
                       </div>
                       <ul className="mt-6 space-y-3">
                         {plan.features.map((feature) => (
@@ -125,7 +147,9 @@ export default function BusinessSignup() {
                       </ul>
                       <Button
                         className="w-full mt-6"
-                        variant={selectedPlan === plan.name ? "default" : "outline"}
+                        variant={
+                          selectedPlan === plan.name ? "default" : "outline"
+                        }
                         onClick={() => setSelectedPlan(plan.name)}
                       >
                         Select Plan
@@ -152,7 +176,10 @@ export default function BusinessSignup() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="business-name">Business Name</Label>
-                      <Input id="business-name" placeholder="Enter your salon name" />
+                      <Input
+                        id="business-name"
+                        placeholder="Enter your salon name"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="business-type">Business Type</Label>
@@ -170,17 +197,28 @@ export default function BusinessSignup() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" placeholder="Enter business phone number" />
+                      <Input
+                        id="phone"
+                        placeholder="Enter business phone number"
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Business Email</Label>
-                      <Input id="email" type="email" placeholder="Enter business email" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter business email"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">Business Description</Label>
-                    <Textarea id="description" placeholder="Tell us about your business" className="min-h-[100px]" />
+                    <Textarea
+                      id="description"
+                      placeholder="Tell us about your business"
+                      className="min-h-[100px]"
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -224,6 +262,5 @@ export default function BusinessSignup() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
