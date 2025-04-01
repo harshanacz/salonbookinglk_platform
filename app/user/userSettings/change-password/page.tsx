@@ -23,11 +23,11 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto py-12 px-4">
         <div className="flex items-center gap-2 mb-12">
           <Settings className="h-6 w-6" />
-          <h1 className="text-2xl font-medium">Settings</h1>
+          <h1 className="text-2xl font-medium">Forgot Password</h1>
         </div>
 
         <div className="mt-12">
-          <h2 className="text-sm font-medium uppercase mb-6">Change Password</h2>
+          <h2 className="text-sm font-medium uppercase mb-6">Create new paswrd</h2>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4 max-w-md">
               <div className="grid grid-cols-3 items-center gap-4">

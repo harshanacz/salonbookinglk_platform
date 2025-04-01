@@ -51,6 +51,10 @@ const sidebarItems = [
 
 export function SalonOwnerSidebar() {
   const pathname = usePathname()
+// Hide sidebar on the signup page
+if (pathname === "/salon-owner/sign-up") {
+  return null
+}
 
   return (
     <div className="w-64 min-h-screen bg-gray-900 text-white flex flex-col">
