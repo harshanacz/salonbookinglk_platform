@@ -1,36 +1,37 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Toaster } from "@/components/ui/toaster"
+'use client'; // Add this at the top to mark this as a Client Component
 
-const inter = Inter({ subsets: ["latin"] })
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Toaster } from "@/components/ui/toaster";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export const metadata: Metadata = {
-  title: "SalonBooking.lk - Book Your Salon, Anytime",
-  description: "Find and book the best salon services in Sri Lanka",
-    generator: 'v0.dev'
-}
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const [shouldHideHeaderFooter, setShouldHideHeaderFooter] = useState(false);
+
+  useEffect(() => {
+    const hideHeaderFooterRoutes = ["/add-complaint"];
+    setShouldHideHeaderFooter(hideHeaderFooterRoutes.includes(pathname));
+  }, [pathname]);
+
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar />
+        {!shouldHideHeaderFooter && <Navbar />}
         <main>{children}</main>
-        <Footer />
+        {!shouldHideHeaderFooter && <Footer />}
         <Toaster />
       </body>
     </html>
-  )
+  );
 }
-
-
-
-import './globals.css'
