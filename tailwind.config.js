@@ -17,6 +17,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        // Just override the sans font family to use Montserrat
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -51,6 +55,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        customBg: '#f0f8ff', // Add your custom background color
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -75,4 +80,3 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
-
