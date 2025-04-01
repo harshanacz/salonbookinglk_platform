@@ -1,19 +1,19 @@
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Star } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 interface ServiceCardProps {
   service: {
-    id: number
-    title: string
-    image: string
-    price: number
-    salon: string
-    rating: number
-    reviews: number
-    location: string
-  }
+    id: number;
+    title: string;
+    image: string;
+    price: number;
+    salon: string;
+    rating: number;
+    reviews: number;
+    location: string;
+  };
 }
 
 export function ServiceCard({ service }: ServiceCardProps) {
@@ -21,7 +21,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
     <Link href={`/service/${service.id}`}>
       <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
         <div className="relative h-48 w-full">
-          <Image src={service.image || "/placeholder.svg"} alt={service.title} fill className="object-cover" />
+          <Image
+            src={service.image || "/placeholder.svg"}
+            alt={service.title}
+            fill
+            className="object-cover"
+          />
         </div>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
@@ -49,7 +54,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 strokeWidth={2}
                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
               />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             {service.location}
           </div>
@@ -57,6 +67,5 @@ export function ServiceCard({ service }: ServiceCardProps) {
         </CardFooter>
       </Card>
     </Link>
-  )
+  );
 }
-

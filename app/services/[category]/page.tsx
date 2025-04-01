@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { MapPin, Search, Star } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { MapPin, Search, Star } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 // Sample service data (you would fetch this from an API in a real application)
 const services = [
@@ -41,21 +41,27 @@ const services = [
     location: "Wellawatte, Galle Road",
   },
   // Add more sample services...
-]
+];
 
-export default function ServiceCategoryPage({ params }: { params: { category: string } }) {
-  const [searchQuery, setSearchQuery] = useState("")
+export default function ServiceCategoryPage({
+  params,
+}: {
+  params: { category: string };
+}) {
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredServices = services.filter(
     (service) =>
       service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.salon.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      service.salon.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 capitalize">{params.category}</h1>
+        <h1 className="text-3xl font-bold mb-6 capitalize">
+          {params.category}
+        </h1>
 
         {/* Search Bar */}
         <div className="mb-8">
@@ -82,16 +88,27 @@ export default function ServiceCategoryPage({ params }: { params: { category: st
             <Card key={service.id} className="overflow-hidden">
               <Link href={`/service/${service.id}`}>
                 <div className="relative h-48">
-                  <Image src={service.image || "/placeholder.svg"} alt={service.name} fill className="object-cover" />
+                  <Image
+                    src={service.image || "/placeholder.svg"}
+                    alt={service.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div className="p-4">
                   <h3 className="font-medium text-lg mb-2">{service.name}</h3>
                   <div className="flex items-center mb-2">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="ml-1 text-sm font-medium">{service.rating}</span>
-                    <span className="ml-1 text-sm text-gray-500">({service.reviews} reviews)</span>
+                    <span className="ml-1 text-sm font-medium">
+                      {service.rating}
+                    </span>
+                    <span className="ml-1 text-sm text-gray-500">
+                      ({service.reviews} reviews)
+                    </span>
                   </div>
-                  <div className="text-sm text-gray-500 mb-2">{service.salon}</div>
+                  <div className="text-sm text-gray-500 mb-2">
+                    {service.salon}
+                  </div>
                   <div className="flex items-center text-sm text-gray-500 mb-4">
                     <MapPin className="h-4 w-4 mr-1" />
                     {service.location}
@@ -107,6 +124,5 @@ export default function ServiceCategoryPage({ params }: { params: { category: st
         </div>
       </div>
     </div>
-  )
+  );
 }
-

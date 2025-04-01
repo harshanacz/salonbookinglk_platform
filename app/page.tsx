@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
-import Image from "next/image"
-import { ServiceCard } from "@/components/service-card"
-import { CategoryButton } from "@/components/category-button"
-import { PromoBanner } from "@/components/promo-banner"
-import { StylesGallery } from "@/components/styles-gallery"
-import { UserTypeCards } from "@/components/user-type-cards"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import Image from "next/image";
+import { ServiceCard } from "@/components/service-card";
+import { CategoryButton } from "@/components/category-button";
+import { PromoBanner } from "@/components/promo-banner";
+import { StylesGallery } from "@/components/styles-gallery";
+import { UserTypeCards } from "@/components/user-type-cards";
+import { useRouter } from "next/navigation";
+import HeroSection from "@/components/hero-section";
 
 // ... (keep existing imports and data)
 
@@ -42,15 +43,15 @@ const nearbySalons = [
     distance: 1.2,
     address: "789 Lake Rd, Colombo 06",
   },
-]
+];
 
 export default function Home() {
-  const [location, setLocation] = useState("")
-  const router = useRouter()
+  const [location, setLocation] = useState("");
+  const router = useRouter();
 
   const handleSearch = () => {
-    router.push(`/search?location=${encodeURIComponent(location)}`)
-  }
+    router.push(`/search?location=${encodeURIComponent(location)}`);
+  };
 
   // Sample data for services
   const popularServices = [
@@ -94,7 +95,7 @@ export default function Home() {
       reviews: 130,
       location: "Moipe Road, Moratuwa",
     },
-  ]
+  ];
 
   const categories = [
     { id: 1, name: "Hair Cuts", icon: "✂️" },
@@ -102,48 +103,12 @@ export default function Home() {
     { id: 3, name: "Skin Care", icon: "✨" },
     { id: 4, name: "Brows & Lashes", icon: "👁️" },
     { id: 5, name: "Makeup", icon: "💄" },
-  ]
+  ];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen lg-mx-5 mx-4">
       {/* Hero Section */}
-      <section className="relative w-full h-[400px] bg-purple-900 text-white">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/placeholder.svg?height=800&width=1600"
-            alt="Salon background"
-            fill
-            className="object-cover opacity-40"
-            priority
-          />
-        </div>
-        <div className="relative z-10 container mx-auto px-4 py-16 flex flex-col items-center justify-center h-full">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-center">Book Your Salon, Anytime.</h1>
-          <div className="w-full max-w-md flex flex-col gap-4">
-            <div className="flex">
-              <Input
-                type="text"
-                placeholder="Enter your location"
-                className="rounded-r-none bg-white text-black"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-              <Button
-                variant="default"
-                className="rounded-l-none bg-purple-700 hover:bg-purple-800"
-                onClick={handleSearch}
-              >
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              {categories.map((category) => (
-                <CategoryButton key={category.id} name={category.name} icon={category.icon} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Nearby Salons */}
       {/* {showNearbySalons && (
@@ -223,10 +188,11 @@ export default function Home() {
 
       {/* Styles Gallery */}
       <section className="container mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold mb-6">New styles publish by salons</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          New styles publish by salons
+        </h2>
         <StylesGallery />
       </section>
     </div>
-  )
+  );
 }
-
