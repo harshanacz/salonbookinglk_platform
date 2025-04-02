@@ -25,7 +25,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MoreHorizontal, Search, User } from "lucide-react";
+import { MoreHorizontal, Search, User, Eye } from "lucide-react";
+import Link from "next/link";
 
 const clients = [
   {
@@ -125,7 +126,7 @@ export default function AdminClientsPage() {
                 <TableHead>Total Bookings</TableHead>
                 <TableHead>Total Spent</TableHead>
                 <TableHead>Last Visit</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -152,20 +153,11 @@ export default function AdminClientsPage() {
                     {new Date(client.lastVisit).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit client</DropdownMenuItem>
-                        <DropdownMenuItem>View bookings</DropdownMenuItem>
-                        <DropdownMenuItem>Send message</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button asChild size="sm">
+                      <Link href={`/admin/clients/${client.id}`}>
+                        <Eye className="mr-2 h-4 w-4" /> View
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
