@@ -23,7 +23,7 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto py-12 px-4">
         <div className="flex items-center gap-2 mb-12">
           <Settings className="h-6 w-6" />
-          <h1 className="text-2xl font-medium">Forgot Password</h1>
+          <h1 className="text-2xl font-medium">Change Password</h1>
         </div>
 
         <div className="mt-12">
