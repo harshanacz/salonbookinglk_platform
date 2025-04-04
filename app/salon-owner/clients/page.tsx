@@ -157,7 +157,7 @@ export default function ClientsPage() {
                         <DropdownMenuItem>View details</DropdownMenuItem>
                         <DropdownMenuItem>Edit client</DropdownMenuItem>
                         <DropdownMenuItem>View appointments</DropdownMenuItem>
-                        <DropdownMenuItem>Send message</DropdownMenuItem>
+                      
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

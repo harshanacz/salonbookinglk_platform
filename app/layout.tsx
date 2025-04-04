@@ -19,18 +19,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAddComplaintPage = pathname === "/add-complaint";
+
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Navbar />
+      <body className={montserrat.className}>
+        {!isAddComplaintPage && <Navbar />}
         <main>{children}</main>
-        <Footer />
+        {!isAddComplaintPage && <Footer />}
         <Toaster />
       </body>
     </html>
   );
 }
-
-
-
-import './globals.css'
