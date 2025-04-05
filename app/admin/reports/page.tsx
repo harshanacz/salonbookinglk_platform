@@ -151,7 +151,7 @@ export default function AdminReportsPage() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="Date"
+              variant="outline2"
               size="lg"
               className="justify-start text-left font-normal"
             >

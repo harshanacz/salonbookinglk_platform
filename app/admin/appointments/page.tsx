@@ -127,7 +127,7 @@ export default function AdminAppointmentsPage() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="Date"
+                  variant="outline2"
                   size="lg"
                   className="w-[240px] justify-start text-left font-normal"
                 >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect import
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -111,6 +111,13 @@ export default function AppointmentDetailsPage() {
     (appt) => appt.id === Number(params.id)
   );
 
+  // Use useEffect to initialize the status from appointment
+  useEffect(() => {
+    if (appointment) {
+      setStatus(appointment.status);
+    }
+  }, [appointment]);
+
   if (!appointment) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
@@ -123,11 +130,6 @@ export default function AppointmentDetailsPage() {
       </div>
     );
   }
-
-  // Set initial status from appointment
-  useState(() => {
-    setStatus(appointment.status);
-  });
 
   const handleStatusChange = (newStatus: string) => {
     setStatus(newStatus);
