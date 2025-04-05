@@ -27,15 +27,15 @@ export function Navbar() {
             SalonBooking.lk
           </Link>
         </div>
-        <div className="hidden md:flex items-center gap-8"> {/* Increased the gap here to create two groups */}
+        <div className="hidden md:flex items-center gap-8">
           <div className="flex items-center">
             <NavigationMenu>
               <NavigationMenuList>
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="flex items-center text-sm font-medium text-gray-600 hover:text-black">
-                    Services 
+                    Services
                   </NavigationMenuTrigger>
-                  <NavigationMenuContent>
+                  <NavigationMenuContent className="absolute left-0 md:left-auto md:right-0"> {/* Adjusted positioning */}
                     <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                       <ListItem href="/services/hair-cuts" title="Hair Cuts">
                         Men's and women's haircuts, styling, and treatments
@@ -112,8 +112,8 @@ export function Navbar() {
                 For Business
               </Link>
               <hr className="my-2" />
-              <Link 
-                href="/sign-in" 
+              <Link
+                href="/sign-in"
                 className="font-medium"
                 onClick={() => setIsOpen(false)}
               >
