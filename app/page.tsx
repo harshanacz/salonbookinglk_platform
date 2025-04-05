@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import Image from "next/image";
 import { ServiceCard } from "@/components/service-card";
 import { CategoryButton } from "@/components/category-button";
@@ -12,6 +12,7 @@ import { StylesGallery } from "@/components/styles-gallery";
 import { UserTypeCards } from "@/components/user-type-cards";
 import { useRouter } from "next/navigation";
 import HeroSection from "@/components/hero-section";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // ... (keep existing imports and data)
 
@@ -57,7 +58,7 @@ export default function Home() {
   const popularServices = [
     {
       id: 1,
-      title: "Custom Hair Coloring And Highlights",
+      title: "Custom Hair Coloring And Highlights Art",
       image: "/placeholder.svg?height=300&width=400",
       price: 620,
       salon: "Salon Amayali",
@@ -180,7 +181,7 @@ export default function Home() {
           {popularServices.map((service) => (
             <ServiceCard key={service.id} service={service} />
           ))}
-        </div>
+        </div> 
       </section>
 
       {/* User Type Cards */}
@@ -191,7 +192,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold mb-6">
           New styles publish by salons
         </h2>
-        <StylesGallery />
+        <StylesGallery /> 
       </section>
     </div>
   );
