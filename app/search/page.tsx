@@ -9,7 +9,6 @@ import { MapPin, Search, Star, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-// Sample salon data (you would fetch this from an API in a real application)
 const salons = [
   {
     id: 1,
@@ -67,57 +66,40 @@ const salons = [
   },
 ];
 
-const categories = [
-  "Men Hair Cuts",
-  "Female Hair Cuts",
-  "Nail Arts",
-  "Skin Cares",
-  "Brows & Lashes",
-  "Makeup",
-  "Waxing",
-];
+
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // Fixed: Explicitly typed as string | null
   const [selectedSalon, setSelectedSalon] = useState<number | null>(null);
   const [isMapLoading, setIsMapLoading] = useState(true);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     const location = searchParams.get("location");
     if (location) {
       setSearchQuery(location);
     }
+    
+    // Set default showMap state based on screen size
+    const handleResize = () => {
+      setShowMap(window.innerWidth >= 1024); // Show map by default on lg screens and above
+    };
+    
+    // Initialize on mount
+    handleResize();
+    
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Categories */}
-      <div className="border-b bg-white sticky top-16 z-10">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-6 overflow-x-auto py-4 scrollbar-hide">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Search Bar */}
       <div className="container mx-auto px-4 py-4">
-        <div className="flex gap-4 max-w-3xl mx-auto">
-          <div className="flex-1 flex gap-2">
+        <div className="flex flex-col gap-2 md:flex-row md:gap-4 max-w-3xl mx-auto">
+          <div className="flex-1 flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
@@ -128,19 +110,48 @@ export default function SearchPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Input type="text" placeholder="Map Area" className="w-32" />
-            <Input type="text" placeholder="Availability" className="w-32" />
+            <div className="flex gap-2">
+              <Input type="text" placeholder="Map Area" className="flex-1" />
+              <Input type="text" placeholder="Availability" className="flex-1" />
+            </div>
           </div>
-          <Button>
-            <Search className="h-4 w-4" />
+          <Button className="w-full md:w-auto">
+            <Search className="h-4 w-4 mr-2 md:mr-0" />
+            <span className="md:hidden">Search</span>
           </Button>
+        </div>
+        
+       
+        
+        {/* Mobile toggle for map/list */}
+        <div className="mt-4 lg:hidden flex justify-center">
+          <div className="inline-flex rounded-md shadow-sm" role="group">
+            <button
+              type="button"
+              onClick={() => setShowMap(false)}
+              className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                !showMap ? "bg-primary text-white" : "bg-white text-gray-700"
+              }`}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMap(true)}
+              className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                showMap ? "bg-primary text-white" : "bg-white text-gray-700"
+              }`}
+            >
+              Map
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Salon List */}
-          <div className="space-y-4">
+          <div className={`space-y-4 ${showMap ? "hidden lg:block" : "block"}`}>
             {salons.map((salon) => (
               <Card
                 key={salon.id}
@@ -151,7 +162,7 @@ export default function SearchPage() {
               >
                 <Link href={`/salons/${salon.id}`}>
                   <div className="flex gap-4">
-                    <div className="relative w-24 h-24 rounded-lg overflow-hidden">
+                    <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden">
                       <Image
                         src={salon.image || "/placeholder.svg"}
                         alt={salon.name}
@@ -160,7 +171,7 @@ export default function SearchPage() {
                       />
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {salon.isBestSeller && (
                           <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
                             Best Seller
@@ -176,18 +187,18 @@ export default function SearchPage() {
                           </span>
                         </div>
                       </div>
-                      <h3 className="font-medium mt-1">{salon.name}</h3>
-                      <div className="flex items-center text-sm text-gray-500 mt-1">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {salon.location.address}
+                      <h3 className="font-medium mt-1 text-sm sm:text-base">{salon.name}</h3>
+                      <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">{salon.location.address}</span>
                       </div>
                       {salon.services.map((service, index) => (
                         <div
                           key={index}
                           className="mt-2 p-2 bg-gray-50 rounded-lg"
                         >
-                          <div className="font-medium">{service.name}</div>
-                          <div className="text-sm">
+                          <div className="font-medium text-xs sm:text-sm">{service.name}</div>
+                          <div className="text-xs sm:text-sm">
                             From Rs. {service.price.toLocaleString()}
                           </div>
                         </div>
@@ -200,7 +211,7 @@ export default function SearchPage() {
           </div>
 
           {/* Map */}
-          <div className="lg:h-[calc(100vh-8rem)] bg-white rounded-lg overflow-hidden">
+          <div className={`h-[50vh] lg:h-[calc(100vh-8rem)] bg-white rounded-lg overflow-hidden ${showMap ? "block" : "hidden lg:block"}`}>
             <div className="relative h-full">
               {isMapLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
@@ -213,7 +224,7 @@ export default function SearchPage() {
               <div className="h-full">
                 <iframe
                   className="w-full h-full rounded-lg"
-                  src="https://maps.google.com/maps?width=600&amp;height=800&amp;hl=en&amp;q=Colombo, Sri Lanka&amp;t=&amp;z=12&amp;ie=UTF8&amp;iwloc=B&amp;output=embed"
+                  src="https://maps.google.com/maps?width=600&height=800&hl=en&q=Colombo, Sri Lanka&t=&z=12&ie=UTF8&iwloc=B&output=embed"
                   style={{ border: "none" }}
                   allowFullScreen
                   loading="lazy"
