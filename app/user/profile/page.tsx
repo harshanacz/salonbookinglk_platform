@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState, ChangeEvent } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Pencil } from "lucide-react"
+import { useState, ChangeEvent } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 export default function UserProfile() {
   const [userData, setUserData] = useState({
@@ -14,39 +14,39 @@ export default function UserProfile() {
     country: "Sri Lanka",
     emailUpdated: "1 month ago", // Last updated timestamp
     address: "No. 123,\nPeradeniya road,\nPiliyandala.",
-  })
+  });
 
-  const [editingField, setEditingField] = useState<string | null>(null)
-  const [tempValue, setTempValue] = useState("")
-  const [profileImage, setProfileImage] = useState("/placeholder-user.jpg")
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [tempValue, setTempValue] = useState("");
+  const [profileImage, setProfileImage] = useState("/placeholder-user.jpg");
 
   const handleEditClick = (field: keyof typeof userData) => {
-    setEditingField(field)
-    setTempValue(userData[field])
-  }
+    setEditingField(field);
+    setTempValue(userData[field]);
+  };
 
   const handleSave = () => {
     if (editingField) {
       setUserData((prevData) => ({
         ...prevData,
         [editingField]: tempValue,
-      }))
-      setEditingField(null)
+      }));
+      setEditingField(null);
     }
-  }
+  };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
-          setProfileImage(reader.result as string)
+          setProfileImage(reader.result as string);
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-pink-50 p-6">
@@ -75,7 +75,9 @@ export default function UserProfile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Full Name */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Full Name</label>
+            <label className="block text-sm text-gray-600 mb-2">
+              Full Name
+            </label>
             <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
               {editingField === "fullName" ? (
                 <input
@@ -99,7 +101,9 @@ export default function UserProfile() {
 
           {/* Mobile Number */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Mobile number</label>
+            <label className="block text-sm text-gray-600 mb-2">
+              Mobile number
+            </label>
             <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
               {editingField === "mobileNumber" ? (
                 <input
@@ -179,12 +183,19 @@ export default function UserProfile() {
 
           {/* My email Address */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">My email Address</label>
+            <label className="block text-sm text-gray-600 mb-2">
+              My email Address
+            </label>
             <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-              <div className="w-5 h-5 bg-blue-100 rounded-sm flex items-center justify-center text-blue-500">@</div>
+              <div className="w-5 h-5 bg-blue-100 rounded-sm flex items-center justify-center text-blue-500">
+                @
+              </div>
               <div>
-                <div>{userData.email}</div> {/* Now using the same email as the top */}
-                <div className="text-xs text-gray-400">{userData.emailUpdated}</div>
+                <div>{userData.email}</div>{" "}
+                {/* Now using the same email as the top */}
+                <div className="text-xs text-gray-400">
+                  {userData.emailUpdated}
+                </div>
               </div>
             </div>
           </div>
@@ -214,7 +225,9 @@ export default function UserProfile() {
 
           {/* Profile Picture */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Profile Picture</label>
+            <label className="block text-sm text-gray-600 mb-2">
+              Profile Picture
+            </label>
             <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
               <input
                 type="file"
@@ -227,5 +240,5 @@ export default function UserProfile() {
         </div>
       </div>
     </div>
-  )
+  );
 }

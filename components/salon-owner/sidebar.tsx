@@ -1,14 +1,28 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { CalendarDays, Home, Settings, Users, CreditCard, BarChart3, Scissors } from "lucide-react"
-import { cn } from "@/lib/utils"
-import Image from "next/image"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  CalendarDays,
+  Home,
+  Settings,
+  Users,
+  CreditCard,
+  BarChart3,
+  Scissors,
+  Menu,
+  X,
+  LogOut,
+  CircleUserRound,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const sidebarItems = [
   {
-    title: "Home",
+    title: "Dashboard",
     href: "/salon-owner",
     icon: Home,
   },
@@ -47,54 +61,89 @@ const sidebarItems = [
     href: "/salon-owner/settings",
     icon: Settings,
   },
-]
+];
 
 export function SalonOwnerSidebar() {
-  const pathname = usePathname()
-// Hide sidebar on the signup page
-if (pathname === "/salon-owner/sign-up") {
-  return null
-}
-else if (pathname === "/salon-owner/sign-in") {
-  return null
-}
+  const pathname = usePathname();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Hide sidebar on the signup and signin pages
+  if (pathname === "/salon-owner/sign-up" || pathname === "/salon-owner/sign-in") {
+    return null;
+  }
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleLogout = () => {
+    // Add logout logic here
+    console.log("Logging out...");
+  };
 
   return (
-    <div className="w-64 min-h-screen bg-gray-900 text-white flex flex-col">
-      <div className="p-4 border-b border-gray-800">
-        <Link href="/salon-owner" className="flex items-center">
-          <span className="text-xl font-semibold">salonbooking.lk</span>
-        </Link>
-      </div>
-      <div className="flex-1 py-6 flex flex-col gap-1">
-        {sidebarItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors",
-              pathname === item.href && "bg-gray-800 text-white",
-            )}
-          >
-            <item.icon className="h-5 w-5" />
-            <span>{item.title}</span>
-          </Link>
-        ))}
-      </div>
-      <div className="p-4 border-t border-gray-800 mt-auto">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-700">
-            <Image src="/placeholder.svg?height=40&width=40" alt="Profile" fill className="object-cover" />
+    <div className="relative">
+      {/* Hamburger Icon */}
+      <button className="md:hidden p-4" onClick={toggleSidebar}>
+        {isSidebarOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <Menu className="h-6 w-6" />
+        )}
+      </button>
+
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "w-64 min-h-screen bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+        style={{ top: 0 }}
+      >
+        {/* Close Button for Small Screens */}
+        <button className="md:hidden p-4 self-end" onClick={toggleSidebar}>
+          <X className="h-6 w-6" />
+        </button>
+
+        {/* Header Section */}
+        <div className="p-4 border-b border-[#D9D9D9]">
+          <div className="flex items-center gap-2">
+            <CircleUserRound className="h-10 w-10 text-purple-700" />
+            <div>
+              <div className="font-medium text-sm">John Doe</div>
+            </div>
           </div>
-          <div>
-            <div className="font-medium">Profile</div>
-            <Link href="/salon-owner/profile" className="text-sm text-gray-400 hover:text-white">
-              View Profile
+        </div>
+
+        {/* Sidebar Links */}
+        <div className="flex-1 py-6 flex flex-col gap-1">
+          {sidebarItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
+                pathname === item.href && "bg-[#F3E5F5]"
+              )}
+            >
+              <item.icon className="h-5 w-5 mx-4" />
+              <span>{item.title}</span>
             </Link>
-          </div>
+          ))}
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-[#D9D9D9]">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
-

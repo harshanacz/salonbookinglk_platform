@@ -1,13 +1,31 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MoreHorizontal, Search, User } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MoreHorizontal, Search, User } from "lucide-react";
 
 const clients = [
   {
@@ -60,17 +78,17 @@ const clients = [
     lastVisit: "2023-12-15",
     avatar: "/placeholder.svg?height=40&width=40",
   },
-]
+];
 
 export default function AdminClientsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredClients = clients.filter(
     (client) =>
       client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery),
-  )
+      client.phone.includes(searchQuery)
+  );
 
   return (
     <div className="space-y-6">
@@ -81,7 +99,9 @@ export default function AdminClientsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Client Management</CardTitle>
-          <CardDescription>View and manage all clients across salons</CardDescription>
+          <CardDescription>
+            View and manage all clients across salons
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4 mb-6">
@@ -125,8 +145,12 @@ export default function AdminClientsPage() {
                   <TableCell>{client.email}</TableCell>
                   <TableCell>{client.phone}</TableCell>
                   <TableCell>{client.totalBookings}</TableCell>
-                  <TableCell>LKR {client.totalSpent.toLocaleString()}</TableCell>
-                  <TableCell>{new Date(client.lastVisit).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    LKR {client.totalSpent.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(client.lastVisit).toLocaleDateString()}
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -150,6 +174,5 @@ export default function AdminClientsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

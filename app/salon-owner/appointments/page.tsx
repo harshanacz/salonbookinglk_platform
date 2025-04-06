@@ -1,16 +1,39 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, ChevronDown, Search } from "lucide-react"
-import { format } from "date-fns"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, ChevronDown, Search } from "lucide-react";
+import { format } from "date-fns";
 
 const appointments = [
   {
@@ -58,65 +81,79 @@ const appointments = [
     time: "9:00 AM",
     status: "Confirmed",
   },
-]
+];
 
 export default function AppointmentsPage() {
-  const [date, setDate] = useState<Date>()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [date, setDate] = useState<Date>();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredAppointments = appointments.filter(
     (appointment) =>
       appointment.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       appointment.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      appointment.staff.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      appointment.staff.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Appointments</h1>
-        <Button>Add Appointment</Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto">Add Appointment</Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Manage Appointments</CardTitle>
-          <CardDescription>View and manage your salon appointments</CardDescription>
+          <CardDescription>
+            View and manage your salon appointments
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search appointments..."
-                className="pl-8"
+                className="pl-8 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
-              </PopoverContent>
-            </Popover>
-            <Select>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full sm:w-[240px] justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Select>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <Table>
@@ -137,7 +174,8 @@ export default function AppointmentsPage() {
                   <TableCell>{appointment.service}</TableCell>
                   <TableCell>{appointment.staff}</TableCell>
                   <TableCell>
-                    {format(new Date(appointment.date), "MMM d, yyyy")} at {appointment.time}
+                    {format(new Date(appointment.date), "MMM d, yyyy")} at{" "}
+                    {appointment.time}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -146,10 +184,10 @@ export default function AppointmentsPage() {
                         appointment.status === "Confirmed"
                           ? "bg-green-100 text-green-800"
                           : appointment.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : appointment.status === "Completed"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : appointment.status === "Completed"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-red-100 text-red-800"
                       }
                     >
                       {appointment.status}
@@ -167,6 +205,5 @@ export default function AppointmentsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-
