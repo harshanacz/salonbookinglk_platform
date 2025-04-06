@@ -1,14 +1,36 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { BarChart, CalendarIcon, Download, LineChart, PieChart } from "lucide-react"
-import { format, subDays } from "date-fns"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  BarChart,
+  CalendarIcon,
+  Download,
+  LineChart,
+  PieChart,
+} from "lucide-react";
+import { format, subDays } from "date-fns";
 
 // This is a placeholder component for charts. In a real application, you'd use a charting library like recharts or Chart.js
 const ChartPlaceholder = ({ type }: { type: string }) => (
@@ -18,68 +40,82 @@ const ChartPlaceholder = ({ type }: { type: string }) => (
     {type === "pie" && <PieChart className="h-12 w-12 text-gray-400" />}
     <span className="ml-2 text-gray-500">Chart placeholder</span>
   </div>
-)
+);
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState<{
-    from: Date
-    to: Date | undefined
+    from: Date;
+    to: Date | undefined;
   }>({
     from: subDays(new Date(), 30),
     to: new Date(),
-  })
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Reports</h1>
-        <Button>
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Export Report
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[300px] justify-start text-left font-normal">
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange.from ? (
-                dateRange.to ? (
-                  <>
-                    {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
-                  </>
+      <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="w-full sm:w-auto">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full sm:w-[300px] justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "LLL dd, y")} -{" "}
+                      {format(dateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(dateRange.from, "LLL dd, y")
+                  )
                 ) : (
-                  format(dateRange.from, "LLL dd, y")
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange.from}
-              selected={dateRange}
-              onSelect={setDateRange}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
-        <Select defaultValue="all">
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select service" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Services</SelectItem>
-            <SelectItem value="haircut">Haircut</SelectItem>
-            <SelectItem value="coloring">Hair Coloring</SelectItem>
-            <SelectItem value="manicure">Manicure</SelectItem>
-            <SelectItem value="pedicure">Pedicure</SelectItem>
-          </SelectContent>
-        </Select>
+                  <span>Pick a date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={dateRange}
+                onSelect={(range) => {
+                  if (range?.from && range?.to) {
+                    setDateRange({ from: range.from, to: range.to });
+                  }
+                }}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="w-full sm:w-auto">
+          <Select defaultValue="all">
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Select service" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Services</SelectItem>
+              <SelectItem value="haircut">Haircut</SelectItem>
+              <SelectItem value="coloring">Hair Coloring</SelectItem>
+              <SelectItem value="manicure">Manicure</SelectItem>
+              <SelectItem value="pedicure">Pedicure</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -89,16 +125,22 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">LKR 45,231</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +20.1% from last month
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Appointments
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">+12% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -112,7 +154,9 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Customer Satisfaction
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">4.8/5</div>
@@ -131,7 +175,9 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Your revenue trend over the selected period</CardDescription>
+              <CardDescription>
+                Your revenue trend over the selected period
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ChartPlaceholder type="line" />
@@ -142,7 +188,9 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Appointment Statistics</CardTitle>
-              <CardDescription>Breakdown of appointments by status</CardDescription>
+              <CardDescription>
+                Breakdown of appointments by status
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ChartPlaceholder type="bar" />
@@ -153,7 +201,9 @@ export default function ReportsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Popular Services</CardTitle>
-              <CardDescription>Distribution of services by popularity</CardDescription>
+              <CardDescription>
+                Distribution of services by popularity
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <ChartPlaceholder type="pie" />
@@ -162,6 +212,5 @@ export default function ReportsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-

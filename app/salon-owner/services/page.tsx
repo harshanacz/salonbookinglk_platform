@@ -1,17 +1,35 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 // Sample services data
 const services = [
@@ -70,45 +88,51 @@ const services = [
     appointments: 0,
     staffAssigned: 0,
   },
-]
+];
 
 export default function ServicesManagement() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState("active")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
 
   const filteredServices = services
     .filter(
       (service) =>
         (activeTab === "active" && service.status === "active") ||
         (activeTab === "pending" && service.status === "pending") ||
-        (activeTab === "inactive" && service.status === "inactive"),
+        (activeTab === "inactive" && service.status === "inactive")
     )
-    .filter((service) => service.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((service) =>
+      service.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Your Services</h1>
-        <Button asChild>
-          <Link href="/salon-owner/services/create">
-            <Plus className="mr-2 h-4 w-4" /> Add New Service
-          </Link>
-        </Button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button className="w-full sm:w-auto" asChild>
+            <Link href="/salon-owner/services/create">
+              <Plus className="mr-2 h-4 w-4" /> Add New Service
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Manage Services</CardTitle>
-          <CardDescription>View and manage all your salon services</CardDescription>
+          <CardDescription>
+            View and manage all your salon services
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center mb-6">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+            <div className="relative flex-1 w-full">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search services..."
-                className="pl-8"
+                className="pl-8 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -117,12 +141,16 @@ export default function ServicesManagement() {
 
           <Tabs defaultValue="active" onValueChange={setActiveTab}>
             <TabsList className="mb-6">
-              <TabsTrigger value="active">Active ({services.filter((s) => s.status === "active").length})</TabsTrigger>
+              <TabsTrigger value="active">
+                Active ({services.filter((s) => s.status === "active").length})
+              </TabsTrigger>
               <TabsTrigger value="pending">
-                Pending Approval ({services.filter((s) => s.status === "pending").length})
+                Pending Approval (
+                {services.filter((s) => s.status === "pending").length})
               </TabsTrigger>
               <TabsTrigger value="inactive">
-                Inactive ({services.filter((s) => s.status === "inactive").length})
+                Inactive (
+                {services.filter((s) => s.status === "inactive").length})
               </TabsTrigger>
             </TabsList>
 
@@ -158,8 +186,12 @@ export default function ServicesManagement() {
                               />
                             </div>
                             <div>
-                              <div className="font-medium line-clamp-1">{service.title}</div>
-                              <div className="text-sm text-gray-500">LKR {service.price}</div>
+                              <div className="font-medium line-clamp-1">
+                                {service.title}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                LKR {service.price}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
@@ -175,12 +207,16 @@ export default function ServicesManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}`}
+                                >
                                   <Eye className="mr-2 h-4 w-4" /> View
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}/edit`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}/edit`}
+                                >
                                   <Edit className="mr-2 h-4 w-4" /> Edit
                                 </Link>
                               </DropdownMenuItem>
@@ -228,13 +264,19 @@ export default function ServicesManagement() {
                               />
                             </div>
                             <div>
-                              <div className="font-medium line-clamp-1">{service.title}</div>
-                              <div className="text-sm text-gray-500">LKR {service.price}</div>
+                              <div className="font-medium line-clamp-1">
+                                {service.title}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                LKR {service.price}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            Pending Approval
+                          </Badge>
                         </TableCell>
                         <TableCell>{service.staffAssigned}</TableCell>
                         <TableCell>
@@ -246,12 +288,16 @@ export default function ServicesManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}`}
+                                >
                                   <Eye className="mr-2 h-4 w-4" /> View
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}/edit`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}/edit`}
+                                >
                                   <Edit className="mr-2 h-4 w-4" /> Edit
                                 </Link>
                               </DropdownMenuItem>
@@ -299,13 +345,20 @@ export default function ServicesManagement() {
                               />
                             </div>
                             <div>
-                              <div className="font-medium line-clamp-1">{service.title}</div>
-                              <div className="text-sm text-gray-500">LKR {service.price}</div>
+                              <div className="font-medium line-clamp-1">
+                                {service.title}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                LKR {service.price}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+                          <Badge
+                            variant="outline"
+                            className="bg-gray-100 text-gray-800"
+                          >
                             Inactive
                           </Badge>
                         </TableCell>
@@ -319,12 +372,16 @@ export default function ServicesManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}`}
+                                >
                                   <Eye className="mr-2 h-4 w-4" /> View
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/salon-owner/services/${service.id}/edit`}>
+                                <Link
+                                  href={`/salon-owner/services/${service.id}/edit`}
+                                >
                                   <Edit className="mr-2 h-4 w-4" /> Edit
                                 </Link>
                               </DropdownMenuItem>
@@ -347,6 +404,5 @@ export default function ServicesManagement() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

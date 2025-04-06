@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { Facebook, Mail } from "lucide-react"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { Facebook, Mail } from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 export default function JoinPage() {
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      setIsLoading(false)
+      setIsLoading(false);
       toast({
         title: "Account created",
         description: "Welcome to SalonBooking.lk!",
-      })
-    }, 2000)
-  }
+      });
+    }, 2000);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -36,7 +36,9 @@ export default function JoinPage() {
             <Link href="/" className="text-2xl font-bold text-primary">
               SalonBooking.lk
             </Link>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
+            <h2 className="mt-6 text-3xl font-bold text-gray-900">
+              Create your account
+            </h2>
             <p className="mt-2 text-sm text-gray-600">
               Or{" "}
               <Link href="/sign-in" className="text-primary hover:underline">
@@ -60,7 +62,9 @@ export default function JoinPage() {
                   <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-gray-50 text-gray-500">
+                    Or continue with
+                  </span>
                 </div>
               </div>
             </div>
@@ -69,15 +73,29 @@ export default function JoinPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="Enter your full name" required />
+                  <Input
+                    id="name"
+                    placeholder="Enter your full name"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="Enter your email" required />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" placeholder="Create a password" required />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Create a password"
+                    required
+                  />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create account"}
@@ -96,6 +114,5 @@ export default function JoinPage() {
         />
       </div>
     </div>
-  )
+  );
 }
-

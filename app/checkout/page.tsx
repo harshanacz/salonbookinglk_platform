@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/components/ui/use-toast"
-import { CreditCard, Wallet } from "lucide-react"
-import Image from "next/image"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/components/ui/use-toast";
+import { CreditCard, Wallet } from "lucide-react";
+import Image from "next/image";
 
 // Sample checkout data (in a real app, this would come from your global state or API)
 const checkoutData = {
@@ -27,23 +27,26 @@ const checkoutData = {
   },
   date: "May 15, 2024",
   time: "10:00 AM",
-}
+};
 
 export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState("card")
-  const { toast } = useToast()
+  const [paymentMethod, setPaymentMethod] = useState("card");
+  const { toast } = useToast();
 
   const handlePayment = () => {
     toast({
       title: "Booking Confirmed",
       description: "Your appointment has been successfully booked.",
-    })
+    });
     // In a real app, you would process the payment and create the booking here
-  }
+  };
 
-  const subtotal = checkoutData.services.reduce((sum, service) => sum + service.price, 0)
-  const tax = subtotal * 0.1 // Assuming 10% tax
-  const total = subtotal + tax
+  const subtotal = checkoutData.services.reduce(
+    (sum, service) => sum + service.price,
+    0
+  );
+  const tax = subtotal * 0.1; // Assuming 10% tax
+  const total = subtotal + tax;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,7 +72,9 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <h3 className="font-medium">{service.name}</h3>
-                      <div className="text-sm text-gray-500">Rs. {service.price}</div>
+                      <div className="text-sm text-gray-500">
+                        Rs. {service.price}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -100,7 +105,10 @@ export default function CheckoutPage() {
                 <CardTitle>Payment Method</CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                <RadioGroup
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                >
                   <div className="flex items-center space-x-2 mb-4">
                     <RadioGroupItem value="card" id="card" />
                     <Label htmlFor="card" className="flex items-center">
@@ -121,7 +129,10 @@ export default function CheckoutPage() {
                   <div className="space-y-4 mt-4">
                     <div>
                       <Label htmlFor="card-number">Card Number</Label>
-                      <Input id="card-number" placeholder="1234 5678 9012 3456" />
+                      <Input
+                        id="card-number"
+                        placeholder="1234 5678 9012 3456"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -138,7 +149,9 @@ export default function CheckoutPage() {
 
                 {paymentMethod === "wallet" && (
                   <div className="mt-4">
-                    <p>You will be redirected to the digital wallet payment page.</p>
+                    <p>
+                      You will be redirected to the digital wallet payment page.
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -172,7 +185,8 @@ export default function CheckoutPage() {
                 </Button>
 
                 <p className="text-sm text-gray-500 mt-4">
-                  By clicking "Pay Now", you agree to our Terms of Service and Privacy Policy.
+                  By clicking "Pay Now", you agree to our Terms of Service and
+                  Privacy Policy.
                 </p>
               </CardContent>
             </Card>
@@ -184,7 +198,8 @@ export default function CheckoutPage() {
               <CardContent>
                 {/* Add recommended services here */}
                 <p className="text-sm text-gray-500">
-                  Recommended services from the same salon will be displayed here.
+                  Recommended services from the same salon will be displayed
+                  here.
                 </p>
               </CardContent>
             </Card>
@@ -192,6 +207,5 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

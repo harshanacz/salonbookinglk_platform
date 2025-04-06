@@ -1,24 +1,44 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Checkbox } from "@/components/ui/checkbox"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { ArrowLeft, Clock, Trash2, Upload } from "lucide-react"
-import Link from "next/link"
-import { useToast } from "@/components/ui/use-toast"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { ArrowLeft, Clock, Trash2, Upload } from "lucide-react";
+import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
 
 // Sample staff members for assignment
 const staffMembers = [
@@ -27,23 +47,29 @@ const staffMembers = [
   { id: "3", name: "Priyanka Jayawardena", role: "Beautician" },
   { id: "4", name: "Nimal Fernando", role: "Junior Stylist" },
   { id: "5", name: "Kumari Perera", role: "Massage Therapist" },
-]
+];
 
 const serviceFormSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters." }),
   category: z.string().min(1, { message: "Please select a category." }),
   price: z.string().min(1, { message: "Please enter a price." }),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
+  description: z
+    .string()
+    .min(10, { message: "Description must be at least 10 characters." }),
   instructions: z.string().optional(),
-  slotDuration: z.string().min(1, { message: "Please select a slot duration." }),
-  staffMembers: z.array(z.string()).min(1, { message: "Please select at least one staff member." }),
-})
+  slotDuration: z
+    .string()
+    .min(1, { message: "Please select a slot duration." }),
+  staffMembers: z
+    .array(z.string())
+    .min(1, { message: "Please select at least one staff member." }),
+});
 
-type ServiceFormValues = z.infer<typeof serviceFormSchema>
+type ServiceFormValues = z.infer<typeof serviceFormSchema>;
 
 export default function CreateService() {
-  const [images, setImages] = useState<string[]>([])
-  const { toast } = useToast()
+  const [images, setImages] = useState<string[]>([]);
+  const { toast } = useToast();
 
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
@@ -56,40 +82,40 @@ export default function CreateService() {
       slotDuration: "30",
       staffMembers: [],
     },
-  })
+  });
 
   function onSubmit(data: ServiceFormValues) {
-    console.log(data)
+    console.log(data);
     toast({
       title: "Service created",
       description: "Your service has been submitted for approval.",
-    })
+    });
     // In a real app, you would submit this data to your backend
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files) {
-      const newImages: string[] = []
+      const newImages: string[] = [];
 
       Array.from(files).forEach((file) => {
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = (e) => {
           if (e.target?.result) {
-            newImages.push(e.target.result as string)
+            newImages.push(e.target.result as string);
             if (newImages.length === files.length) {
-              setImages((prev) => [...prev, ...newImages])
+              setImages((prev) => [...prev, ...newImages]);
             }
           }
-        }
-        reader.readAsDataURL(file)
-      })
+        };
+        reader.readAsDataURL(file);
+      });
     }
-  }
+  };
 
   const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index))
-  }
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="space-y-6">
@@ -132,7 +158,10 @@ export default function CreateService() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a category" />
@@ -140,10 +169,14 @@ export default function CreateService() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="hair-cuts">Hair Cuts</SelectItem>
-                            <SelectItem value="hair-coloring">Hair Coloring</SelectItem>
+                            <SelectItem value="hair-coloring">
+                              Hair Coloring
+                            </SelectItem>
                             <SelectItem value="nail-arts">Nail Arts</SelectItem>
                             <SelectItem value="skin-care">Skin Care</SelectItem>
-                            <SelectItem value="brows-lashes">Brows & Lashes</SelectItem>
+                            <SelectItem value="brows-lashes">
+                              Brows & Lashes
+                            </SelectItem>
                             <SelectItem value="makeup">Makeup</SelectItem>
                             <SelectItem value="massage">Massage</SelectItem>
                           </SelectContent>
@@ -160,7 +193,11 @@ export default function CreateService() {
                       <FormItem>
                         <FormLabel>Price (LKR)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="Enter price" {...field} />
+                          <Input
+                            type="number"
+                            placeholder="Enter price"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -171,7 +208,10 @@ export default function CreateService() {
                     <Label htmlFor="service-images">Service Images</Label>
                     <div className="flex flex-wrap gap-4 mb-4">
                       {images.map((image, index) => (
-                        <div key={index} className="relative w-24 h-24 rounded-md overflow-hidden border">
+                        <div
+                          key={index}
+                          className="relative w-24 h-24 rounded-md overflow-hidden border"
+                        >
                           <img
                             src={image || "/placeholder.svg"}
                             alt={`Service preview ${index + 1}`}
@@ -193,7 +233,9 @@ export default function CreateService() {
                           className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
                         >
                           <Upload className="h-6 w-6 text-gray-400" />
-                          <span className="text-xs text-gray-500 mt-1">Add Image</span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            Add Image
+                          </span>
                           <Input
                             id="service-images"
                             type="file"
@@ -205,7 +247,9 @@ export default function CreateService() {
                         </label>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">Upload up to 5 images of your service (max 2MB each)</p>
+                    <p className="text-xs text-gray-500">
+                      Upload up to 5 images of your service (max 2MB each)
+                    </p>
                   </div>
                 </div>
 
@@ -242,7 +286,8 @@ export default function CreateService() {
                           />
                         </FormControl>
                         <FormDescription>
-                          Provide any preparation instructions or information clients should know before the service
+                          Provide any preparation instructions or information
+                          clients should know before the service
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -302,7 +347,8 @@ export default function CreateService() {
                         </RadioGroup>
                       </FormControl>
                       <FormDescription>
-                        This determines how long each appointment slot will be for this service
+                        This determines how long each appointment slot will be
+                        for this service
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -321,7 +367,9 @@ export default function CreateService() {
                     <FormItem>
                       <div className="mb-4">
                         <FormLabel>Assign Staff Members</FormLabel>
-                        <FormDescription>Select which staff members can perform this service</FormDescription>
+                        <FormDescription>
+                          Select which staff members can perform this service
+                        </FormDescription>
                       </div>
                       <div className="space-y-2">
                         {staffMembers.map((staff) => (
@@ -340,17 +388,28 @@ export default function CreateService() {
                                       checked={field.value?.includes(staff.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...field.value, staff.id])
-                                          : field.onChange(field.value?.filter((value) => value !== staff.id))
+                                          ? field.onChange([
+                                              ...field.value,
+                                              staff.id,
+                                            ])
+                                          : field.onChange(
+                                              field.value?.filter(
+                                                (value) => value !== staff.id
+                                              )
+                                            );
                                       }}
                                     />
                                   </FormControl>
                                   <div className="space-y-1 leading-none">
-                                    <FormLabel className="text-base">{staff.name}</FormLabel>
-                                    <FormDescription>{staff.role}</FormDescription>
+                                    <FormLabel className="text-base">
+                                      {staff.name}
+                                    </FormLabel>
+                                    <FormDescription>
+                                      {staff.role}
+                                    </FormDescription>
                                   </div>
                                 </FormItem>
-                              )
+                              );
                             }}
                           />
                         ))}
@@ -372,6 +431,5 @@ export default function CreateService() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

@@ -1,36 +1,38 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Navbar } from "@/components/navbar"
-import { Footer } from "@/components/footer"
-import { Toaster } from "@/components/ui/toaster"
+"use client";
 
-const inter = Inter({ subsets: ["latin"] })
+import type React from "react";
+import { Montserrat } from "next/font/google";
+import "./globals.css";
+import { usePathname } from "next/navigation";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Toaster } from "@/components/ui/toaster";
 
-export const metadata: Metadata = {
-  title: "SalonBooking.lk - Book Your Salon, Anytime",
-  description: "Find and book the best salon services in Sri Lanka",
-    generator: 'v0.dev'
-}
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const isAdminPage =
+    pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
+  const isUserPage = pathname.startsWith("/user");
+  const isSalonOwnerPage = pathname.startsWith("/salon-owner");
+
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Navbar />
+      <body className={montserrat.className}>
+        {!isAdminPage && !isSalonOwnerPage && <Navbar />}
         <main>{children}</main>
-        <Footer />
+        {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
         <Toaster />
       </body>
     </html>
-  )
+  );
 }
-
-
-
-import './globals.css'

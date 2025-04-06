@@ -1,89 +1,70 @@
-"use client"
+"use client";
+import React from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, Search, Store } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+type Salon = {
+  id: string;
+  name: string;
+  image: string;
+  status: string;
+  startedDate: string;
+  updatedDate: string;
+};
 
-const salons = [
-  {
-    id: 1,
-    name: "Salon Elegance",
-    owner: "John Doe",
-    location: "Colombo 7",
-    status: "Active",
-    registrationDate: "2024-01-01",
-    rating: 4.8,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Beauty Hub",
-    owner: "Jane Smith",
-    location: "Nugegoda",
-    status: "Active",
-    registrationDate: "2024-01-05",
-    rating: 4.5,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Glamour Studio",
-    owner: "Alice Johnson",
-    location: "Mount Lavinia",
-    status: "Pending",
-    registrationDate: "2024-01-10",
-    rating: 0,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 4,
-    name: "Style Masters",
-    owner: "Bob Brown",
-    location: "Dehiwala",
-    status: "Active",
-    registrationDate: "2023-12-15",
-    rating: 4.2,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 5,
-    name: "Trendy Cuts",
-    owner: "Eva Green",
-    location: "Rajagiriya",
-    status: "Suspended",
-    registrationDate: "2023-11-20",
-    rating: 3.9,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-]
+const fetchSalonData = async (): Promise<Salon[]> => {
+  const response = await fetch("/verify.json");
+  const data = await response.json();
+  return data.salons;
+};
 
-export default function SalonsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+const Page = () => {
+  const [salonData, setSalonData] = React.useState<Salon[]>([]);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-  const filteredSalons = salons.filter(
-    (salon) =>
-      salon.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      salon.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      salon.location.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  React.useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchSalonData();
+      setSalonData(data);
+    };
+    fetchData();
+  }, []);
+
+  const filteredSalons = salonData.filter((salon) =>
+    salon.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Salons</h1>
-        <Button>Add New Salon</Button>
+        <h1 className="text-3xl font-bold">Verifications</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Salon Management</CardTitle>
-          <CardDescription>View and manage registered salons</CardDescription>
+          <CardTitle>Pending Approval</CardTitle>
+          <CardDescription>
+            Manage and verify salon registrations
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4 mb-6">
@@ -102,67 +83,51 @@ export default function SalonsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Salon</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Registration Date</TableHead>
-                <TableHead>Rating</TableHead>
+                <TableHead>Started Date</TableHead>
+                <TableHead>Updated Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSalons.map((salon) => (
+              {filteredSalons.map((salon: Salon) => (
                 <TableRow key={salon.id}>
-                  <TableCell className="font-medium">
+                  <TableCell>
                     <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src={salon.avatar} />
-                        <AvatarFallback>
-                          <Store className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      {salon.name}
+                      <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2">
+                        <Image
+                          src={salon.image}
+                          alt={`${salon.name} logo`}
+                          width={32}
+                          height={32}
+                          className="object-cover"
+                        />
+                      </div>
+                      <span>{salon.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{salon.owner}</TableCell>
-                  <TableCell>{salon.location}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
                       className={
-                        salon.status === "Active"
+                        salon.status === "Approved"
                           ? "bg-green-100 text-green-800"
                           : salon.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-red-100 text-red-800"
                       }
                     >
                       {salon.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(salon.registrationDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{salon.rating > 0 ? `${salon.rating}/5` : "N/A"}</TableCell>
+                  <TableCell>{salon.startedDate}</TableCell>
+                  <TableCell>{salon.updatedDate}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit salon</DropdownMenuItem>
-                        <DropdownMenuItem>View services</DropdownMenuItem>
-                        <DropdownMenuItem>Contact owner</DropdownMenuItem>
-                        {salon.status === "Active" && (
-                          <DropdownMenuItem className="text-red-600">Suspend salon</DropdownMenuItem>
-                        )}
-                        {salon.status === "Suspended" && (
-                          <DropdownMenuItem className="text-green-600">Reactivate salon</DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Link href={`/admin/dashboard/verify/${salon.id}`}>
+                      <Button variant="outline" size="sm">
+                        View
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))}
@@ -171,6 +136,7 @@ export default function SalonsPage() {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
+export default Page;

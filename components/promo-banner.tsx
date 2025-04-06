@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
 
 export function PromoBanner() {
   return (
@@ -14,14 +14,18 @@ export function PromoBanner() {
         />
       </div>
       <div className="relative z-10 container mx-auto px-4 text-center">
-        <h2 className="text-3xl font-bold mb-6">Get 30% Off on Your First Booking!</h2>
-        <Link href="/join">
-          <Button variant="secondary" className="bg-white text-purple-900 hover:bg-gray-100">
-            Join
+        <h2 className="text-3xl font-bold mb-6">
+          Get 30% Off on Your First Booking!
+        </h2>
+        <Link href="/sign-up">
+          <Button
+            variant="outline"
+            className="bg-white text-purple-900 hover:bg-gray-100"
+          >
+            Sign Up
           </Button>
         </Link>
       </div>
     </section>
-  )
+  );
 }
-
