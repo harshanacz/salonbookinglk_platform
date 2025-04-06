@@ -55,6 +55,9 @@ export function SalonOwnerSidebar() {
 if (pathname === "/salon-owner/sign-up") {
   return null
 }
+else if (pathname === "/salon-owner/sign-in") {
+  return null
+}
 
   return (
     <div className="w-64 min-h-screen bg-gray-900 text-white flex flex-col">
