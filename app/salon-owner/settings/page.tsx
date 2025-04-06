@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -115,6 +116,7 @@ export default function SalonSettings() {
           <TabsTrigger value="closed-days">Closed Days</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security-and-privacy">Security & Privacy</TabsTrigger>
+          <TabsTrigger value="verify">Verify Saloon</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6">
@@ -426,6 +428,59 @@ export default function SalonSettings() {
     </CardContent>
   </Card>
 </TabsContent>
+<TabsContent value="verify" className="space-y-6">
+  <Card>
+    <CardHeader>
+      <CardTitle>Verify Salon</CardTitle>
+      <CardDescription>
+        Complete the information to verify your salon.
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="salon-name">Salon Name</Label>
+          <Input id="salon-name" placeholder="Enter your salon name" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="salon-email">Email Address</Label>
+          <Input id="salon-email" type="email" placeholder="Enter your email" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="salon-phone">Contact Number</Label>
+          <Input id="salon-phone" placeholder="Enter your contact number" />
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <Label htmlFor="salon-documents">Upload Documents</Label>
+        <p className="text-sm text-gray-500 mb-4">
+          Upload relevant documents for verification (e.g., Business Registration).
+        </p>
+        <Input
+          id="salon-documents"
+          type="file"
+          accept=".pdf,.doc,.docx,.jpg,.png"
+          className="border-2 border-gray-300 rounded-md p-2"
+        />
+      </div>
+    </CardContent>
+    <CardFooter>
+      <Button
+        variant="default"
+        onClick={() => {
+          // Logic for submitting the form data to admin
+          alert("Salon verification data submitted to admin!");
+        }}
+      >
+        Submit Verification
+      </Button>
+    </CardFooter>
+  </Card>
+</TabsContent>
+
 
       </Tabs>
     </div>
