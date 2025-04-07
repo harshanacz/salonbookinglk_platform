@@ -1,0 +1,36 @@
+{
+    "salons": [
+      {
+        "id": "1",
+        "name": "Salon Amaya",
+        "status": "NEW",
+        "startedDate": "-",
+        "updatedDate": "Dec 16",
+        "image": "/placeholder.svg?height=40&width=40",
+        "shortName": "Amaya",
+        "owner": "Sanduni Perera",
+        "contact": "+94 71 234 5678",
+        "email": "sanduni.perera@amaya.lk",
+        "businessRegNo": "BRN202412345",
+        "address": "No. 45, Galle Road,\nColombo 03,\nSri Lanka",
+        "notes": "Specializes in bridal makeup services.",
+        "logoColor": "bg-yellow-200"
+      },
+      {
+        "id": "2",
+        "name": "Salon Leo",
+        "status": "UPDATE",
+        "startedDate": "Nov 11",
+        "updatedDate": "Dec 16",
+        "image": "/placeholder.svg?height=40&width=40",
+        "shortName": "Leo",
+        "owner": "Amal Fernando",
+        "contact": "+94 77 123 4567",
+        "email": "amal@salonleo.lk",
+        "businessRegNo": "BRN202387654",
+        "address": "No. 12, Main Street,\nKandy,\nSri Lanka",
+        "notes": "Specializes in hair coloring and styling.",
+        "logoColor": "bg-gray-200"
+      }
+    ]
+  }

@@ -76,6 +76,11 @@ export function SalonOwnerSidebar() {
     console.log("Logging out...");
   };
 
+  // Hide sidebar on the signup page
+  if (pathname === "/salon-owner/sign-up") {
+    return null
+  }
+
   return (
     <div className="relative">
       {/* Hamburger Icon */}

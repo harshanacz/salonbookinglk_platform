@@ -81,6 +81,14 @@ const staffMembers = [
     availability: "Full-time",
     joinedDate: "May 18, 2023",
   },
+ {    id: 6,
+    name: "Pubudu Maduranga",
+    image: "/placeholder.svg?height=40&width=40",
+    role: "Massage Therapist",
+    services: ["Customer Service", "Appointment Scheduling"],
+    status: "Inactive",   
+    availability: "Full-time",
+    joinedDate: "Jun 12, 2023",}
 ];
 
 export default function StaffManagement() {
@@ -134,7 +142,7 @@ export default function StaffManagement() {
               <TableRow>
                 <TableHead>Staff Member</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Services</TableHead>
+                {/* <TableHead>Services</TableHead> */}
                 <TableHead>Status</TableHead>
                 <TableHead>Availability</TableHead>
                 <TableHead>Joined Date</TableHead>
@@ -158,7 +166,7 @@ export default function StaffManagement() {
                     </div>
                   </TableCell>
                   <TableCell>{staff.role}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {staff.services.map((service, index) => (
                         <Badge key={index} variant="outline">
@@ -166,7 +174,7 @@ export default function StaffManagement() {
                         </Badge>
                       ))}
                     </div>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <Badge
                       variant={
@@ -192,12 +200,12 @@ export default function StaffManagement() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/${staff.id}`}>
-                            View Details
+                          <Link href={`/salon-owner/staff/update_attendace?id=${staff.id}`}>
+                            Update Attendance
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/${staff.id}/edit`}>
+                          <Link href={`/salon-owner/staff/edit?id=${staff.id}`}>
                             <Edit className="mr-2 h-4 w-4" /> Edit
                           </Link>
                         </DropdownMenuItem>
