@@ -19,9 +19,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Sample services data
 const services = [
@@ -121,21 +122,19 @@ export default function ServiceCards() {
               <TableBody>
                 {filteredServices.map((service) => (
                   <TableRow key={service.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-md overflow-hidden">
-                          <Image
-                            src={service.image || "/placeholder.svg"}
-                            alt={service.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src={service.image} />
+                          <AvatarFallback>
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <div className="font-medium line-clamp-1">
                             {service.title}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {service.salon}
                           </div>
                         </div>
@@ -143,10 +142,8 @@ export default function ServiceCards() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={
-                          service.status === "NEW"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-yellow-100 text-yellow-800"
+                        variant={
+                          service.status === "NEW" ? "default" : "secondary"
                         }
                       >
                         {service.status}

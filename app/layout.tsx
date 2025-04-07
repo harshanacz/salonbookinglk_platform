@@ -4,7 +4,7 @@ import type React from "react";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { usePathname } from "next/navigation";
-import { Navbar } from "@/components/navbar";
+import { Navbar } from "@/components/user/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        {!isAdminPage && !isSalonOwnerPage && <Navbar />}
+        {!isAdminPage && !isSalonOwnerPage && <Navbar />} 
         <main>{children}</main>
         {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
         <Toaster />
