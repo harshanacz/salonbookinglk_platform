@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import Image from "next/image";
 import { ServiceCard } from "@/components/service-card";
 import { CategoryButton } from "@/components/category-button";
-import { PromoBanner } from "@/components/promo-banner";
-import { StylesGallery } from "@/components/styles-gallery";
-import { UserTypeCards } from "@/components/user-type-cards";
+import { PromoBanner } from "@/components/user/Home/promo-banner";
+import { StylesGallery } from "@/components/user/Home/styles-gallery";
+import { UserTypeCards } from "@/components/user/Home/user-type-cards";
 import { useRouter } from "next/navigation";
-import HeroSection from "@/components/hero-section";
+import HeroSection from "@/components/user/Home/hero-section";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // ... (keep existing imports and data)
 
@@ -57,7 +58,7 @@ export default function Home() {
   const popularServices = [
     {
       id: 1,
-      title: "Custom Hair Coloring And Highlights",
+      title: "Custom Hair Coloring And Highlights Art",
       image: "/placeholder.svg?height=300&width=400",
       price: 620,
       salon: "Salon Amayali",
@@ -110,57 +111,6 @@ export default function Home() {
       {/* Hero Section */}
       <HeroSection />
 
-      {/* Nearby Salons */}
-      {/* {showNearbySalons && (
-        <section className="container mx-auto px-4 py-10">
-          <h2 className="text-2xl font-bold mb-6">Nearby Salons</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {nearbySalons.map((salon) => (
-              <Card key={salon.id}>
-                <CardHeader className="flex flex-row items-center gap-4">
-                  <Image
-                    src={salon.image || "/placeholder.svg"}
-                    alt={salon.name}
-                    width={60}
-                    height={60}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <CardTitle>{salon.name}</CardTitle>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {salon.distance} km away
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center mb-2">
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg
-                          key={star}
-                          className={`h-4 w-4 ${
-                            star <= Math.floor(salon.rating) ? "text-yellow-400" : "text-gray-300"
-                          }`}
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-.181h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-gray-500">{salon.reviews} reviews</span>
-                  </div>
-                  <p className="text-sm text-gray-500">{salon.address}</p>
-                  <Button className="w-full mt-4">Book Now</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )} */}
-
-      {/* Popular Services */}
       <section className="container mx-auto px-4 py-10">
         <h2 className="text-2xl font-bold mb-6">Popular services</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -171,7 +121,7 @@ export default function Home() {
       </section>
 
       {/* Promo Banner */}
-      <PromoBanner />
+      <PromoBanner /> 
 
       {/* Top Rated */}
       <section className="container mx-auto px-4 py-10">
@@ -180,7 +130,7 @@ export default function Home() {
           {popularServices.map((service) => (
             <ServiceCard key={service.id} service={service} />
           ))}
-        </div>
+        </div> 
       </section>
 
       {/* User Type Cards */}
@@ -191,7 +141,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold mb-6">
           New styles publish by salons
         </h2>
-        <StylesGallery />
+        <StylesGallery /> 
       </section>
     </div>
   );
