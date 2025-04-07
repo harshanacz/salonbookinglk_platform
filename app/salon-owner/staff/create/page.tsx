@@ -85,7 +85,7 @@ export default function CreateStaffMember() {
       bio: "",
       availability: "",
       services: [],
-      workingDays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      workingDays: [],
     },
   });
 
@@ -106,6 +106,22 @@ export default function CreateStaffMember() {
         setImage(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvailabilityChange = (value: string) => {
+    if (value === "full-time") {
+      form.setValue("workingDays", [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+      ]);
+    } else if (value === "weekends-only") {
+      form.setValue("workingDays", ["saturday", "sunday"]);
+    } else {
+      form.setValue("workingDays", []);
     }
   };
 
@@ -270,7 +286,10 @@ export default function CreateStaffMember() {
                       <FormItem>
                         <FormLabel>Availability</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleAvailabilityChange(value);
+                          }}
                           defaultValue={field.value}
                         >
                           <FormControl>
@@ -317,6 +336,14 @@ export default function CreateStaffMember() {
                               control={form.control}
                               name="workingDays"
                               render={({ field }) => {
+                                const availability = form.watch("availability");
+                                const isDisabled =
+                                  (availability === "full-time" &&
+                                    ["saturday", "sunday"].includes(day)) ||
+                                  (availability === "weekends-only" &&
+                                    !["saturday", "sunday"].includes(day)) ||
+                                  availability === "";
+
                                 return (
                                   <FormItem
                                     key={day}
@@ -325,6 +352,7 @@ export default function CreateStaffMember() {
                                     <FormControl>
                                       <Checkbox
                                         checked={field.value?.includes(day)}
+                                        disabled={isDisabled}
                                         onCheckedChange={(checked) => {
                                           return checked
                                             ? field.onChange([
@@ -339,7 +367,11 @@ export default function CreateStaffMember() {
                                         }}
                                       />
                                     </FormControl>
-                                    <FormLabel className="capitalize">
+                                    <FormLabel
+                                      className={`capitalize ${
+                                        isDisabled ? "text-gray-400" : ""
+                                      }`}
+                                    >
                                       {day}
                                     </FormLabel>
                                   </FormItem>
@@ -354,60 +386,6 @@ export default function CreateStaffMember() {
                   />
                 </div>
               </div>
-
-              <FormField
-                control={form.control}
-                name="services"
-                render={() => (
-                  <FormItem>
-                    <div className="mb-4">
-                      <FormLabel>Services</FormLabel>
-                      <FormDescription>
-                        Select the services this staff member can perform
-                      </FormDescription>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {availableServices.map((service) => (
-                        <FormField
-                          key={service.id}
-                          control={form.control}
-                          name="services"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={service.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(service.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([
-                                            ...field.value,
-                                            service.id,
-                                          ])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== service.id
-                                            )
-                                          );
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {service.name}
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" asChild>
