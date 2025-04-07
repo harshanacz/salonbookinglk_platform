@@ -60,13 +60,24 @@ export default function AdminReportsPage() {
     to: new Date(),
   });
 
+  // Replace CSS variables with direct color values
+  const siteColors = {
+    primary: "#6a0dad", // Blue
+    secondary: "#8e44ad", // Purple
+    accent1: "#4caf50", // Green
+    accent2: "#da9021", // Orange
+    accent3: "#06B6D4", // Cyan
+    danger: "#EF4444", // Red
+  };
+
   const revenueData = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
     datasets: [
       {
         label: "Revenue",
         data: [12000, 19000, 15000, 25000, 22000, 30000],
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
+        backgroundColor: siteColors.secondary.replace("0.8", "0.6"),
+        borderColor: siteColors.secondary,
       },
     ],
   };
@@ -76,7 +87,13 @@ export default function AdminReportsPage() {
     datasets: [
       {
         data: [300, 50, 100, 20],
-        backgroundColor: ["#4CAF50", "#FFC107", "#2196F3", "#F44336"],
+        backgroundColor: [
+          siteColors.accent1,
+          siteColors.accent2,
+          siteColors.primary,
+          siteColors.danger,
+        ],
+        borderWidth: 1,
       },
     ],
   };
@@ -87,10 +104,37 @@ export default function AdminReportsPage() {
       {
         label: "Bookings",
         data: [120, 80, 60, 50, 40],
-        borderColor: "rgb(75, 192, 192)",
+        borderColor: siteColors.secondary,
+        backgroundColor: siteColors.secondary.replace("0.8", "0.2"),
         tension: 0.1,
       },
     ],
+  };
+
+  // Chart options for controlling size
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: "right" as const,
+      },
+    },
+  };
+
+  // Add additional options for better bar chart appearance
+  const barChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
   };
 
   return (
@@ -107,8 +151,9 @@ export default function AdminReportsPage() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
-              className="w-[300px] justify-start text-left font-normal"
+              variant="outline2"
+              size="lg"
+              className="justify-start text-left font-normal"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateRange.from ? (
@@ -217,7 +262,7 @@ export default function AdminReportsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Bar data={revenueData} />
+              <Bar data={revenueData} options={barChartOptions} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -230,7 +275,11 @@ export default function AdminReportsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Pie data={appointmentsData} />
+              <div className="flex justify-center items-center">
+                <div className="w-96 h-96">
+                  <Pie data={appointmentsData} options={pieChartOptions} />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

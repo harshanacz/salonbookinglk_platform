@@ -114,9 +114,9 @@ export function AdminSidebar() {
         </button>
 
         {/* Header Section */}
-        <div className="p-4 border-b border-[#D9D9D9]">
+        <div className="p-4 border-b border-[var(lightGreyColor)]">
           <div className="flex items-center gap-2">
-            <CircleUserRound className="h-10 w-10 text-purple-700" />
+            <CircleUserRound className="h-10 w-10 text-[var(--secondary)]]" />
             <div>
               <div className="font-medium text-sm">John Doe</div>
             </div>
@@ -130,8 +130,8 @@ export function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
-                pathname === item.href && "bg-[#F3E5F5]"
+                "flex items-center gap-2 px-4 mr-3 rounded-r-full py-3 hover:bg-[var(--superAccent2)] text-[var(--darkPurple)]",
+                pathname === item.href && "bg-[var(--superAccent2)]"
               )}
             >
               <item.icon className="h-5 w-5 mx-4" />
@@ -141,15 +141,17 @@ export function AdminSidebar() {
         </div>
 
         {/* Logout Button */}
-        <div className="p-4 border-t border-[#D9D9D9]">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5" />
-            <span>Logout</span>
-          </Button>
+        <div className="p-4 border-t border-[var(lightGreyColor)]">
+            <div className="flex justify-center">
+            <Button
+              variant="cancel"
+              className="border-none"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </Button>
+            </div>
         </div>
       </div>
     </div>
