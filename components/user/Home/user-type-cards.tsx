@@ -9,7 +9,7 @@ export function UserTypeCards() {
         <div className="bg-white rounded-lg shadow-sm border p-6 flex flex-col items-center text-center">
           <div className="relative w-full h-48 mb-4">
             <Image
-              src="/placeholder.svg?height=300&width=400"
+              src="https://i.ibb.co/Cs3vY3CX/2.png"
               alt="Find and book appointment"
               fill
               className="object-contain"
@@ -31,7 +31,7 @@ export function UserTypeCards() {
         <div className="bg-white rounded-lg shadow-sm border p-6 flex flex-col items-center text-center">
           <div className="relative w-full h-48 mb-4">
             <Image
-              src="/placeholder.svg?height=300&width=400"
+              src="https://i.ibb.co/KJzFnk6/1.png"
               alt="Grow your business"
               fill
               className="object-contain"
