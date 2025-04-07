@@ -17,7 +17,6 @@ interface ServicePageProps {
 export default function ServicePage({ params }: ServicePageProps) {
   const addService = useCheckoutStore((state) => state.addService);
 
-  // In a real app, you would fetch this data based on the ID
   const service = {
     id: Number.parseInt(params.id),
     title: "Custom Hair Coloring and Highlights",
@@ -36,152 +35,82 @@ export default function ServicePage({ params }: ServicePageProps) {
       "Wash your hair 1-2 days before coloring. Freshly washed hair can strip natural oils, making it more porous and potentially leading to uneven color.",
       "Use a deep conditioner or hair mask to hydrate your hair. This helps protect it from the chemicals in the dye.",
     ],
-    staff: [
-      {
-        id: 1,
-        name: "Staff Member 1",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-      {
-        id: 2,
-        name: "Staff Member 2",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-      {
-        id: 3,
-        name: "Staff Member 3",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-      {
-        id: 4,
-        name: "Staff Member 4",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-      {
-        id: 5,
-        name: "Staff Member 5",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-      {
-        id: 6,
-        name: "Staff Member 6",
-        image: "/placeholder.svg?height=100&width=100",
-      },
-    ],
+    staff: Array.from({ length: 6 }).map((_, index) => ({
+      id: index + 1,
+      name: `Staff Member ${index + 1}`,
+      image: "/placeholder.svg?height=100&width=100",
+    })),
   };
 
-  // Sample related services
   const relatedServices = [
     {
       id: 2,
       title: "Acrylic Nail Extensions With Custom Art",
       image: "/placeholder.svg?height=300&width=400",
       price: 1500,
-      salon: "Salon Amayali",
+      salon: "Salon Amaya",
       rating: 4.9,
       reviews: 130,
-      location: "Moipe Road, Moratuwa",
+      location: "Molpe Road, Moratuwa",
     },
     {
       id: 3,
       title: "Acrylic Nail Extensions With Custom Art",
       image: "/placeholder.svg?height=300&width=400",
       price: 1500,
-      salon: "Salon Amayali",
+      salon: "Salon Amaya",
       rating: 4.8,
       reviews: 150,
-      location: "Moipe Road, Moratuwa",
+      location: "Molpe Road, Moratuwa",
     },
     {
       id: 4,
       title: "Acrylic Nail Extensions With Custom Art",
       image: "/placeholder.svg?height=300&width=400",
       price: 1500,
-      salon: "Salon Amayali",
+      salon: "Salon Amaya",
       rating: 4.9,
       reviews: 130,
-      location: "Moipe Road, Moratuwa",
+      location: "Molpe Road, Moratuwa",
     },
     {
       id: 5,
       title: "Custom Hair Coloring And Highlights",
       image: "/placeholder.svg?height=300&width=400",
       price: 620,
-      salon: "Salon Amayali",
+      salon: "Salon Amaya",
       rating: 4.8,
       reviews: 120,
       location: "Katubedda, Galle Road",
     },
   ];
 
-  const handleBookNow = () => {
-    addService({
-      id: service.id,
-      name: service.title,
-      price: service.price,
-      image: service.image,
-    });
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        <div className="md:w-2/3">
-          {/* Breadcrumb */}
+    <div className="max-w-screen-xl mx-auto px-4 py-8">
+      <div className="flex flex-col lg:flex-row gap-8">
+        <div className="lg:w-2/3 w-full">
           <nav className="text-sm mb-4">
-            <Link
-              href="/services"
-              className="text-gray-500 hover:text-gray-700"
-            >
+            <Link href="/services" className="text-gray-500 hover:text-gray-700">
               Main HairCuts
             </Link>
             <span className="mx-2 text-gray-400">/</span>
             <span className="text-gray-900">{service.title}</span>
           </nav>
 
-          {/* Service Title */}
           <h1 className="text-2xl font-bold mb-6">{service.title}</h1>
 
-          {/* Main Image */}
-          <div className="relative aspect-[4/3] w-full mb-4 rounded-lg overflow-hidden">
-            <Image
-              src={service.image || "/placeholder.svg"}
-              alt={service.title}
-              fill
-              className="object-cover"
-              priority
-            />
+          <div className="relative aspect-video w-full mb-4 rounded-lg overflow-hidden">
+            <Image src={service.image} alt={service.title} fill className="object-cover" priority />
           </div>
 
-          {/* Thumbnails */}
           <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
-            <div className="relative w-20 h-20 rounded-md overflow-hidden border-2 border-purple-600">
-              <Image
-                src={service.image || "/placeholder.svg"}
-                alt={service.title}
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="relative w-20 h-20 rounded-md overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=100&width=100"
-                alt="Thumbnail 2"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="relative w-20 h-20 rounded-md overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=100&width=100"
-                alt="Thumbnail 3"
-                fill
-                className="object-cover"
-              />
-            </div>
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className={`relative w-20 h-20 rounded-md overflow-hidden ${i === 0 ? "border-2 border-purple-600" : ""}`}>
+                <Image src="/placeholder.svg?height=100&width=100" alt={`Thumbnail ${i + 1}`} fill className="object-cover" />
+              </div>
+            ))}
           </div>
 
-          {/* Instructions */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Instructions</h2>
             <ul className="space-y-4">
@@ -193,34 +122,80 @@ export default function ServicePage({ params }: ServicePageProps) {
             </ul>
           </div>
 
-          {/* Staff Members */}
+          {/* Booking Card: Mobile only */}
+          <div className="lg:hidden mb-8">
+            <Card className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative w-16 h-16 rounded-full overflow-hidden bg-yellow-100">
+                  <Image src="/placeholder.svg?height=100&width=100" alt={service.salon.name} fill className="object-cover" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                  <div className="flex items-center">
+                    <div className="flex items-center text-yellow-500 mr-1">
+                      <Star className="h-4 w-4 fill-current" />
+                      <span className="ml-1 text-black">{service.salon.rating}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">({service.salon.reviews})</span>
+                  </div>
+                </div>
+              </div>
+              {service.salon.bestSeller && (
+                <div className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full inline-block mb-4">
+                  Best Seller
+                </div>
+              )}
+              <div className="flex items-center text-sm text-gray-700 mb-2">
+                <svg className="h-5 w-5 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <div>Open until {service.salon.openUntil}</div>
+                  <div className="text-green-600 font-medium">Now Open</div>
+                </div>
+              </div>
+              <div className="flex items-center text-sm text-gray-700 mb-6">
+                <MapPin className="h-5 w-5 mr-1 text-gray-500" />
+                <span>{service.salon.location}</span>
+                <Link href="#" className="ml-2 text-purple-600 hover:underline">Get direction</Link>
+              </div>
+              <div className="mb-6">
+                <div className="text-gray-700 mb-1">From</div>
+                <div className="text-2xl font-bold mb-4">LKR {service.price}.00</div>
+              </div>
+              <div className="space-y-3">
+                <Link href={`/service/${params.id}/book`}>
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">Book now</Button>
+                </Link>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1">
+                    <Heart className="h-4 w-4 mr-2" /> Save
+                  </Button>
+                  <Button variant="outline" className="flex-1">
+                    <Share2 className="h-4 w-4 mr-2" /> Share
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Staff Members</h2>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
               {service.staff.map((staff) => (
                 <div key={staff.id} className="flex flex-col items-center">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
-                    <Image
-                      src={staff.image || "/placeholder.svg"}
-                      alt={staff.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={staff.image} alt={staff.name} fill className="object-cover" />
                   </div>
-                  <span className="text-xs text-center text-gray-600">
-                    Staff Member
-                  </span>
+                  <span className="text-xs text-center text-gray-600">{staff.name}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Related Services */}
           <div>
-            <h2 className="text-xl font-semibold mb-4">
-              Services you may like
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+            <h2 className="text-xl font-semibold mb-4">Services you may like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {relatedServices.map((service) => (
                 <ServiceCard key={service.id} service={service} />
               ))}
@@ -228,97 +203,60 @@ export default function ServicePage({ params }: ServicePageProps) {
           </div>
         </div>
 
-        <div className="md:w-1/3">
+        <div className="hidden lg:block lg:w-1/3">
           <Card className="sticky top-24 p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden bg-yellow-100">
-                <Image
-                  src="/placeholder.svg?height=100&width=100"
-                  alt={service.salon.name}
-                  fill
-                  className="object-cover"
-                />
+                <Image src="/placeholder.svg?height=100&width=100" alt={service.salon.name} fill className="object-cover" />
               </div>
               <div>
                 <h3 className="font-semibold text-lg">{service.salon.name}</h3>
                 <div className="flex items-center">
                   <div className="flex items-center text-yellow-500 mr-1">
                     <Star className="h-4 w-4 fill-current" />
-                    <span className="ml-1 text-black">
-                      {service.salon.rating}
-                    </span>
+                    <span className="ml-1 text-black">{service.salon.rating}</span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    ({service.salon.reviews})
-                  </span>
+                  <span className="text-sm text-gray-500">({service.salon.reviews})</span>
                 </div>
               </div>
             </div>
-
             {service.salon.bestSeller && (
               <div className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full inline-block mb-4">
                 Best Seller
               </div>
             )}
-
             <div className="flex items-center text-sm text-gray-700 mb-2">
-              <div className="flex items-center mr-4">
-                <svg
-                  className="h-5 w-5 mr-1 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <div>
-                  <div>Open until {service.salon.openUntil}</div>
-                  <div className="text-green-600 font-medium">Now Open</div>
-                </div>
+              <svg className="h-5 w-5 mr-1 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <div>Open until {service.salon.openUntil}</div>
+                <div className="text-green-600 font-medium">Now Open</div>
               </div>
             </div>
-
             <div className="flex items-center text-sm text-gray-700 mb-6">
               <MapPin className="h-5 w-5 mr-1 text-gray-500" />
               <span>{service.salon.location}</span>
-              <Link href="#" className="ml-2 text-purple-600 hover:underline">
-                Get direction
-              </Link>
+              <Link href="#" className="ml-2 text-purple-600 hover:underline">Get direction</Link>
             </div>
-
             <div className="mb-6">
               <div className="text-gray-700 mb-1">From</div>
-              <div className="text-2xl font-bold mb-4">
-                LKR {service.price}.00
-              </div>
+              <div className="text-2xl font-bold mb-4">LKR {service.price}.00</div>
             </div>
-
             <div className="space-y-3">
               <Link href={`/service/${params.id}/book`}>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  Book now
-                </Button>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700">Book now</Button>
               </Link>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1">
-                  <Heart className="h-4 w-4 mr-2" />
-                  Save
+                  <Heart className="h-4 w-4 mr-2" /> Save
                 </Button>
                 <Button variant="outline" className="flex-1">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
+                  <Share2 className="h-4 w-4 mr-2" /> Share
                 </Button>
               </div>
             </div>
-
-            <div className="text-xs text-gray-500 mt-4 text-center">
-              Something went wrong
-            </div>
+            <div className="text-xs text-gray-500 mt-4 text-center">Something went wrong</div>
           </Card>
         </div>
       </div>
