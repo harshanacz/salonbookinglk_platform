@@ -33,7 +33,7 @@ export default function Header() {
             placeholder="Search For Any Service ..."
             className="w-full rounded-[20px] bg-white/90 py-3 pl-6 pr-12 text-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          <button className="absolute right-1 top-1/2 -translate-y-1/2 rounded-[20px] bg-[var(--primary)] p-3 text-white hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
+          <button className="absolute right-1 top-1/2 -translate-y-1/2 rounded-[20px] bg-purple-900 p-3 text-white hover:bg-[var(--secondary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
             <Search size={24} />
           </button>
         </div>
