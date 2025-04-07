@@ -38,6 +38,7 @@
     --secondary2: #8e44ad;
     --accent2: #ba68c8;
     --superAccent: #f5f1f7;
+    --superAccent2: #F3E5F5;
 
     --pageBackground: #fff5ff;
     --backgroundWhite: #ffffff;
@@ -47,6 +48,14 @@
     --textPrimary: #2d2d2d;
 
     --success: #4caf50;
+    --successLight: #e8f5e9;
+    --info: #2b8cdc;
+    --infoLight: #e3f2fd;
+    --warnings: #da9021;
+    --warningsLight: #fff3e0;
+    --orange: #ff5722;
+    --orangeLight: #fbe9e7;
+
     --errorOrRedNotifications: #ff9800;
     --warning: #f44336;
 

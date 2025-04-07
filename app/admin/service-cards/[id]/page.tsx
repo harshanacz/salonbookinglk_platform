@@ -237,14 +237,15 @@ export default function ServiceApprovalPage({
 
               <div className="flex gap-3 pt-4">
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  variant="success"
+                  className="w-full"
                   onClick={handleApprove}
                 >
                   Approve
                 </Button>
                 <Button
-                  variant="outline"
-                  className="flex-1 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                  variant="cancel"
+                  className="w-full"
                   onClick={handleReject}
                 >
                   Reject

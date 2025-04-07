@@ -20,7 +20,7 @@ const buttonVariants = cva(
         link: "text-blue-600 underline-offset-4 hover:underline hover:text-white",
         cancel:
           "bg-red-50 border border-red-600 hover:bg-red-100 text-red-500",
-        Date:
+        outline2:
           "rounded-sm border border-border",
         outlineDate:
           "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 rounded-sm",
