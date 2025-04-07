@@ -32,7 +32,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronDown, Search } from "lucide-react";
+import { CalendarIcon, ChevronDown, Search, Eye } from "lucide-react";
+import Link from "next/link";
 import { format } from "date-fns";
 
 const appointments = [
@@ -126,7 +127,7 @@ export default function AdminAppointmentsPage() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="Date"
+                  variant="outline2"
                   size="lg"
                   className="w-[240px] justify-start text-left font-normal"
                 >
@@ -166,7 +167,7 @@ export default function AdminAppointmentsPage() {
                 <TableHead>Staff</TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -182,23 +183,26 @@ export default function AdminAppointmentsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant="outline"
-                      className={
+                      variant={
                         appointment.status === "Confirmed"
-                          ? "bg-green-100 text-green-800"
+                          ? "default"
                           : appointment.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
+                          ? "pending"
                           : appointment.status === "Completed"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-red-100 text-red-800"
+                          ? "secondary"
+                          : appointment.status === "Cancelled"
+                          ? "destructive"
+                          : "outline"
                       }
                     >
                       {appointment.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      View <ChevronDown className="ml-2 h-4 w-4" />
+                    <Button asChild size="sm">
+                      <Link href={`/admin/appointments/${appointment.id}`}>
+                        <Eye className="mr-2 h-4 w-4" /> View
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
