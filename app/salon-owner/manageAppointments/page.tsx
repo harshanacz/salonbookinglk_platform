@@ -170,7 +170,7 @@ export default function AppointmentsPage() {
         "bookedServices",
         JSON.stringify([selectedAppointment])
       );
-      router.push("/owner/summaryBill");
+      router.push("/salon-owner/summaryBill");
     }
   };
 

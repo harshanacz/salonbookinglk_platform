@@ -173,7 +173,7 @@ export default function SelectTime() {
     <div className="p-12 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto">
       <nav className="text-gray-600 mb-4 mt-5">
         <Link
-          href="/services"
+          href="/booking/Services"
           className="text-gray-500 hover:underline pl-3 pr-3"
         >
           Services
@@ -181,7 +181,7 @@ export default function SelectTime() {
         {" > "}
         <span className="text-black font-semibold pr-3">Time</span>
         {" > "}
-        <Link href="/Confirm" className="text-gray-500 hover:underline pl-3">
+        <Link href="/booking/Confirm" className="text-gray-500 hover:underline pl-3">
           Confirm
         </Link>
       </nav>
@@ -361,7 +361,7 @@ export default function SelectTime() {
 
               <button 
                 className="mt-4 w-full bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white py-3 rounded-2xl text-lg"
-                onClick={() => router.push("/Confirm")}
+                onClick={() => router.push("/booking/Confirm")}
                 
               >
                 No Thanks

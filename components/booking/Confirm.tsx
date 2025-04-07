@@ -97,6 +97,7 @@ const ConfirmPage = () => {
       router.push("/payments/paymentCards");
     }
   };
+  
   return (
     <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
       <nav className="text-gray-600 mb-4 mt-5">

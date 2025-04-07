@@ -97,13 +97,13 @@ const ServicesPage = () => {
       <nav className="text-gray-600 mb-4 mt-5">
         <span className="text-black font-semibold pr-3">Services</span> {"> "}
         <Link
-          href="/services/time"
+          href="/booking/TimeSlot"
           className="text-gray-500 hover:underline pl-3 pr-3"
         >
           Time
         </Link>{" "}
         {"> "}
-        <Link href="/services/confirm" className="text-gray-500 hover:underline pl-3">
+        <Link href="/booking/confirm" className="text-gray-500 hover:underline pl-3">
           Confirm
         </Link>
       </nav>
@@ -154,11 +154,8 @@ const ServicesPage = () => {
             address: selectedSalon.address,
             mapLink: selectedSalon.mapLink
           }}
-          selectedProfessionalId="1"
-          selectedProfessionalName={selectedProfessionalName}
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          onContinue={() => router.push("/services/time")}
+          
+          onContinue={() => router.push("/booking/TimeSlot")}
           buttonText="Continue"
         />
       </div>
