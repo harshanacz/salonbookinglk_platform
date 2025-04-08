@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        {!isAdminPage && !isSalonOwnerPage && <Navbar />} 
+        <Navbar />
         <main>{children}</main>
         {!isAddComplaintPage && <Footer />}
         <Toaster />

@@ -13,7 +13,7 @@ export default function Header() {
   return (
     <header className="relative h-[500px] w-full overflow-hidden rounded-[30px] mt-5">
       <Image
-        src="/images/HomeScreen/HeroImg.webp"
+        src="/images/HomeScreen/HeroImg.webp" 
         alt="Salon background"
         fill
         className="object-cover"
