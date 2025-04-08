@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const steps = [
-  { path: "/user-booking/services", name: "Services" },
-  { path: "/user-booking/time", name: "Time" },
-  { path: "/user-booking/confirm", name: "Confirm" },
-];
+interface BookingNavigationProps {
+  salonId: number;
+}
 
-export default function BookingNavigation() {
+export default function BookingNavigation({ salonId }: BookingNavigationProps) {
   const pathname = usePathname();
+  
+  const steps = [
+    { path: `/service/${salonId}/available-services`, name: "Services" },
+    { path: `/service/${salonId}/time`, name: "Time" },
+    { path: `/service/${salonId}/confirm`, name: "Confirm" },
+  ];
   
   return (
     <nav className="text-gray-600 mb-4 mt-5">

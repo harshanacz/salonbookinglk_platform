@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import SalonCard from "@/components/booking/SalonCard";
 import BookingNavigation from "@/components/booking/BookingNavigation"
 
@@ -71,6 +72,8 @@ const ServicesPage = () => {
   const [selectedDate, setSelectedDate] = useState("15");
   const [selectedTime, setSelectedTime] = useState("2:30 PM");
   const router = useRouter();
+  const params = useParams();
+  const salonId = params.id;
 
   const addService = (service: Service) => {
     if (!selectedServices.find((s) => s.id === service.id)) {
@@ -94,25 +97,7 @@ const ServicesPage = () => {
 
   return (
     <div className="p-8 shadow-lg w-full h-screen bg-purple-50 flex flex-col overflow-y-auto"> {/* Changed p-7 to p-8 */}
-      {/* Navigation */}
-      {/* <nav className="text-gray-600 mb-4 mt-5">
-        <span className="text-black font-semibold pr-3">Services</span> {"> "}
-        <Link
-          href="/user-booking/time"
-          className="text-gray-500 hover:underline pl-3 pr-3"
-        >
-          Time
-        </Link>{" "}
-        {"> "}
-        <Link href="/user-booking/confirm" className="text-gray-500 hover:underline pl-3">
-          Confirm
-        </Link>
-      </nav> */}
-      <>
-      <BookingNavigation/>
-      </>
-
-
+      <BookingNavigation salonId={Number(useParams().id)}/>
       {/* Header */}
       <h1 className="pl-6 text-2xl font-bold mb-4">Services</h1>
       <button className="bg-purple-900 text-white px-4 py-1 lg:w-[250px] rounded-full lg:text-sm">
@@ -163,7 +148,7 @@ const ServicesPage = () => {
           selectedProfessionalName={selectedProfessionalName}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
-          onContinue={() => router.push("/user-booking/time")}
+          onContinue={() => router.push(`/service/${salonId}/time`)}
           buttonText="Continue"
         />
       </div>
