@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SalonCard from "@/components/booking/SalonCard";
@@ -25,6 +25,7 @@ export default function SelectTime() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
   const weeks: (number | null)[][] = [];
+  const params = useParams();
   let week: (number | null)[] = Array(firstDayOfMonth).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -138,12 +139,12 @@ export default function SelectTime() {
 
   const navigateToConfirm = () => {
     console.log("Navigating to Confirm page");
-    router.push("/user-booking/confirm");
+    router.push(`/service/${params.id}/confirm`);
   };
 
   return (
     <div className="p-12 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto">
-      <BookingNavigation/>
+      <BookingNavigation salonId={Number(useParams().id)}/>
       <h2 className="pl-6 text-2xl font-bold mb-4">Select Time</h2>
 
       <div className="w-full lg:w-1/2 p-4 space-y-6">
