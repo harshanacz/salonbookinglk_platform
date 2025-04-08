@@ -9,8 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { Eye } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { User } from "lucide-react";
 
 type Salon = {
   id: string;
@@ -43,53 +54,66 @@ const Page = () => {
       <div>
         <h1 className="text-3xl font-bold">Verifications</h1>
       </div>
-      <div className="bg-white rounded-lg shadow-sm p-6 ">
-        <h2 className="text-xl font-medium mb-6">Pending Approval</h2>
-
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-1/4">Salon</TableHead>
-                <TableHead className="w-1/4">Status</TableHead>
-                <TableHead className="w-1/4">Started Date</TableHead>
-                <TableHead className="w-1/4">Updated Date</TableHead>
-                <TableHead className="text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {salonData.map((salon: Salon) => (
-                <TableRow key={salon.id}>
-                  <TableCell className="py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 rounded-full overflow-hidden bg-yellow-200">
-                        <Image
-                          src={salon.image}
-                          alt={`${salon.name} logo`}
-                          width={40}
-                          height={40}
-                          className="object-cover"
-                        />
-                      </div>
-                      <span>{salon.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{salon.status}</TableCell>
-                  <TableCell>{salon.startedDate}</TableCell>
-                  <TableCell>{salon.updatedDate}</TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/admin/dashboard/verify/${salon.id}`}>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
+      <Card>
+        <CardHeader>
+          <CardTitle>Pending Approval</CardTitle>
+          <CardDescription>
+            Review and approve salon verification requests
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-1/4">Salon</TableHead>
+                  <TableHead className="w-1/4">Status</TableHead>
+                  <TableHead className="w-1/4">Started Date</TableHead>
+                  <TableHead className="w-1/4">Updated Date</TableHead>
+                  <TableHead className="text-right"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {salonData.map((salon: Salon) => (
+                  <TableRow key={salon.id}>
+                    <TableCell className="py-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 mr-2">
+                          <AvatarImage src={salon.image} />
+                          <AvatarFallback>
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{salon.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span>
+                        <Badge
+                          variant={
+                            salon.status === "NEW" ? "default" : "secondary"
+                          }
+                        >
+                          {salon.status}
+                        </Badge>
+                      </span>
+                    </TableCell>
+                    <TableCell>{salon.startedDate}</TableCell>
+                    <TableCell>{salon.updatedDate}</TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild size="sm">
+                        <Link href={`/admin/verification/${salon.id}`}>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
