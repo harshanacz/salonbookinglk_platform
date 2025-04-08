@@ -21,6 +21,9 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  images: {
+    domains: ['i.ibb.co'],
+  },
 }
 
 mergeConfig(nextConfig, userConfig)

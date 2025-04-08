@@ -7,7 +7,7 @@ export function PromoBanner() {
     <section className="relative w-full bg-purple-900 text-white py-10">
       <div className="absolute inset-0 z-0">
         <Image
-          src="images/HomeScreen/HeroImg.webp"
+          src="/images/HomeScreen/HeroImg.webp"
           alt="Promo background" 
           fill
           className="object-cover opacity-20"
