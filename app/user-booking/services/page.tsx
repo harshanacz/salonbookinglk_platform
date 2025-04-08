@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SalonCard from "@/components/booking/SalonCard";
+import BookingNavigation from "@/components/booking/BookingNavigation"
 
 
 interface Service {
@@ -92,21 +93,25 @@ const ServicesPage = () => {
   
 
   return (
-    <div className="p-7 shadow-lg w-full h-screen bg-purple-50 flex flex-col overflow-y-auto">
+    <div className="p-8 shadow-lg w-full h-screen bg-purple-50 flex flex-col overflow-y-auto"> {/* Changed p-7 to p-8 */}
       {/* Navigation */}
-      <nav className="text-gray-600 mb-4 mt-5">
+      {/* <nav className="text-gray-600 mb-4 mt-5">
         <span className="text-black font-semibold pr-3">Services</span> {"> "}
         <Link
-          href="/services/time"
+          href="/user-booking/time"
           className="text-gray-500 hover:underline pl-3 pr-3"
         >
           Time
         </Link>{" "}
         {"> "}
-        <Link href="/services/confirm" className="text-gray-500 hover:underline pl-3">
+        <Link href="/user-booking/confirm" className="text-gray-500 hover:underline pl-3">
           Confirm
         </Link>
-      </nav>
+      </nav> */}
+      <>
+      <BookingNavigation/>
+      </>
+
 
       {/* Header */}
       <h1 className="pl-6 text-2xl font-bold mb-4">Services</h1>
@@ -114,7 +119,7 @@ const ServicesPage = () => {
         Available services
       </button>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8"> {/* Changed gap-6 mt-4 to gap-8 mt-8 */}
         {/* Available Services */}
         <div className="space-y-3">
           {availableServices.map((service) => (
@@ -132,7 +137,7 @@ const ServicesPage = () => {
                 </p>
                 <button
                   onClick={() => addService(service)}
-                  className="mt-10 bg-black text-white w-8 h-8 rounded-lg flex items-center justify-center"
+                  className="bg-black text-white w-8 h-8 rounded-lg flex items-center justify-center" 
                 >
                   +
                 </button>
@@ -158,7 +163,7 @@ const ServicesPage = () => {
           selectedProfessionalName={selectedProfessionalName}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
-          onContinue={() => router.push("/services/time")}
+          onContinue={() => router.push("/user-booking/time")}
           buttonText="Continue"
         />
       </div>
