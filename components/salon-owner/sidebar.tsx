@@ -67,6 +67,11 @@ export function SalonOwnerSidebar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // Hide sidebar on the signup and signin pages
+  if (pathname === "/salon-owner/sign-up" || pathname === "/salon-owner/sign-in") {
+    return null;
+  }
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
