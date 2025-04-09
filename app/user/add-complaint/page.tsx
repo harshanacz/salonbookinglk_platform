@@ -1,25 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ComplaintForm() {
-  const [category, setCategory] = useState("payment-issue")
-  const [subject, setSubject] = useState("")
-  const [description, setDescription] = useState("")
+  const [category, setCategory] = useState("payment-issue");
+  const [subject, setSubject] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log({ category, subject, description })
+    e.preventDefault();
+    console.log({ category, subject, description });
     // Handle form submission logic here
-  }
+  };
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-[#F3E5F5]">
@@ -47,7 +53,12 @@ export default function ComplaintForm() {
 
             <div className="space-y-2">
               <Label htmlFor="subject">Subject:</Label>
-              <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} required />
+              <Input
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                required
+              />
             </div>
 
             <div className="space-y-2">
@@ -61,12 +72,15 @@ export default function ComplaintForm() {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-purple-400 hover:bg-purple-500 text-black font-medium">
+            <Button
+              type="submit"
+              className="w-full bg-purple-400 hover:bg-purple-500 text-black font-medium"
+            >
               SUBMIT
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
