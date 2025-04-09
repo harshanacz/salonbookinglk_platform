@@ -2,8 +2,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter ,useParams} from "next/navigation";
 import SalonCard from "@/components/booking/SalonCard";
+import BookingNavigation from "@/components/booking/BookingNavigation";
 
 interface Service {
   id: number;
@@ -99,20 +100,8 @@ const ConfirmPage = () => {
   };
   return (
     <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
-      <nav className="text-gray-600 mb-4 mt-5">
-        <Link href="/services" className="text-gray-500 hover:underline pl-3">
-          Services
-        </Link>{" "}
-        {" > "}
-        <Link
-          href="/services"
-          className="text-gray-500 hover:underline pl-3 pr-3"
-        >
-          Time
-        </Link>{" "}
-        {" > "}
-        <span className="text-black font-semibold pr-3">Confirm</span>
-      </nav>
+     
+     <BookingNavigation salonId={Number(useParams().id)}/>
 
       <h1 className="pl-6 text-2xl font-bold mb-4">Review and Confirm</h1>
 
