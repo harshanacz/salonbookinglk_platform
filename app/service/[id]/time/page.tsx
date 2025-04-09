@@ -1,28 +1,22 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import SalonCard from "@/components/booking/SalonCard";
-
+import BookingNavigation from "@/components/booking/BookingNavigation";
 
 export default function SelectTime() {
   const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [selectedProfessional, setSelectedProfessional] = useState<
-    string | null
-  >(null);
-  const [selectedProfessionalName, setSelectedProfessionalName] = useState<
-    string | null
-  >(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",
   });
-  const [showPopup, setShowPopup] = useState(false); // State to control the popup visibility
-
-  
+  const [showPopup, setShowPopup] = useState(false);
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -31,6 +25,7 @@ export default function SelectTime() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
   const weeks: (number | null)[][] = [];
+  const params = useParams();
   let week: (number | null)[] = Array(firstDayOfMonth).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -45,18 +40,8 @@ export default function SelectTime() {
   }
 
   const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
   ];
 
   const professionals = [
@@ -80,7 +65,6 @@ export default function SelectTime() {
     },
   ];
 
-  // Update the professional name when the ID changes
   useEffect(() => {
     if (selectedProfessional) {
       const professional = professionals.find(p => p.id === selectedProfessional);
@@ -150,42 +134,17 @@ export default function SelectTime() {
 
   const handleContinue = () => {
     console.log("Continue button clicked!");
-    // Direct approach - set the popup to show
     setShowPopup(true);
   };
 
   const navigateToConfirm = () => {
     console.log("Navigating to Confirm page");
-    // The correct path should not include "components/bookingPage/"
-    router.push("/Confirm");
+    router.push(`/service/${params.id}/confirm`);
   };
-  type TimeSlotProps = {
-    onNext: () => void;
-  };
-  
-  const TimeSlot: React.FC<TimeSlotProps> = ({ onNext }) => {
-    const handleSelect = (slot: string) => {
-      console.log("Selected slot:", slot);
-      onNext(); // Navigate to confirm step
-    };
-    
+
   return (
     <div className="p-12 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto">
-      <nav className="text-gray-600 mb-4 mt-5">
-        <Link
-          href="/services"
-          className="text-gray-500 hover:underline pl-3 pr-3"
-        >
-          Services
-        </Link>{" "}
-        {" > "}
-        <span className="text-black font-semibold pr-3">Time</span>
-        {" > "}
-        <Link href="/Confirm" className="text-gray-500 hover:underline pl-3">
-          Confirm
-        </Link>
-      </nav>
-
+      <BookingNavigation salonId={Number(useParams().id)}/>
       <h2 className="pl-6 text-2xl font-bold mb-4">Select Time</h2>
 
       <div className="w-full lg:w-1/2 p-4 space-y-6">
@@ -324,12 +283,10 @@ export default function SelectTime() {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onContinue={handleContinue}
-          buttonText="Continue "
+          buttonText="Continue"
         />
 
-        
-
-        {/* Popup for Extra Service - made more visible and moved outside conditionals */}
+        {/* Popup for Extra Service */}
         {showPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -358,20 +315,16 @@ export default function SelectTime() {
                 ))}
               </div>
               
-
               <button 
                 className="mt-4 w-full bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white py-3 rounded-2xl text-lg"
-                onClick={() => router.push("/Confirm")}
-                
+                onClick={navigateToConfirm}
               >
                 No Thanks
               </button>
-             
             </div>
           </div>
         )}
       </div>
     </div>
   );
-}
 }
