@@ -20,8 +20,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isAddComplaintPage = pathname === "/add-complaint";
-
   const isAdminPage =
     pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
   const isUserPage = pathname.startsWith("/user");
@@ -30,9 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={montserrat.className}>
-        <Navbar />
+        {!isAdminPage && !isSalonOwnerPage && <Navbar />}
         <main>{children}</main>
-        {!isAddComplaintPage && <Footer />}
+        {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
         <Toaster />
       </body>
     </html>
