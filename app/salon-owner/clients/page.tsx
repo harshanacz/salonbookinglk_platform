@@ -89,9 +89,9 @@ export default function ClientsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Clients</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        {/* <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Button className="w-full sm:w-auto">Add New Client</Button>
-        </div>
+        </div> */}
       </div>
 
       <Card>
@@ -154,10 +154,10 @@ export default function ClientsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit client</DropdownMenuItem>
+                        {/* <DropdownMenuItem>View details</DropdownMenuItem>
+                        <DropdownMenuItem>Edit client</DropdownMenuItem> */}
                         <DropdownMenuItem>View appointments</DropdownMenuItem>
-                        <DropdownMenuItem>Send message</DropdownMenuItem>
+                      
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
