@@ -22,6 +22,11 @@ export default function RootLayout({
   const pathname = usePathname();
   const isAddComplaintPage = pathname === "/add-complaint";
 
+  const isAdminPage =
+    pathname.startsWith("/admin") || pathname.startsWith("/super-admin");
+  const isUserPage = pathname.startsWith("/user");
+  const isSalonOwnerPage = pathname.startsWith("/salon-owner");
+
   return (
     <html lang="en">
       <body className={montserrat.className}>
