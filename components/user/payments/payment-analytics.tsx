@@ -25,11 +25,10 @@ const paymentData = [
   { date: "April 25", value: 40 },
 ];
 
-export default function AnalyticsPage() {
+export const PaymentAnalytics = () => {
   return (
-    <div className="bg-purple-50 min-h-screen p-10">
+    <div>
       <div className="bg-white p-6 rounded-2xl shadow-md">
-        <h2 className="text-2xl font-semibold">Analytics</h2>
         <div className="mt-4 grid grid-cols-2 gap-6">
           <Card>
             <CardContent>
@@ -82,4 +81,4 @@ export default function AnalyticsPage() {
       </div>
     </div>
   );
-}
+}; 

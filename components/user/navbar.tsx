@@ -47,7 +47,10 @@ export function Navbar() {
                       <ListItem href="/categories/skin-care" title="Skin Care">
                         Facials, skin treatments, and skin consultations
                       </ListItem>
-                      <ListItem href="/categories/brows-lashes" title="Brows & Lashes">
+                      <ListItem
+                        href="/categories/brows-lashes"
+                        title="Brows & Lashes"
+                      >
                         Eyebrow shaping, tinting, and eyelash extensions
                       </ListItem>
                       <ListItem href="/categories/makeup" title="Makeup">
@@ -63,7 +66,10 @@ export function Navbar() {
 
         {/* Right section: For Business + Sign In + Join */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/for-business" className="text-sm font-medium text-gray-600 hover:text-black">
+          <Link
+            href="/for-business"
+            className="text-sm font-medium text-gray-600 hover:text-black"
+          >
             For Business
           </Link>
           <Link href="/sign-in">
@@ -118,19 +124,34 @@ export function Navbar() {
                 </button>
                 {isServicesOpen && (
                   <div className="ml-4 mt-2 flex flex-col gap-2 text-sm text-gray-600">
-                    <Link href="/categories/hair-cuts" onClick={() => setIsOpen(false)}>
+                    <Link
+                      href="/categories/hair-cuts"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Hair Cuts
                     </Link>
-                    <Link href="/categories/nail-arts" onClick={() => setIsOpen(false)}>
+                    <Link
+                      href="/categories/nail-arts"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Nail Arts
                     </Link>
-                    <Link href="/categories/skin-care" onClick={() => setIsOpen(false)}>
+                    <Link
+                      href="/categories/skin-care"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Skin Care
                     </Link>
-                    <Link href="/categories/brows-lashes" onClick={() => setIsOpen(false)}>
+                    <Link
+                      href="/categories/brows-lashes"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Brows & Lashes
                     </Link>
-                    <Link href="/categories/makeup" onClick={() => setIsOpen(false)}>
+                    <Link
+                      href="/categories/makeup"
+                      onClick={() => setIsOpen(false)}
+                    >
                       Makeup
                     </Link>
                   </div>

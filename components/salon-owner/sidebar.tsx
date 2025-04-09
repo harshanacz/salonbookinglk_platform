@@ -14,6 +14,9 @@ import {
   X,
   LogOut,
   CircleUserRound,
+  FileText,
+  Bell,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -27,8 +30,18 @@ const sidebarItems = [
     icon: Home,
   },
   {
+    title: "Profile",
+    href: "/salon-owner/profile",
+    icon: UserCog,
+  },
+  {
     title: "Appointments",
     href: "/salon-owner/appointments",
+    icon: CalendarDays,
+  },
+  {
+    title: "Manage Appointments",
+    href: "/salon-owner/manage-appointments",
     icon: CalendarDays,
   },
   {
@@ -42,14 +55,19 @@ const sidebarItems = [
     icon: Users,
   },
   {
+    title: "Staff",
+    href: "/salon-owner/staff",
+    icon: Users,
+  },
+  {
     title: "Payments",
     href: "/salon-owner/payments",
     icon: CreditCard,
   },
   {
-    title: "Staff Management",
-    href: "/salon-owner/staff",
-    icon: Users,
+    title: "Summary Bill",
+    href: "/salon-owner/summary-bill",
+    icon: FileText,
   },
   {
     title: "Reports",
@@ -67,8 +85,12 @@ export function SalonOwnerSidebar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Hide sidebar on the signup and signin pages
-  if (pathname === "/salon-owner/sign-up" || pathname === "/salon-owner/sign-in") {
+  // Hide sidebar on auth pages
+  if (
+    pathname === "/salon-owner/sign-up" || 
+    pathname === "/salon-owner/sign-in" ||
+    pathname === "/salon-owner/forgot-password"
+  ) {
     return null;
   }
 
@@ -80,11 +102,6 @@ export function SalonOwnerSidebar() {
     // Add logout logic here
     console.log("Logging out...");
   };
-
-  // Hide sidebar on the signup page
-  if (pathname === "/salon-owner/sign-up") {
-    return null
-  }
 
   return (
     <div className="relative">
@@ -116,6 +133,7 @@ export function SalonOwnerSidebar() {
             <CircleUserRound className="h-10 w-10 text-purple-700" />
             <div>
               <div className="font-medium text-sm">John Doe</div>
+              <div className="text-xs text-gray-500">Salon Owner</div>
             </div>
           </div>
         </div>

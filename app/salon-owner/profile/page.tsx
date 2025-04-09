@@ -1,139 +1,274 @@
-"use client"
+"use client";
 
-import { Clock, MapPin, MoreHorizontal, Plus } from "lucide-react"
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { ServiceCard } from "@/components/service-card"
+import { useState, ChangeEvent } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Pencil, MapPin, Phone, Mail, Globe } from "lucide-react";
 
-const services = [
-    {
-        id: 1,
-        title: "Luxury Haircut & Styling",
-        image: "#",
-        price: 2500,
-        salon: "Salon Amaya",
-        rating: 4.8,
-        reviews: 120,
-        location: "Colombo",
-      },
-      {
-        id: 2,
-        title: "Relaxing Spa Treatment",
-        image: "#",
-        price: 5000,
-        salon: "Salon Amaya",
-        rating: 4.9,
-        reviews: 85,
-        location: "Kandy",
-      },
-]
+export default function SalonOwnerProfile() {
+  const [salonData, setSalonData] = useState({
+    salonName: "Glamour Studio",
+    ownerName: "John Doe",
+    email: "john@glamourstudio.com",
+    phone: "+94 71 234 5678",
+    address: "123 Beauty Lane, Colombo 07",
+    description:
+      "Premier salon offering a wide range of beauty and hair services. Specializing in modern cuts, coloring, and bridal packages.",
+    website: "www.glamourstudio.com",
+    openingHours: "9:00 AM - 8:00 PM",
+    businessRegistration: "REG123456",
+  });
 
-const progressStats = [
-  { label: "Profile rating", value: 100 },
-  { label: "Order completion", value: 100 },
-  { label: "Delivered on time", value: 100 },
-]
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [tempValue, setTempValue] = useState("");
+  const [profileImage, setProfileImage] = useState("/images/salon/profile.jpg");
 
-export default function SalonProfile() {
+  const handleEditClick = (field: keyof typeof salonData) => {
+    setEditingField(field);
+    setTempValue(salonData[field]);
+  };
+
+  const handleSave = () => {
+    if (editingField) {
+      setSalonData((prevData) => ({
+        ...prevData,
+        [editingField]: tempValue,
+      }));
+      setEditingField(null);
+    }
+  };
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl">
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-8">
-        
-        {/* Salon Profile Section */}
-        <div className="flex flex-col items-center">
-          <div className="flex flex-col items-center mb-6">
-            <div className="w-32 h-32 bg-yellow-300 rounded-full flex items-center justify-center mb-3">
-              <Image
-                src="#"
-                alt="Logo"
-                width={80}
-                height={80}
-                className="opacity-80"
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Salon Profile</h1>
+        <Button
+          onClick={handleSave}
+          className="bg-purple-600 hover:bg-purple-700"
+        >
+          Save Changes
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Profile Image and Basic Info */}
+        <Card className="p-6 md:col-span-1">
+          <div className="flex flex-col items-center space-y-4">
+            <Avatar className="w-32 h-32">
+              <AvatarImage src={profileImage} />
+              <AvatarFallback>GS</AvatarFallback>
+            </Avatar>
+            <label className="cursor-pointer">
+              <Input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageChange}
               />
-            </div>
-            <h1 className="text-2xl font-bold mt-2">Salon Amaya</h1>
-            <div className="bg-yellow-500 text-white text-xs px-3 py-0.5 rounded-full mt-1">Best Seller</div>
-            <div className="flex items-center mt-2">
-              <div className="flex text-yellow-400">
-                <svg xmlns="#" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                  <path
-                    fillRule="evenodd"
-                    d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <span className="font-semibold ml-1">4.9</span>
-              <span className="text-gray-500 text-sm ml-1">(440)</span>
+              <span className="text-sm text-purple-600 hover:text-purple-700">
+                Change Photo
+              </span>
+            </label>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold">{salonData.salonName}</h2>
+              <p className="text-gray-500">{salonData.ownerName}</p>
             </div>
           </div>
+        </Card>
 
-          <div className="w-full space-y-4">
-            <div className="flex items-start">
-              <Clock className="w-5 h-5 mt-0.5 text-gray-700" />
-              <div className="ml-3">
-                <div className="flex items-center">
-                  <span>Open until 7:30PM</span>
-                  <button className="ml-2 text-purple-600 text-sm">Edit</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-start">
-              <MapPin className="w-5 h-5 mt-0.5 text-gray-700" />
-              <div className="ml-3">
-                <div>Molpe Road, Moratuwa</div>
-                <button className="text-purple-600 text-sm">Change Location</button>
-              </div>
-            </div>
-
-            {/* Progress Stats */}
-            <div className="mt-6 space-y-3">
-              {progressStats.map((stat, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{stat.label}</span>
-                    <span>{stat.value}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 bg-purple-600 rounded-full w-full"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Button variant="outline" className="w-full mt-4 text-purple-600 border-purple-600">
-              Edit
-            </Button>
-          </div>
-        </div>
-
-        {/* Services Section */}
-        <div>
-          <div className="flex justify-between items-center mb-6">
+        {/* Contact and Business Information */}
+        <Card className="p-6 md:col-span-2">
+          <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-semibold">Active Services</h2>
-              <div className="h-1 w-24 bg-purple-600 mt-1 rounded-full"></div>
+              <h3 className="text-lg font-medium mb-4">Business Information</h3>
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-500">Salon Name</label>
+                    {editingField === "salonName" ? (
+                      <Input
+                        value={tempValue}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        className="max-w-sm"
+                      />
+                    ) : (
+                      <p>{salonData.salonName}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("salonName")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-500">Description</label>
+                    {editingField === "description" ? (
+                      <Textarea
+                        value={tempValue}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        className="max-w-sm"
+                      />
+                    ) : (
+                      <p className="max-w-sm">{salonData.description}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("description")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  {editingField === "address" ? (
+                    <Input
+                      value={tempValue}
+                      onChange={(e) => setTempValue(e.target.value)}
+                      className="flex-1"
+                    />
+                  ) : (
+                    <span>{salonData.address}</span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("address")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-gray-500" />
+                  {editingField === "phone" ? (
+                    <Input
+                      value={tempValue}
+                      onChange={(e) => setTempValue(e.target.value)}
+                      className="flex-1"
+                    />
+                  ) : (
+                    <span>{salonData.phone}</span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("phone")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-gray-500" />
+                  {editingField === "email" ? (
+                    <Input
+                      value={tempValue}
+                      onChange={(e) => setTempValue(e.target.value)}
+                      className="flex-1"
+                    />
+                  ) : (
+                    <span>{salonData.email}</span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("email")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-gray-500" />
+                  {editingField === "website" ? (
+                    <Input
+                      value={tempValue}
+                      onChange={(e) => setTempValue(e.target.value)}
+                      className="flex-1"
+                    />
+                  ) : (
+                    <span>{salonData.website}</span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("website")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
-            <Button variant="outline" className="rounded-full h-12 w-12 p-0 border-2">
-              <Plus className="h-6 w-6" />
-              <span className="sr-only">Add New Service</span>
-            </Button>
-          </div>
 
-          {/* Render Services Using ServiceCard */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
+            <div>
+              <h3 className="text-lg font-medium mb-4">Business Hours</h3>
+              <div className="flex items-center gap-2">
+                {editingField === "openingHours" ? (
+                  <Input
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    className="flex-1"
+                  />
+                ) : (
+                  <span>{salonData.openingHours}</span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditClick("openingHours")}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
-          <div className="mt-4 text-center">
-            <span className="text-sm text-gray-500">Add New Service</span>
+            <div>
+              <h3 className="text-lg font-medium mb-4">Legal Information</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500">Business Registration:</span>
+                {editingField === "businessRegistration" ? (
+                  <Input
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    className="flex-1"
+                  />
+                ) : (
+                  <span>{salonData.businessRegistration}</span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEditClick("businessRegistration")}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
-  )
+  );
 }
