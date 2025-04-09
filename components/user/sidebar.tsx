@@ -14,6 +14,11 @@ import {
   X,
   LogOut,
   CircleUserRound,
+  CreditCard,
+  Heart,
+  AlertTriangle,
+  BarChart3,
+  KeyRound,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -24,37 +29,36 @@ const routes = [
     label: "Profile",
     icon: User,
     href: "/user",
-    color: "text-sky-500",
   },
-  // {
-  //   label: "My Appointments",
-  //   icon: Calendar,
-  //   href: "/user/appointments",
-  //   color: "text-violet-500",
-  // },
-  // {
-  //   label: "My Reviews",
-  //   icon: Star,
-  //   href: "/user/reviews",
-  //   color: "text-pink-700",
-  // },
-  // {
-  //   label: "My Messages",
-  //   icon: MessageSquare,
-  //   href: "/user/messages",
-  //   color: "text-orange-700",
-  // },
-  // {
-  //   label: "History",
-  //   icon: Clock,
-  //   href: "/user/history",
-  //   color: "text-green-700",
-  // },
+  {
+    label: "My Bookings",
+    icon: Calendar,
+    href: "/user/booking",
+  },
+  {
+    label: "My Payments",
+    icon: CreditCard,
+    href: "/user/payments",
+  },
+  {
+    label: "Financial Summary",
+    icon: BarChart3,
+    href: "/user/financial-summary",
+  },
+  {
+    label: "My Favorites",
+    icon: Heart,
+    href: "/user/favorites",
+  },
+  {
+    label: "Add Complaint",
+    icon: AlertTriangle,
+    href: "/user/add-complaint",
+  },
   {
     label: "Settings",
     icon: Settings,
     href: "/user/settings",
-    color: "text-gray-700",
   },
 ];
 
@@ -85,9 +89,10 @@ export const UserSidebar = () => {
       {/* Sidebar */}
       <div
         className={cn(
-          "w-64 h-[calc(100vh-4rem)] bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50 top-16 md:top-0",
+          "w-64 min-h-screen bg-[var(--pageBackground)] flex flex-col fixed md:relative transition-transform z-50",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
+        style={{ top: 0 }}
       >
         {/* Close Button for Small Screens */}
         <button className="md:hidden p-4 self-end" onClick={toggleSidebar}>
@@ -95,9 +100,9 @@ export const UserSidebar = () => {
         </button>
 
         {/* Header Section */}
-        <div className="p-4 border-b border-[#D9D9D9]">
+        <div className="p-4 border-b border-[var(lightGreyColor)]">
           <div className="flex items-center gap-2">
-            <CircleUserRound className="h-10 w-10 text-purple-700" />
+            <CircleUserRound className="h-10 w-10 text-[var(--secondary)]" />
             <div>
               <div className="font-medium text-sm">John Doe</div>
             </div>
@@ -105,32 +110,34 @@ export const UserSidebar = () => {
         </div>
 
         {/* Sidebar Links */}
-        <div className="flex-1 py-6 flex flex-col gap-1 overflow-y-auto">
+        <div className="flex-1 py-6 flex flex-col gap-1">
           {routes.map((route) => (
             <Link
               key={route.href}
               href={route.href}
               className={cn(
-                "flex items-center gap-2 px-4 mr-1 rounded-r-full py-3 hover:bg-[#F3E5F5] text-black",
-                pathname === route.href && "bg-[#F3E5F5]"
+                "flex items-center gap-2 px-4 mr-3 rounded-r-full py-3 hover:bg-[var(--superAccent2)] text-[var(--darkPurple)]",
+                pathname === route.href && "bg-[var(--superAccent2)]"
               )}
             >
-              <route.icon className={cn("h-5 w-5 mx-4", route.color)} />
+              <route.icon className="h-5 w-5 mx-4" />
               <span>{route.label}</span>
             </Link>
           ))}
         </div>
 
         {/* Logout Button */}
-        <div className="p-4 border-t border-[#D9D9D9]">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5" />
-            <span>Logout</span>
-          </Button>
+        <div className="p-4 border-t border-[var(lightGreyColor)]">
+          <div className="flex justify-center">
+            <Button
+              variant="cancel"
+              className="border-none"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
