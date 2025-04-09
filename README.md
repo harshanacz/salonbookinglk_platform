@@ -1,88 +1,53 @@
-# Salon Booking Application
+# Salon Booking LK
 
-A modern web application for booking salon services, built with Next.js, TypeScript, and Tailwind CSS.
 
-## Features
+## ✅ User Flows
 
-- 🎨 Beautiful and responsive UI
-- 📱 Mobile-first design
-- 🔍 Search and filter services
-- 📅 Real-time booking system
-- 💳 Integrated checkout process
-- 👥 User profiles and reviews
-- 🏪 Salon profiles with detailed information
-- 👨‍💼 Staff management
-- ⭐ Rating and review system
 
-## Tech Stack
+### Harshana AMK
 
-- **Framework:** Next.js 14
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **State Management:** Zustand
-- **UI Components:** shadcn/ui
-- **Icons:** Lucide Icons
-- **Date Handling:** date-fns
+### 1. Home Screen (Before and After Sign-In)
+- **Before Sign-In**: General service listing (limited functionality)
+- **After Sign-In**: Personalized recommendations + past bookings on top
+- **URL**: `/`
 
-## Getting Started
+---
 
-### Prerequisites
+### 2. Search Screen
+- **Detail**: Type keywords or use filters → See relevant services + map
+- **URL**: `/search?keyword=test`
 
-- Node.js 18.x or later
-- npm or yarn
+---
 
-### Installation
+### 3. Category Screen
+- **Detail**: Select category → View available services
+- **URL Examples**:    
+  `/categories/hair-cuts`
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/salon-booking.git
-cd salon-booking
-```
+---
 
-2. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-```
+### 4. Service Card View
+- **Detail**: Click a card → View service info, price, reviews, book option
+- **URL**: `/service/[id]`
 
-3. Create a `.env` file in the root directory and add your environment variables:
-```env
-NEXT_PUBLIC_API_URL=your_api_url
-```
+---
 
-4. Run the development server:
-```bash
-npm run dev
-# or
-yarn dev
-```
+### 5. Service Card Management (Create / Delete / Manage)
+- **Create**: Add service (multi-step) → Submit for review
+- **Delete**: Deactivation flow → Auto-delete after 7 days post last appointment
+- **Manage**: Edit → Minor edits allow faster approval
+- **URL**: `/salon-owner/services/create`
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+---
 
-## Project Structure
+### 6. Service Management Tabs (Active / Deactivated / Pending)
+- **Detail**: View categorized services by status. Fix and resubmit rejected ones.
+- **URL**: `/salon-owner/services`
 
-```
-salon-booking/
-├── app/                    # Next.js app directory
-│   ├── service/           # Service-related pages
-│   ├── salon/            # Salon-related pages
-│   ├── checkout/         # Checkout process
-│   └── admin/            # Admin dashboard
-├── components/           # Reusable components
-├── store/               # Zustand store
-├── lib/                 # Utility functions
-└── public/             # Static assets
-```
+---
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+### 7. Admin Panel – Approve / Reject / Suspend Services
+- **Detail**: Review all submitted services, take actions
+- **URL**:  
+  `/admin/service-cards`  
+  `/admin/service-cards/[id]`
