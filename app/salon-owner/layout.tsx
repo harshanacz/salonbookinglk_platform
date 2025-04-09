@@ -17,8 +17,10 @@ export default function SalonOwnerLayout({
     <div className="h-screen flex overflow-hidden">
       <SalonOwnerSidebar />
       <div className="flex-1 overflow-auto">
-        <main className="p-6">{children}</main>
-      </div>
+  <main className="p-6">{children}</main>
+</div>
+
+
       <Toaster />
     </div>
   );

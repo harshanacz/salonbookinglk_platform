@@ -27,6 +27,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 const complaints = [
   {
@@ -83,13 +93,48 @@ const complaints = [
 
 export default function ComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+  const [newStatus, setNewStatus] = useState<string>("");
+  const [complaintsData, setComplaintsData] = useState(complaints);
 
-  const filteredComplaints = complaints.filter(
+  const filteredComplaints = complaintsData.filter(
     (complaint) =>
       complaint.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       complaint.salon.toLowerCase().includes(searchQuery.toLowerCase()) ||
       complaint.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleStatusUpdate = () => {
+    if (!selectedComplaint) return;
+
+    setComplaintsData((prevComplaints) =>
+      prevComplaints.map((complaint) =>
+        complaint.id === selectedComplaint.id
+          ? { ...complaint, status: newStatus }
+          : complaint
+      )
+    );
+    
+    // You would typically make an API call here to update the status
+    console.log(`Updated complaint ${selectedComplaint.id} status to ${newStatus}`);
+    setIsStatusDialogOpen(false);
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "Open":
+        return "bg-red-100 text-red-800";
+      case "In Progress":
+        return "bg-yellow-100 text-yellow-800";
+      case "Resolved":
+        return "bg-green-100 text-green-800";
+      case "Closed":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -147,13 +192,7 @@ export default function ComplaintsPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={
-                        complaint.status === "Open"
-                          ? "bg-red-100 text-red-800"
-                          : complaint.status === "In Progress"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-green-100 text-green-800"
-                      }
+                      className={getStatusStyle(complaint.status)}
                     >
                       {complaint.status}
                     </Badge>
@@ -181,11 +220,22 @@ export default function ComplaintsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Update status</DropdownMenuItem>
-                        <DropdownMenuItem>Assign to staff</DropdownMenuItem>
-                        <DropdownMenuItem>Contact client</DropdownMenuItem>
-                        <DropdownMenuItem>Contact salon</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/complaints/view_complaint?id=${complaint.id}`}>
+                            View details
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedComplaint(complaint);
+                            setNewStatus(complaint.status);
+                            setIsStatusDialogOpen(true);
+                          }}
+                        >
+                          Update status
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>Notify client</DropdownMenuItem>
+                        <DropdownMenuItem>Notify salon</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -195,6 +245,47 @@ export default function ComplaintsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Complaint Status</DialogTitle>
+          </DialogHeader>
+          <div className="py-6">
+            <RadioGroup
+              value={newStatus}
+              onValueChange={setNewStatus}
+              className="space-y-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Open" id="open" />
+                <Label htmlFor="open">Open</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="In Progress" id="in-progress" />
+                <Label htmlFor="in-progress">In Progress</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Resolved" id="resolved" />
+                <Label htmlFor="resolved">Resolved</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="Closed" id="closed" />
+                <Label htmlFor="closed">Closed</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsStatusDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleStatusUpdate}>Update Status</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
