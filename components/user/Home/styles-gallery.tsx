@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 export function StylesGallery() {
-  // Sample gallery items with different sizes
   const galleryItems = [
     {
       id: 1,
