@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   BarChart3,
   KeyRound,
+  BellIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -44,6 +45,11 @@ const routes = [
     label: "Financial Summary",
     icon: BarChart3,
     href: "/user/financial-summary",
+  },
+  {
+    label: "Notifications",
+    icon: BellIcon,
+    href: "/user/notifications",
   },
   {
     label: "My Favorites",
