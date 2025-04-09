@@ -51,3 +51,31 @@
 - **URL**:  
   `/admin/service-cards`  
   `/admin/service-cards/[id]`
+
+  ## ✅ Booking Flow
+  Nirasha
+
+ 1. Select Service
+Details: When selecting a service, it displays available services.
+URL: service/[id]/available-services
+
+2. Select Time Slot
+Details:
+Select professional
+Select date
+Select timeslot
+URL: service/[id]/time
+
+3. Confirm Booking
+Details:
+Select payment method
+Confirm booking
+URL: service/[id]/confirm
+
+4. Payment Flow (if "Pay via Credit/Debit Card" is selected)
+Navigate to Add or Select Payment Card
+URL: user/payments/add-card/payment-card
+
+5. After Confirmation
+Redirect to User Appointments Page
+URL: user/booking/user-appointments
