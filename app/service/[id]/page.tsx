@@ -164,7 +164,7 @@ export default function ServicePage({ params }: ServicePageProps) {
                 <div className="text-2xl font-bold mb-4">LKR {service.price}.00</div>
               </div>
               <div className="space-y-3">
-                <Link href={`/service/${params.id}/book`}>
+                <Link href={`/service/${params.id}/available-services`}>
                   <Button className="w-full bg-purple-600 hover:bg-purple-700">Book now</Button>
                 </Link>
                 <div className="flex gap-2">
@@ -244,7 +244,7 @@ export default function ServicePage({ params }: ServicePageProps) {
               <div className="text-2xl font-bold mb-4">LKR {service.price}.00</div>
             </div>
             <div className="space-y-3">
-              <Link href={`/service/${params.id}/book`}>
+              <Link href={`/service/${params.id}/available-services`}>
                 <Button className="w-full bg-purple-600 hover:bg-purple-700">Book now</Button>
               </Link>
               <div className="flex gap-2">
