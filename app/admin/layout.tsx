@@ -2,9 +2,6 @@ import type React from "react";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 
-
-
-
 export default function AdminLayout({
   children,
 }: Readonly<{
