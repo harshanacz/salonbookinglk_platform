@@ -3,13 +3,12 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-export default function AddCard() {
+export const AddCard = () => {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-purple-50 p-6 flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-6">Payment Method</h1>
-      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-lg flex flex-col items-center">
+    <div className="w-full max-w-lg mx-auto">
+      <div className="bg-white shadow-md rounded-lg p-8 w-full flex flex-col items-center">
         <div className="bg-gray-200 p-4 rounded-md mb-6 w-full flex justify-center">
           <Image
             src="/card-image.png"
@@ -80,4 +79,4 @@ export default function AddCard() {
       </div>
     </div>
   );
-}
+}; 

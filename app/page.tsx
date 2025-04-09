@@ -7,11 +7,11 @@ import { Search, MapPin } from "lucide-react";
 import Image from "next/image";
 import { ServiceCard } from "@/components/service-card";
 import { CategoryButton } from "@/components/category-button";
-import { PromoBanner } from "@/components/user/Home/promo-banner";
-import { StylesGallery } from "@/components/user/Home/styles-gallery";
-import { UserTypeCards } from "@/components/user/Home/user-type-cards";
+import { PromoBanner } from "@/components/user/home/promo-banner";
+import { StylesGallery } from "@/components/user/home/styles-gallery";
+import { UserTypeCards } from "@/components/user/home/user-type-cards";
 import { useRouter } from "next/navigation";
-import HeroSection from "@/components/user/Home/hero-section";
+import HeroSection from "@/components/user/home/hero-section";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // ... (keep existing imports and data)
@@ -121,7 +121,7 @@ export default function Home() {
       </section>
 
       {/* Promo Banner */}
-      <PromoBanner /> 
+      <PromoBanner />
 
       {/* Top Rated */}
       <section className="container mx-auto px-4 py-10">
@@ -130,7 +130,7 @@ export default function Home() {
           {popularServices.map((service) => (
             <ServiceCard key={service.id} service={service} />
           ))}
-        </div> 
+        </div>
       </section>
 
       {/* User Type Cards */}
@@ -141,7 +141,7 @@ export default function Home() {
         <h2 className="text-2xl font-bold mb-6">
           New styles publish by salons
         </h2>
-        <StylesGallery /> 
+        <StylesGallery />
       </section>
     </div>
   );
