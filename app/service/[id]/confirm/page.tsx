@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import SalonCard from "@/components/booking/SalonCard";
+import BookingNavigation from "@/components/booking/BookingNavigation";
 
 interface Service {
   id: number;
@@ -23,6 +24,13 @@ interface Salon {
   isOpen?: boolean;
   address?: string;
   mapLink?: string;
+}
+
+interface CardDetails {
+  id: number | null;
+  type: string;
+  lastFour: string;
+  holder: string;
 }
 
 const availableSalons: Salon[] = [
@@ -61,11 +69,32 @@ const ConfirmPage = () => {
   ]);
   const [selectedSalon, setSelectedSalon] = useState<Salon>(availableSalons[0]);
   const [paymentMethod, setPaymentMethod] = useState<"venue" | "card">("venue");
-  const [selectedProfessional, setSelectedProfessional] =
-    useState("Sarah Johnson");
+  const [selectedProfessional, setSelectedProfessional] = useState("Sarah Johnson");
   const [selectedDate, setSelectedDate] = useState("15"); // Assuming day of month
   const [selectedTime, setSelectedTime] = useState("2:30 PM");
+  const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
+  
   const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
+
+  // Check for card details in URL params on component mount
+  useEffect(() => {
+    const cardId = searchParams.get('cardId');
+    const cardType = searchParams.get('cardType');
+    const cardLastFour = searchParams.get('cardLastFour');
+    const cardHolder = searchParams.get('cardHolder');
+    
+    if (cardId && cardType && cardLastFour && cardHolder) {
+      setSelectedCard({
+        id: parseInt(cardId),
+        type: cardType,
+        lastFour: cardLastFour,
+        holder: cardHolder
+      });
+      setPaymentMethod("card");
+    }
+  }, [searchParams]);
 
   const totalPrice = selectedServices.reduce(
     (sum, service) => sum + service.price,
@@ -84,36 +113,30 @@ const ConfirmPage = () => {
     setPaymentMethod(method);
 
     // If card payment is selected, navigate to payment cards page
-    if (method === "card") {
-      router.push("/payments/paymentCards");
-    }
-  };
-  const handleContinue = () => {
-    // If venue payment is selected, proceed with booking confirmation
-    if (paymentMethod === "venue") {
-      router.push("/booking-confirmed");
-    } else {
-      // For card payments, navigate to payment cards page
-      router.push("/payments/paymentCards");
+    if (method === "card" && !selectedCard) {
+      router.push("/user/payments/payment-cards");
     }
   };
   
+  const handleContinue = () => {
+    // Corrected navigation logic based on payment method
+    if (paymentMethod === "venue") {
+      // If paying at venue, navigate to user appointments page
+      router.push("/user/booking/user-appointments");
+    } else if (paymentMethod === "card") {
+      if (selectedCard) {
+        // If card is selected, navigate to payment successful page
+        router.push("/user/booking/payment-success");
+      } else {
+        // If no card is selected yet, navigate to payment cards page
+        router.push("/user/payments/payment-cards");
+      }
+    }
+  };
+
   return (
     <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
-      <nav className="text-gray-600 mb-4 mt-5">
-        <Link href="/services" className="text-gray-500 hover:underline pl-3">
-          Services
-        </Link>{" "}
-        {" > "}
-        <Link
-          href="/services"
-          className="text-gray-500 hover:underline pl-3 pr-3"
-        >
-          Time
-        </Link>{" "}
-        {" > "}
-        <span className="text-black font-semibold pr-3">Confirm</span>
-      </nav>
+      <BookingNavigation salonId={Number(params.id || 1)} />
 
       <h1 className="pl-6 text-2xl font-bold mb-4">Review and Confirm</h1>
 
@@ -128,7 +151,7 @@ const ConfirmPage = () => {
                   ? "border-purple-500 bg-purple-100"
                   : "border-gray-300"
               }`}
-              onClick={() => setPaymentMethod("venue")}
+              onClick={() => handlePaymentMethodChange("venue")}
             >
               🏠 Pay at venue
             </button>
@@ -143,6 +166,27 @@ const ConfirmPage = () => {
               💳 Pay via Credit/Debit Card
             </button>
           </div>
+
+          {/* Selected Card Details (if any) */}
+          {paymentMethod === "card" && selectedCard && (
+            <div className="mt-2 p-3 border border-purple-200 rounded-lg bg-purple-50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="text-sm font-medium">Selected Card</h4>
+                  <p className="text-gray-600">
+                    {selectedCard.type} ending in {selectedCard.lastFour}
+                  </p>
+                  <p className="text-sm text-gray-500">{selectedCard.holder}</p>
+                </div>
+                <button 
+                  className="text-sm text-purple-600 hover:underline"
+                  onClick={() => router.push("/user/payments/payment-cards")}
+                >
+                  Change
+                </button>
+              </div>
+            </div>
+          )}
 
           <h3 className="font-semibold">Special Notice</h3>
           <p className="text-gray-600 text-sm">
@@ -175,7 +219,18 @@ const ConfirmPage = () => {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onContinue={handleContinue}
-          buttonText="Confirm Booking"
+          buttonText={
+            paymentMethod === "venue" 
+              ? "Confirm Booking" 
+              : selectedCard 
+                ? "Confirm Payment & Booking" 
+                : "Select Payment Card"
+          }
+          paymentMethod={paymentMethod}
+          cardDetails={selectedCard ? {
+            type: selectedCard.type,
+            lastFour: selectedCard.lastFour
+          } : undefined}
         />
       </div>
     </div>

@@ -19,6 +19,9 @@ interface Appointment {
   isWalkIn?: boolean;
   customerName?: string;
   notes?: string;
+  isBlocked?: boolean;
+  blockReason?: string;
+  blockDuration?: string;
 }
 
 interface Service {
@@ -139,6 +142,9 @@ export default function AppointmentsPage() {
   const [walkInNotes, setWalkInNotes] = useState("");
   const [currentDate, setCurrentDate] = useState("Monday 9th Aug"); // Current date for demo
   const [showBlockedTimeModal, setShowBlockedTimeModal] = useState(false);
+  const [blockDuration, setBlockDuration] = useState("15");
+  const [blockReason, setBlockReason] = useState("break");
+  const [blockNotes, setBlockNotes] = useState("");
   const [contextMenu, setContextMenu] = useState<ContextMenuPosition>({
     show: false,
     x: 0,
@@ -199,6 +205,9 @@ export default function AppointmentsPage() {
   }) => {
     setContextMenu({ ...contextMenu, show: false });
     setWalkInData(data);
+    setBlockDuration("15");
+    setBlockReason("break");
+    setBlockNotes("");
     setShowBlockedTimeModal(true);
   };
 
@@ -254,6 +263,42 @@ export default function AppointmentsPage() {
 
     setAllAppointments([...allAppointments, newAppointment]);
     setShowWalkInModal(false);
+  };
+
+  // New function to handle blocked time
+  const handleBlockTime = () => {
+    const startTime = walkInData.time;
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+
+    // Calculate end time based on block duration
+    const durationMinutes = parseInt(blockDuration);
+    let endHour = startHour;
+    let endMinute = startMinute + durationMinutes;
+
+    if (endMinute >= 60) {
+      endHour += Math.floor(endMinute / 60);
+      endMinute = endMinute % 60;
+    }
+
+    // Format the time range
+    const formattedEndHour = endHour.toString().padStart(2, "0");
+    const formattedEndMinute = endMinute.toString().padStart(2, "0");
+    const timeRange = `${startTime}-${formattedEndHour}:${formattedEndMinute}`;
+
+    const newBlockedTime: Appointment = {
+      id: Date.now(),
+      worker: walkInData.worker,
+      time: timeRange,
+      service: `Blocked: ${blockReason}`,
+      color: "bg-gray-500", // Gray color for blocked times
+      isBlocked: true,
+      blockReason: blockReason,
+      blockDuration: blockDuration,
+      notes: blockNotes,
+    };
+
+    setAllAppointments([...allAppointments, newBlockedTime]);
+    setShowBlockedTimeModal(false);
   };
 
   const formatDate = (date: string) => {
@@ -391,7 +436,11 @@ export default function AppointmentsPage() {
                       >
                         {appointment && (
                           <div
-                            className={`absolute w-full px-1 py-0.5 text-white rounded text-xs ${appointment.color} cursor-pointer z-10 truncate`}
+                            className={`absolute w-full px-1 py-0.5 ${
+                              appointment.isBlocked ? "text-white" : "text-white"
+                            } rounded text-xs ${
+                              appointment.color
+                            } cursor-pointer z-10 truncate`}
                           >
                             {appointment.time} {appointment.service}
                             {appointment.isWalkIn && (
@@ -487,78 +536,128 @@ export default function AppointmentsPage() {
             </button>
 
             <div className="flex flex-col h-full overflow-auto">
-              {/* Profile Section */}
-              <div className="bg-purple-50 p-6 flex flex-col items-center border-b">
-                <img
-                  src="/images/profile.jpg"
-                  alt="Profile"
-                  className="w-16 h-16 rounded-full border"
-                />
-                <h3 className="text-lg font-semibold mt-2">
-                  {selectedAppointment.customerName || "Jack Deo"}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {selectedAppointment.isWalkIn
-                    ? "Walk-in Customer"
-                    : "Jack@gmail.com"}
-                </p>
-                <button className="mt-3 text-purple-600 underline">
-                  View Profile
-                </button>
-                <div className="mt-4 text-xs text-gray-600 space-y-1">
-                  <p>📅 Created: 17 Dec 2024</p>
-                  <p>➕ Add pronouns</p>
-                  <p>➕ Add date of birth</p>
-                </div>
-              </div>
+              {selectedAppointment.isBlocked ? (
+                // Blocked Time View
+                <div className="p-6 flex-1">
+                  <h2 className="text-xl font-semibold">Blocked Time</h2>
+                  <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+                    <p>
+                      <span className="font-semibold">Staff:</span>{" "}
+                      {selectedAppointment.worker}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Time:</span>{" "}
+                      {selectedAppointment.time}
+                    </p>
+                    <p>
+                      <span className="font-semibold">Reason:</span>{" "}
+                      {selectedAppointment.blockReason}
+                    </p>
+                    {selectedAppointment.notes && (
+                      <p>
+                        <span className="font-semibold">Notes:</span>{" "}
+                        {selectedAppointment.notes}
+                      </p>
+                    )}
+                  </div>
 
-              {/* Appointment Details Section */}
-              <div className="p-6 flex-1">
-                <h2 className="text-xl font-semibold">Appointment Details</h2>
-                <div className="mt-2">
-                  <select className="w-full border rounded-lg px-3 py-2 bg-gray-100">
-                    <option>Booked</option>
-                    <option>Completed</option>
-                    <option>Canceled</option>
-                  </select>
-                </div>
-
-                {/* Services */}
-                <div className="mt-4">
-                  <h3 className="font-semibold">Services</h3>
-                  <div className="mt-2 p-3 bg-gray-100 rounded-lg">
-                    <p className="text-sm font-medium">
-                      {selectedAppointment.service}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {selectedAppointment.time} - {selectedAppointment.worker}
-                    </p>
-                    <p className="text-sm font-semibold mt-1">
-                      {selectedAppointment.price}
-                    </p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => {
+                        setAllAppointments(
+                          allAppointments.filter(
+                            (a) => a.id !== selectedAppointment.id
+                          )
+                        );
+                        setIsOpen(false);
+                      }}
+                      className="px-4 py-2 bg-red-500 text-white rounded"
+                    >
+                      Delete Blocked Time
+                    </button>
                   </div>
                 </div>
-
-                {/* Notes (only for walk-ins) */}
-                {selectedAppointment.isWalkIn && selectedAppointment.notes && (
-                  <div className="mt-4">
-                    <h3 className="font-semibold">Notes</h3>
-                    <div className="mt-2 p-3 bg-gray-100 rounded-lg">
-                      <p className="text-sm">{selectedAppointment.notes}</p>
+              ) : (
+                // Regular Appointment View
+                <>
+                  {/* Profile Section */}
+                  <div className="bg-purple-50 p-6 flex flex-col items-center border-b">
+                    <img
+                      src="/images/profile.jpg"
+                      alt="Profile"
+                      className="w-16 h-16 rounded-full border"
+                    />
+                    <h3 className="text-lg font-semibold mt-2">
+                      {selectedAppointment.customerName || "Jack Deo"}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {selectedAppointment.isWalkIn
+                        ? "Walk-in Customer"
+                        : "Jack@gmail.com"}
+                    </p>
+                    <button className="mt-3 text-purple-600 underline">
+                      View Profile
+                    </button>
+                    <div className="mt-4 text-xs text-gray-600 space-y-1">
+                      <p>📅 Created: 17 Dec 2024</p>
+                      <p>➕ Add pronouns</p>
+                      <p>➕ Add date of birth</p>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Bottom button section */}
-              <div className="p-6 border-t mt-auto">
-                <button
-                  onClick={handleCheckout}
-                  className="w-full p-3 bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white font-semibold rounded-lg"
-                >
-                  Checkout
-                </button>
-              </div>
+                  {/* Appointment Details Section */}
+                  <div className="p-6 flex-1">
+                    <h2 className="text-xl font-semibold">
+                      Appointment Details
+                    </h2>
+                    <div className="mt-2">
+                      <select className="w-full border rounded-lg px-3 py-2 bg-gray-100">
+                        <option>Booked</option>
+                        <option>Completed</option>
+                        <option>Canceled</option>
+                      </select>
+                    </div>
+
+                    {/* Services */}
+                    <div className="mt-4">
+                      <h3 className="font-semibold">Services</h3>
+                      <div className="mt-2 p-3 bg-gray-100 rounded-lg">
+                        <p className="text-sm font-medium">
+                          {selectedAppointment.service}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {selectedAppointment.time} -{" "}
+                          {selectedAppointment.worker}
+                        </p>
+                        <p className="text-sm font-semibold mt-1">
+                          {selectedAppointment.price}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Notes (only for walk-ins) */}
+                    {selectedAppointment.isWalkIn &&
+                      selectedAppointment.notes && (
+                        <div className="mt-4">
+                          <h3 className="font-semibold">Notes</h3>
+                          <div className="mt-2 p-3 bg-gray-100 rounded-lg">
+                            <p className="text-sm">{selectedAppointment.notes}</p>
+                          </div>
+                        </div>
+                      )}
+                  </div>
+
+                  {/* Bottom button section */}
+                  <div className="p-6 border-t mt-auto">
+                    <button
+                      onClick={handleCheckout}
+                      className="w-full p-3 bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white font-semibold rounded-lg"
+                    >
+                      Checkout
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </>
@@ -634,7 +733,7 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Blocked Time Modal (placeholder) */}
+      {/* Blocked Time Modal (implemented) */}
       {showBlockedTimeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-md">
@@ -653,7 +752,11 @@ export default function AppointmentsPage() {
 
             <div className="mt-4">
               <label className="block mb-2">Duration (minutes)</label>
-              <select className="w-full p-2 border rounded">
+              <select 
+                className="w-full p-2 border rounded"
+                value={blockDuration}
+                onChange={(e) => setBlockDuration(e.target.value)}
+              >
                 <option value="15">15 minutes</option>
                 <option value="30">30 minutes</option>
                 <option value="45">45 minutes</option>
@@ -663,7 +766,11 @@ export default function AppointmentsPage() {
 
             <div className="mt-4">
               <label className="block mb-2">Reason</label>
-              <select className="w-full p-2 border rounded">
+              <select 
+                className="w-full p-2 border rounded"
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+              >
                 <option value="break">Break</option>
                 <option value="lunch">Lunch</option>
                 <option value="meeting">Meeting</option>
@@ -673,7 +780,11 @@ export default function AppointmentsPage() {
 
             <div className="mt-4">
               <label className="block mb-2">Notes</label>
-              <textarea className="w-full p-2 border rounded" />
+              <textarea 
+                className="w-full p-2 border rounded" 
+                value={blockNotes}
+                onChange={(e) => setBlockNotes(e.target.value)}
+              />
             </div>
 
             <div className="flex justify-end mt-6 gap-2">
@@ -685,10 +796,7 @@ export default function AppointmentsPage() {
               </button>
               <button
                 className="px-4 py-2 bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white rounded"
-                onClick={() => {
-                  alert("Blocked time would be saved here");
-                  setShowBlockedTimeModal(false);
-                }}
+                onClick={handleBlockTime}
               >
                 Block Time
               </button>

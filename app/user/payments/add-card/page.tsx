@@ -2,9 +2,42 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function AddCard() {
   const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    cardNumber: "",
+    expiry: "",
+    ccv: "",
+  });
+
+  const isFormValid =
+    formData.name &&
+    formData.cardNumber &&
+    formData.expiry &&
+    formData.ccv;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleAddCard = () => {
+    if (!isFormValid) {
+      alert("Please fill in all the fields.");
+      return;
+    }
+
+    // You could add more validation here (e.g., card number format, expiry format)
+
+    // Navigate to payment page
+    router.push("/user/payments/payment-cards");
+  };
 
   return (
     <div className="min-h-screen bg-purple-50 p-6 flex flex-col items-center">
@@ -18,15 +51,18 @@ export default function AddCard() {
             height={150}
           />
         </div>
-        <form className="w-full space-y-4">
+        <form className="w-full space-y-4" onSubmit={(e) => e.preventDefault()}>
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Name on card:
             </label>
             <input
+              name="name"
               type="text"
               className="mt-1 w-full p-2 border rounded-md"
               placeholder="Esther Howard"
+              value={formData.name}
+              onChange={handleChange}
             />
           </div>
           <div>
@@ -34,9 +70,12 @@ export default function AddCard() {
               Card number:
             </label>
             <input
+              name="cardNumber"
               type="text"
               className="mt-1 w-full p-2 border rounded-md"
               placeholder="1234-5678-9012-3456"
+              value={formData.cardNumber}
+              onChange={handleChange}
             />
           </div>
           <div className="flex space-x-4">
@@ -45,9 +84,12 @@ export default function AddCard() {
                 Expiry date:
               </label>
               <input
+                name="expiry"
                 type="text"
                 className="mt-1 w-full p-2 border rounded-md"
                 placeholder="MM / YY"
+                value={formData.expiry}
+                onChange={handleChange}
               />
             </div>
             <div className="flex-1">
@@ -55,9 +97,12 @@ export default function AddCard() {
                 CCV:
               </label>
               <input
+                name="ccv"
                 type="text"
                 className="mt-1 w-full p-2 border rounded-md"
                 placeholder="•••"
+                value={formData.ccv}
+                onChange={handleChange}
               />
             </div>
           </div>
@@ -71,8 +116,13 @@ export default function AddCard() {
           </div>
           <button
             type="button"
-            className="w-full bg-purple-700 text-white py-2 rounded-md mt-4 hover:bg-purple-700"
-            onClick={() => router.push("/payments")}
+            className={`w-full text-white py-2 rounded-md mt-4 ${
+              isFormValid
+                ? "bg-purple-700 hover:bg-purple-800"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            onClick={handleAddCard}
+            disabled={!isFormValid}
           >
             Add Card
           </button>

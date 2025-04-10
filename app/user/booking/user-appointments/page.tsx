@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const AppointmentSummary = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const router = useRouter();
 
   const userName = "Naduni"; // Replace with actual user data if available
   const bookedDate = "Monday, March 18"; // Replace with dynamic date if available
@@ -34,6 +36,10 @@ const AppointmentSummary = () => {
   ];
 
   const total = overview.reduce((sum, service) => sum + service.price, 0);
+
+  const handleCancelAppointment = () => {
+    router.push("/user/booking/cancel-appointments");
+  };
 
   return (
     <div className="p-7 pl-24 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto scrollbar-hide">
@@ -131,17 +137,22 @@ const AppointmentSummary = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
             <h2 className="text-xl font-bold">Manage appointment</h2>
             {overview.map((service, index) => (
-        <div key={index} className="flex items-center gap-3 mt-4 border-b pb-2 last:border-0">
-          <div className="flex-1">
-            <h3 className="font-semibold">{service.name}</h3>
-            <p className="text-gray-500 text-sm">{service.duration}</p>
-          </div>
-          <p className="font-bold">LKR {service.price.toLocaleString()}</p>
-        </div>
-      ))}
+              <div key={index} className="flex items-center gap-3 mt-4 border-b pb-2 last:border-0">
+                <div className="flex-1">
+                  <h3 className="font-semibold">{service.name}</h3>
+                  <p className="text-gray-500 text-sm">{service.duration}</p>
+                </div>
+                <p className="font-bold">LKR {service.price.toLocaleString()}</p>
+              </div>
+            ))}
             <div className="mt-4 space-y-2">
               <button className="w-full p-3 border rounded-lg bg-gray-100">📅 Reschedule appointment</button>
-              <button className="w-full p-3 border rounded-lg bg-gray-100">❌ Cancel appointment</button>
+              <button 
+                className="w-full p-3 border rounded-lg bg-gray-100"
+                onClick={handleCancelAppointment}
+              >
+                ❌ Cancel appointment
+              </button>
             </div>
             <button 
               className="w-full p-3 border rounded-lg bg-purple-500 text-white mt-4"
