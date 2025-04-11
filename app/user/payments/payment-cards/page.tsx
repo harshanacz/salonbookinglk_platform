@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -31,6 +31,20 @@ export default function Payments() {
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const router = useRouter();
 
+  // Load cards from localStorage on component mount
+  useEffect(() => {
+    const savedCards = localStorage.getItem("paymentCards");
+    if (savedCards) {
+      const parsedCards = JSON.parse(savedCards);
+      // Merge with default cards, avoiding duplicates
+      setCards(prevCards => {
+        const existingIds = new Set(prevCards.map(card => card.id));
+        const newCards = parsedCards.filter((card: Card) => !existingIds.has(card.id));
+        return [...prevCards, ...newCards];
+      });
+    }
+  }, []);
+
   const handleSelectCard = (id: number) => {
     setSelectedCardId(id);
   };
@@ -40,6 +54,32 @@ export default function Payments() {
       const selectedCard = cards.find(card => card.id === selectedCardId);
       // Pass card info via URL query params
       router.push(`/service/[id]/confirm?cardId=${selectedCardId}&cardType=${selectedCard?.type}&cardLastFour=${selectedCard?.lastFour}&cardHolder=${selectedCard?.holder}`);
+    }
+  };
+
+  const handleEditCard = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card selection
+    // In a real app, we would navigate to an edit page
+    alert(`Edit card ${id}`);
+  };
+
+  const handleDeleteCard = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card selection
+    
+    // Remove from state
+    setCards(cards.filter(card => card.id !== id));
+    
+    // Remove from localStorage
+    const savedCards = localStorage.getItem("paymentCards");
+    if (savedCards) {
+      const parsedCards = JSON.parse(savedCards);
+      const updatedCards = parsedCards.filter((card: Card) => card.id !== id);
+      localStorage.setItem("paymentCards", JSON.stringify(updatedCards));
+    }
+    
+    // If the deleted card was selected, clear selection
+    if (selectedCardId === id) {
+      setSelectedCardId(null);
     }
   };
 
@@ -65,8 +105,18 @@ export default function Payments() {
               <Image src={card.logo} alt="Card Logo" width={40} height={40} />
             </div>
             <div className="border-t mt-2 pt-2 flex justify-between text-purple-600 text-sm">
-              <button className="hover:underline">Edit</button>
-              <button className="hover:underline">Delete</button>
+              <button 
+                className="hover:underline"
+                onClick={(e) => handleEditCard(card.id, e)}
+              >
+                Edit
+              </button>
+              <button 
+                className="hover:underline"
+                onClick={(e) => handleDeleteCard(card.id, e)}
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
