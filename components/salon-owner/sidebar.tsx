@@ -35,11 +35,6 @@ const sidebarItems = [
     icon: UserCog,
   },
   {
-    title: "Appointments",
-    href: "/salon-owner/appointments",
-    icon: CalendarDays,
-  },
-  {
     title: "Manage Appointments",
     href: "/salon-owner/manage-appointments",
     icon: CalendarDays,
