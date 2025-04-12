@@ -56,11 +56,7 @@ const routes = [
     icon: Heart,
     href: "/user/favorites",
   },
-  {
-    label: "Add Complaint",
-    icon: AlertTriangle,
-    href: "/user/add-complaint",
-  },
+  
   {
     label: "Settings",
     icon: Settings,
