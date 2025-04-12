@@ -98,9 +98,7 @@ export default function AppointmentsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Appointments</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button className="w-full sm:w-auto">Add Appointment</Button>
-        </div>
+        
       </div>
 
       <Card>
