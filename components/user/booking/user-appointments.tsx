@@ -65,7 +65,7 @@ export const UserAppointments = () => {
               </div>
               <div className="flex flex-col items-start">
                 <button className="text-black underline m-4 border-2 rounded-lg border-black p-2">Review</button>
-                <Link href="/book" className="text-black underline">Complain</Link>
+                <Link href="/user/add-complaint" className="text-black underline">Complain</Link>
               </div>
             </div>
           ))}
