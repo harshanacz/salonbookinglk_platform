@@ -1,22 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter ,useParams} from "next/navigation";
-import SalonCard from "@/components/booking/SalonCard";
-import BookingNavigation from "@/components/booking/BookingNavigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import SalonCard from "@/components/booking/salon-card";
+import BookingNavigation from "@/components/booking/booking-navigation";
 
+// Define Service interface - making it compatible with the format from SelectTime
 interface Service {
-  id: number;
+  id: string;
   name: string;
   price: number;
   duration: string;
-  time?: string;
+  timeSlot?: string;
   professional?: string;
 }
 
+// Define Salon interface
 interface Salon {
-  id: number;
+  id?: number;
   name: string;
   rating: number;
   image: string;
@@ -26,82 +28,138 @@ interface Salon {
   mapLink?: string;
 }
 
-const availableSalons: Salon[] = [
-  {
-    id: 1,
-    name: "Salon Dmesh",
-    rating: 4.9,
-    image: "/Dmesh.jpg",
-    closingTime: "8:00 PM",
-    isOpen: true,
-    address: "123 Main St, New York",
-    mapLink: "https://maps.google.com",
-  },
-  { id: 2, name: "Style Hub", rating: 4.7, image: "/images/StyleHub.jpg" },
-  { id: 3, name: "Elite Salon", rating: 4.8, image: "/images/EliteSalon.jpg" },
-];
+interface CardDetails {
+  id: number | null;
+  type: string;
+  lastFour: string;
+  holder: string;
+}
+
+// Fallback salon data
+const defaultSalon: Salon = {
+  id: 1,
+  name: "Salon Dmesh",
+  rating: 4.9,
+  image: "/Dmesh.jpg",
+  closingTime: "8:00 PM",
+  isOpen: true,
+  address: "123 Main St, New York",
+  mapLink: "https://maps.google.com",
+};
 
 const ConfirmPage = () => {
-  const [selectedServices, setSelectedServices] = useState<Service[]>([
-    {
-      id: 1,
-      name: "Haircut & Styling",
-      price: 65,
-      duration: "45 min",
-      time: "45 min",
-      professional: "Sarah Johnson",
-    },
-    {
-      id: 2,
-      name: "Hair Coloring",
-      price: 85,
-      duration: "60 min",
-      time: "60 min",
-      professional: "Michael Chen",
-    },
-  ]);
-  const [selectedSalon, setSelectedSalon] = useState<Salon>(availableSalons[0]);
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [selectedSalon, setSelectedSalon] = useState<Salon>(defaultSalon);
   const [paymentMethod, setPaymentMethod] = useState<"venue" | "card">("venue");
-  const [selectedProfessional, setSelectedProfessional] =
-    useState("Sarah Johnson");
-  const [selectedDate, setSelectedDate] = useState("15"); // Assuming day of month
-  const [selectedTime, setSelectedTime] = useState("2:30 PM");
+  const [selectedProfessional, setSelectedProfessional] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
+  
   const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
 
-  const totalPrice = selectedServices.reduce(
-    (sum, service) => sum + service.price,
-    0
-  );
+  // Load booking data from sessionStorage
+  useEffect(() => {
+    try {
+      // Retrieve services
+      const servicesData = sessionStorage.getItem('bookingServices');
+      if (servicesData) {
+        setSelectedServices(JSON.parse(servicesData));
+      }
+
+      // Retrieve salon info
+      const salonData = sessionStorage.getItem('salonInfo');
+      if (salonData) {
+        setSelectedSalon(JSON.parse(salonData));
+      }
+
+      // Retrieve other booking details
+      setSelectedProfessional(sessionStorage.getItem('bookingProfessional') || "");
+      setSelectedDate(sessionStorage.getItem('bookingDate') || "");
+      setSelectedTime(sessionStorage.getItem('bookingTime') || "");
+    } catch (error) {
+      console.error("Error loading booking data:", error);
+    }
+  }, []);
+
+  // Check for card details in URL params on component mount
+  useEffect(() => {
+    const cardId = searchParams.get('cardId');
+    const cardType = searchParams.get('cardType');
+    const cardLastFour = searchParams.get('cardLastFour');
+    const cardHolder = searchParams.get('cardHolder');
+    
+    if (cardId && cardType && cardLastFour && cardHolder) {
+      setSelectedCard({
+        id: parseInt(cardId),
+        type: cardType,
+        lastFour: cardLastFour,
+        holder: cardHolder
+      });
+      setPaymentMethod("card");
+    }
+  }, [searchParams]);
+
+  const calculateTotal = () => {
+    const total = selectedServices.reduce(
+      (sum, service) => sum + service.price,
+      0
+    );
+    return `LKR ${total.toLocaleString()}`;
+  };
 
   // Format services for SalonCard
   const formattedServices = selectedServices.map((service) => ({
     name: service.name,
-    time: service.time || service.duration,
-    professional: service.professional || "Staff",
-    price: `$${service.price}`,
+    time: service.timeSlot || service.duration,
+    professional: service.professional || selectedProfessional,
+    price: `LKR ${service.price.toLocaleString()}`,
   }));
 
   const handlePaymentMethodChange = (method: "venue" | "card") => {
     setPaymentMethod(method);
 
     // If card payment is selected, navigate to payment cards page
-    if (method === "card") {
-      router.push("/payments/paymentCards");
+    if (method === "card" && !selectedCard) {
+      router.push("/user/payments/payment-cards");
     }
   };
+  
   const handleContinue = () => {
-    // If venue payment is selected, proceed with booking confirmation
+    // Store final booking data for access on appointment/payment pages
+    const finalBookingData = {
+      services: selectedServices,
+      salon: selectedSalon,
+      professional: selectedProfessional,
+      date: selectedDate,
+      time: selectedTime,
+      paymentMethod: paymentMethod,
+      totalAmount: calculateTotal(),
+      card: selectedCard
+    };
+    
+    sessionStorage.setItem('finalBookingData', JSON.stringify(finalBookingData));
+    
+    // Navigate based on payment method
     if (paymentMethod === "venue") {
-      router.push("/booking-confirmed");
-    } else {
-      // For card payments, navigate to payment cards page
-      router.push("/payments/paymentCards");
+      // If paying at venue, navigate to user appointments page
+      router.push("/user/booking/user-appointments");
+    } else if (paymentMethod === "card") {
+      if (selectedCard) {
+        // If card is selected, navigate to payment successful page
+        router.push("/user/booking/payment-success");
+      } else {
+        // If no card is selected yet, navigate to payment cards page
+        router.push("/user/payments/payment-cards");
+      }
     }
   };
+
   return (
     <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
-     
-     <BookingNavigation salonId={Number(useParams().id)}/>
+      <BookingNavigation salonId={Number(params.id || 1)} />
 
       <h1 className="pl-6 text-2xl font-bold mb-4">Review and Confirm</h1>
 
@@ -116,7 +174,7 @@ const ConfirmPage = () => {
                   ? "border-purple-500 bg-purple-100"
                   : "border-gray-300"
               }`}
-              onClick={() => setPaymentMethod("venue")}
+              onClick={() => handlePaymentMethodChange("venue")}
             >
               🏠 Pay at venue
             </button>
@@ -131,6 +189,27 @@ const ConfirmPage = () => {
               💳 Pay via Credit/Debit Card
             </button>
           </div>
+
+          {/* Selected Card Details (if any) */}
+          {paymentMethod === "card" && selectedCard && (
+            <div className="mt-2 p-3 border border-purple-200 rounded-lg bg-purple-50">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="text-sm font-medium">Selected Card</h4>
+                  <p className="text-gray-600">
+                    {selectedCard.type} ending in {selectedCard.lastFour}
+                  </p>
+                  <p className="text-sm text-gray-500">{selectedCard.holder}</p>
+                </div>
+                <button 
+                  className="text-sm text-purple-600 hover:underline"
+                  onClick={() => router.push("/user/payments/payment-cards")}
+                >
+                  Change
+                </button>
+              </div>
+            </div>
+          )}
 
           <h3 className="font-semibold">Special Notice</h3>
           <p className="text-gray-600 text-sm">
@@ -149,8 +228,9 @@ const ConfirmPage = () => {
         <SalonCard
           salonName={selectedSalon.name}
           services={formattedServices}
-          total={`$${totalPrice}`}
+          total={calculateTotal()}
           selectedSalon={{
+            
             image: selectedSalon.image,
             rating: selectedSalon.rating,
             closingTime: selectedSalon.closingTime,
@@ -163,7 +243,18 @@ const ConfirmPage = () => {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onContinue={handleContinue}
-          buttonText="Confirm Booking"
+          buttonText={
+            paymentMethod === "venue" 
+              ? "Confirm Booking" 
+              : selectedCard 
+                ? "Confirm Payment & Booking" 
+                : "Select Payment Card"
+          }
+          paymentMethod={paymentMethod}
+          cardDetails={selectedCard ? {
+            type: selectedCard.type,
+            lastFour: selectedCard.lastFour
+          } : undefined}
         />
       </div>
     </div>
