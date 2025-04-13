@@ -6,6 +6,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Settings } from "lucide-react"
+import Link from "next/link"
 
 export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -83,9 +84,11 @@ export default function SettingsPage() {
         </div>
 
         <div className="mt-24 flex justify-center">
+        <Link href="/user/settings/deactivate-account">
           <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600">
             Deactivate my account
           </Button>
+          </Link>
         </div>
       </div>
     </div>
