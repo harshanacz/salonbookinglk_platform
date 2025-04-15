@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import { X, Calendar, Users, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
