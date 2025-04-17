@@ -256,7 +256,7 @@ Nirasha
   - **Generate Complaint Reports**: Admin can generate reports showing complaint trends, resolved vs. pending complaints.
 - **URLs**:
   - `/admin/complaints` – Displays list of complaints.
-  - `/admin/complaints/[id]` – Opens specific complaint details.
+  - `/admin/view_complaint?id=1` – Opens specific complaint details.
 
 ---
 
