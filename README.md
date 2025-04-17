@@ -7,7 +7,7 @@
 ### 1. Home Screen (Before and After Sign-In)
 
 - **Before Sign-In**: General service listing (limited functionality)
-- **After Sign-In**: Personalized recommendations + past bookings on top
+- **After Sign-In**: Past bookings on top
 - **URL**: `/`
 
 ---
