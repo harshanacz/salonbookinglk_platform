@@ -171,7 +171,7 @@ if pay by card - URL: user/booking/payment-success
   - Peak Booking Hours
   - Popular Services Data
   - Staff Performance Summary
-- **URL**: `/seller/dashboard`
+- **URL**: `/salon-owner/dashboard`
 
 ---
 
@@ -182,7 +182,7 @@ if pay by card - URL: user/booking/payment-success
   - Total Appointments
   - Booking History
   - Amount Spent
-- **URL**: `/seller/dashboard/clients`
+- **URL**: `/salon-owner/dashboard/clients`
 
 ---
 
@@ -194,7 +194,7 @@ if pay by card - URL: user/booking/payment-success
   - Sales Breakdown
   - Staff Performance
 - **Options**: Download as **PDF/CSV (optional)**
-- **URL**: `/seller/dashboard/reports`
+- **URL**: `/salon-owner/dashboard/reports`
 
 ---
 
@@ -208,8 +208,8 @@ if pay by card - URL: user/booking/payment-success
     - If ongoing bookings → Cannot delete, but deactivate from new bookings.
     - Once bookings are completed, deletion is allowed.
 - **URLs**:
-  - `/seller/dashboard/staff` – Staff list
-  - `/seller/dashboard/staff/[id]` – Individual staff details
+  - `/salon-owner/dashboard/staff` – Staff list
+  - `/salon-owner/dashboard/staff/[id]` – Individual staff details
 
 ---
 
@@ -221,7 +221,7 @@ if pay by card - URL: user/booking/payment-success
 - **Logic**:
   - If a booking exists for the newly marked unavailable time, notify the owner.
   - Unavailable staff cannot be assigned to new bookings in those time slots.
-- **URL**: `/seller/dashboard/staff/availability`
+- **URL**: `/salon-owner/dashboard/staff/availability`
 
 ---
 
