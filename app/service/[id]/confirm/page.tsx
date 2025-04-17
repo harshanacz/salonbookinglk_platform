@@ -55,7 +55,7 @@ const ConfirmPage = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
-  
+
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -64,21 +64,23 @@ const ConfirmPage = () => {
   useEffect(() => {
     try {
       // Retrieve services
-      const servicesData = sessionStorage.getItem('bookingServices');
+      const servicesData = sessionStorage.getItem("bookingServices");
       if (servicesData) {
         setSelectedServices(JSON.parse(servicesData));
       }
 
       // Retrieve salon info
-      const salonData = sessionStorage.getItem('salonInfo');
+      const salonData = sessionStorage.getItem("salonInfo");
       if (salonData) {
         setSelectedSalon(JSON.parse(salonData));
       }
 
       // Retrieve other booking details
-      setSelectedProfessional(sessionStorage.getItem('bookingProfessional') || "");
-      setSelectedDate(sessionStorage.getItem('bookingDate') || "");
-      setSelectedTime(sessionStorage.getItem('bookingTime') || "");
+      setSelectedProfessional(
+        sessionStorage.getItem("bookingProfessional") || ""
+      );
+      setSelectedDate(sessionStorage.getItem("bookingDate") || "");
+      setSelectedTime(sessionStorage.getItem("bookingTime") || "");
     } catch (error) {
       console.error("Error loading booking data:", error);
     }
@@ -86,17 +88,17 @@ const ConfirmPage = () => {
 
   // Check for card details in URL params on component mount
   useEffect(() => {
-    const cardId = searchParams.get('cardId');
-    const cardType = searchParams.get('cardType');
-    const cardLastFour = searchParams.get('cardLastFour');
-    const cardHolder = searchParams.get('cardHolder');
-    
+    const cardId = searchParams.get("cardId");
+    const cardType = searchParams.get("cardType");
+    const cardLastFour = searchParams.get("cardLastFour");
+    const cardHolder = searchParams.get("cardHolder");
+
     if (cardId && cardType && cardLastFour && cardHolder) {
       setSelectedCard({
         id: parseInt(cardId),
         type: cardType,
         lastFour: cardLastFour,
-        holder: cardHolder
+        holder: cardHolder,
       });
       setPaymentMethod("card");
     }
@@ -120,13 +122,8 @@ const ConfirmPage = () => {
 
   const handlePaymentMethodChange = (method: "venue" | "card") => {
     setPaymentMethod(method);
-
-    // If card payment is selected, navigate to payment cards page
-    if (method === "card" && !selectedCard) {
-      router.push("/user/payments/payment-cards");
-    }
   };
-  
+
   const handleContinue = () => {
     // Store final booking data for access on appointment/payment pages
     const finalBookingData = {
@@ -137,23 +134,18 @@ const ConfirmPage = () => {
       time: selectedTime,
       paymentMethod: paymentMethod,
       totalAmount: calculateTotal(),
-      card: selectedCard
+      card: selectedCard,
     };
-    
-    sessionStorage.setItem('finalBookingData', JSON.stringify(finalBookingData));
-    
-    // Navigate based on payment method
+
+    sessionStorage.setItem(
+      "finalBookingData",
+      JSON.stringify(finalBookingData)
+    );
+
     if (paymentMethod === "venue") {
-      // If paying at venue, navigate to user appointments page
       router.push("/user/booking/user-appointments");
-    } else if (paymentMethod === "card") {
-      if (selectedCard) {
-        // If card is selected, navigate to payment successful page
-        router.push("/user/booking/payment-success");
-      } else {
-        // If no card is selected yet, navigate to payment cards page
-        router.push("/user/payments/payment-cards");
-      }
+    } else {
+      router.push("/user/booking/payment-success");
     }
   };
 
@@ -201,7 +193,7 @@ const ConfirmPage = () => {
                   </p>
                   <p className="text-sm text-gray-500">{selectedCard.holder}</p>
                 </div>
-                <button 
+                <button
                   className="text-sm text-purple-600 hover:underline"
                   onClick={() => router.push("/user/payments/payment-cards")}
                 >
@@ -230,7 +222,6 @@ const ConfirmPage = () => {
           services={formattedServices}
           total={calculateTotal()}
           selectedSalon={{
-            
             image: selectedSalon.image,
             rating: selectedSalon.rating,
             closingTime: selectedSalon.closingTime,
@@ -243,18 +234,16 @@ const ConfirmPage = () => {
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onContinue={handleContinue}
-          buttonText={
-            paymentMethod === "venue" 
-              ? "Confirm Booking" 
-              : selectedCard 
-                ? "Confirm Payment & Booking" 
-                : "Select Payment Card"
-          }
+          buttonText="Confirm Booking"
           paymentMethod={paymentMethod}
-          cardDetails={selectedCard ? {
-            type: selectedCard.type,
-            lastFour: selectedCard.lastFour
-          } : undefined}
+          cardDetails={
+            selectedCard
+              ? {
+                  type: selectedCard.type,
+                  lastFour: selectedCard.lastFour,
+                }
+              : undefined
+          }
         />
       </div>
     </div>

@@ -66,12 +66,10 @@
 - **Salon Owner SignUp URL**: /sign-up/salon-owner
 - **SignUp URL**: /sign-up/user
 
----
-
-### 2. Forgot password screen
-- **Detail**: user clicks forgot password
-- **URL**: `/user/forgot-password
-
+### 1. Forgot password screen
+- **URL**: /forgot-password - only include an email input
+- **Reset Password**: /reset-password - include new password and confirm password inputs
+- 
 ---
 
 ### 3. Profile screen
@@ -111,20 +109,14 @@
 
 ### 4. salon-owner change password screen
 **Detail**: owner can change the password
-- **URL**: `/salon-owner/settings/changePassword
+- **URL**: `/salon-owner/settings/change-password
 
 ---
 
 ### 5. salon-owner deactivate account screen
 **Detail**: owner can deactivate her account by providing email and password but the account can be deactivated only if the salon does not have any upcoming boookings and payments
-- **URL**: `/salon-owner/settings/deactivateAccount
+- **URL**: `/salon-owner/settings/deactivate-account
 
----
-
-### 6. Forgot password screen
-- **Detail**: salon owner clicks forgot password
-- **URL**: `/salon-owner/forgot-password
-  
 ---
 
 ### 7. Dashboard screen
@@ -149,7 +141,7 @@
 
  1. Select Service
 Details: When selecting a service, it displays available services.
-URL: service/[id]/available-services
+URL: service/[id]/time
 
 2. Select Time Slot
 Details:
