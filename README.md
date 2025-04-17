@@ -139,18 +139,14 @@
   ## ✅ Booking Flow
   Nirasha
 
- 1. Select Service
-Details: When selecting a service, it displays available services.
-URL: service/[id]/time
-
-2. Select Time Slot
+1. Select Time Slot
 Details:
 Select professional
 Select date
 Select timeslot
 URL: service/[id]/time
 
-3. Confirm Booking
+2. Confirm Booking
 Details:
 Select payment method
 Confirm booking
