@@ -11,7 +11,7 @@ import { Facebook, Mail } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
-export default function SalonOwnerSignInPage() {
+export default function JoinPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -22,8 +22,8 @@ export default function SalonOwnerSignInPage() {
     setTimeout(() => {
       setIsLoading(false);
       toast({
-        title: "Welcome back, Salon Owner!",
-        description: "You have successfully signed in.",
+        title: "Account created",
+        description: "Welcome to SalonBooking.lk!",
       });
     }, 2000);
   };
@@ -37,12 +37,12 @@ export default function SalonOwnerSignInPage() {
               SalonBooking.lk
             </Link>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">
-              Salon Owner Login
+              Create your account
             </h2>
             <p className="mt-2 text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link href="/salon-owner/join" className="text-primary hover:underline">
-                Create one now
+              Or{" "}
+              <Link href="/sign-in" className="text-primary hover:underline">
+                sign in to your account
               </Link>
             </p>
           </div>
@@ -72,6 +72,14 @@ export default function SalonOwnerSignInPage() {
             <div className="mt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -81,24 +89,16 @@ export default function SalonOwnerSignInPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
-                    <Link
-                      href="/salon-owner/forgot-password"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     required
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? "Creating account..." : "Create account"}
                 </Button>
               </form>
             </div>
@@ -108,7 +108,7 @@ export default function SalonOwnerSignInPage() {
       <div className="hidden lg:block relative w-0 flex-1">
         <Image
           src="/placeholder.svg?height=1000&width=1600"
-          alt="Sign in to SalonBooking.lk"
+          alt="Join SalonBooking.lk"
           fill
           className="absolute inset-0 h-full w-full object-cover"
         />

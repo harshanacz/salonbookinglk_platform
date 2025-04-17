@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+// Metadata for the page, used by Next.js for SEO and browser tab info
 export const metadata: Metadata = {
   title: "Deactivate Account",
   description: "Deactivate your account",
@@ -16,12 +17,17 @@ export const metadata: Metadata = {
 export default function DeactivateAccountPage() {
   return (
     <div className="container max-w-md py-10">
+      {/* Card container for form and content */}
       <Card>
+        {/* Card header with title and description */}
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Deactivate Account</CardTitle>
           <CardDescription>Please verify your identity to deactivate your account</CardDescription>
         </CardHeader>
+
+        {/* Card content section */}
         <CardContent className="space-y-4">
+          {/* Destructive alert with deactivation warning */}
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Warning</AlertTitle>
@@ -31,37 +37,41 @@ export default function DeactivateAccountPage() {
             </AlertDescription>
           </Alert>
 
+          {/* Secondary alert for additional deactivation restriction */}
           <Alert>
             <AlertDescription>
               You cannot deactivate your account if you have any ongoing bookings or active resources.
             </AlertDescription>
           </Alert>
 
+          {/* Email input field */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="Enter your email" required />
           </div>
 
+          {/* Password input field */}
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" placeholder="Enter your password" required />
           </div>
 
+          {/* Confirmation input to ensure user understands action */}
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirm deactivation</Label>
             <Input id="confirm" placeholder="Type 'DEACTIVATE' to confirm" required />
           </div>
         </CardContent>
+
+        {/* Footer with the deactivation button */}
         <CardFooter className="flex flex-col space-y-2">
-          <Button variant="destructive" className="w-full">
-            Deactivate Account
-          </Button>
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/account">Cancel</Link>
-          </Button>
+          <Link href="/">
+            <Button variant="destructive" className="w-full">
+              Deactivate Account
+            </Button>
+          </Link>
         </CardFooter>
       </Card>
     </div>
   )
 }
-
