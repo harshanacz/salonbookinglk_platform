@@ -226,7 +226,6 @@ Nirasha
 - **URLs**:
   - `/salon-owner/staff` – Staff list
   - `/salon-owner/staff/create` - Create staff member
-  - `/salon-owner/staff/update-attendance?id=1` - Update Attendance
   - `/salon-owner/staff/edit?id=1` - Edit Attendance
 
 ---
@@ -240,7 +239,7 @@ Nirasha
 - **Logic**:
   - If a booking exists for the newly marked unavailable time, notify the owner.
   - Unavailable staff cannot be assigned to new bookings in those time slots.
-- **URL**: `/salon-owner/staff/availability`
+- **URL**: `/salon-owner/staff/update-attendance?id=1`
 
 ---
 
