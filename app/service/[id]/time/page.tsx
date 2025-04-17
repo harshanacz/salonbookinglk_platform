@@ -2,21 +2,64 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import SalonCard from "@/components/booking/SalonCard";
-import BookingNavigation from "@/components/booking/BookingNavigation";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
+import SalonCard from "@/components/booking/salon-card";
+import BookingNavigation from "@/components/booking/booking-navigation";
+
+// Define Service interface
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: string;
+  timeSlot?: string;
+  professional?: string;
+}
+
+// Define formatted service interface for SalonCard
+interface FormattedService {
+  name: string;
+  time: string;
+  professional: string;
+  price: string;
+}
 
 export default function SelectTime() {
   const router = useRouter();
+  const params = useParams();
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [selectedProfessional, setSelectedProfessional] = useState<string | null>(null);
-  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string | null>(null);
+  const [selectedProfessional, setSelectedProfessional] = useState<string | null>("any"); // Default to "any" professional
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>("Any Professional"); // Default to "Any Professional"
   const [formData, setFormData] = useState({
     fullName: "",
     phoneNumber: "",
   });
   const [showPopup, setShowPopup] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Professional, 2: Date, 3: Time
+  const [selectedExtraServices, setSelectedExtraServices] = useState<Service[]>([]); // Selected extra services array
+  const [currentExtraService, setCurrentExtraService] = useState<Service | null>(null); // Service we're currently scheduling
+  const [isSelectingTimeForExtra, setIsSelectingTimeForExtra] = useState(false);
+
+  // Main services - fixed services that are always included
+  const mainServices: Service[] = [
+    {
+      id: "main-1",
+      name: "Layer Hair Cut",
+      price: 7000,
+      duration: "30 min",
+      timeSlot: "9:30-10:00AM",
+      professional: selectedProfessionalName
+    },
+    {
+      id: "main-2",
+      name: "Scalp Anti-Dandruff treatment",
+      price: 1000,
+      duration: "30 min",
+      timeSlot: "10:00-10:30AM",
+      professional: selectedProfessionalName
+    }
+  ];
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -25,7 +68,6 @@ export default function SelectTime() {
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
   const weeks: (number | null)[][] = [];
-  const params = useParams();
   let week: (number | null)[] = Array(firstDayOfMonth).fill(null);
 
   for (let day = 1; day <= daysInMonth; day++) {
@@ -45,6 +87,12 @@ export default function SelectTime() {
   ];
 
   const professionals = [
+    {
+      id: "any",
+      name: "Any Professional",
+      specialty: "No Preference",
+      image: "/images/any-professional.jpg",
+    },
     {
       id: "1",
       name: "John Doe",
@@ -70,9 +118,52 @@ export default function SelectTime() {
       const professional = professionals.find(p => p.id === selectedProfessional);
       if (professional) {
         setSelectedProfessionalName(professional.name);
+        setCurrentStep(2); // Move to date selection after professional is selected
+        
+        // Update professional name in main services
+        updateMainServicesProfessional(professional.name);
       }
     }
   }, [selectedProfessional]);
+
+  // Update main services professional name when it changes
+  const updateMainServicesProfessional = (name: string) => {
+    mainServices.forEach(service => {
+      service.professional = name;
+    });
+  };
+
+  useEffect(() => {
+    if (selectedDate) {
+      setCurrentStep(3); // Move to time selection after date is selected
+    }
+  }, [selectedDate]);
+
+  const handleSelectProfessional = (id: string) => {
+    setSelectedProfessional(id);
+    // Reset date and time when changing professional
+    setSelectedDate(null);
+    setSelectedTime(null);
+  };
+
+  const handleSelectDate = (day: number | null) => {
+    if (day) {
+      setSelectedDate(day.toString());
+    }
+  };
+
+  const handleSelectTime = (time: string) => {
+    if (selectedDate) {
+      setSelectedTime(time);
+      
+      // If we're selecting time for an extra service, update that service's time slot
+      if (isSelectingTimeForExtra && currentExtraService) {
+        setCurrentExtraService(prevService => 
+          prevService ? { ...prevService, timeSlot: time } : null
+        );
+      }
+    }
+  };
 
   const handleMonthChange = (increment: number) => {
     setCurrentMonth((prevMonth) => {
@@ -93,7 +184,7 @@ export default function SelectTime() {
   };
 
   const timeSlots = Array.from({ length: 6 }, (_, i) => ({
-    time: `${9 + Math.floor(i / 2)}:${i % 2 === 0 ? "00" : "30"} AM`,
+    time: `${9 + Math.floor(i / 2)}:${i % 2 === 0 ? "00" : "30"} ${9 + Math.floor(i / 2) < 12 ? "AM" : "PM"}`,
     status: i % 4 === 0 ? "unavailable" : "available",
   }));
 
@@ -101,26 +192,55 @@ export default function SelectTime() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const services = [
-    {
-      name: "Layer Hair Cut",
-      time: "9:30-10:00AM",
-      professional: "Layer cut with Dhanuka",
-      price: "LKR 7,000",
-    },
-    {
-      name: "Scalp Anti-Dandruff treatment",
-      time: "10:00-10:30AM",
-      professional: "Layer cut with Dhanuka",
-      price: "LKR 1,000",
-    },
+  // Available extra services
+  const extraServices: Service[] = [
+    { id: "extra-1", name: "Facial Treatment", duration: "30 mins", price: 2000 },
+    { id: "extra-2", name: "Manicure", duration: "15 mins", price: 1000 },
+    { id: "extra-3", name: "Pedicure", duration: "20 mins", price: 1500 },
   ];
 
-  const extraServices = [
-    { id: "1", name: "Facial Treatment", duration: "30 mins", price: 2000 },
-    { id: "2", name: "Manicure", duration: "15 mins", price: 1000 },
-    { id: "3", name: "Pedicure", duration: "20 mins", price: 1500 },
-  ];
+  // Handle selecting a single extra service
+  const handleSelectExtraService = (service: Service) => {
+    // Check if this service is already selected
+    const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
+    
+    if (isAlreadySelected) {
+      // If already selected, do nothing or provide feedback
+      return;
+    }
+    
+    // Set the current extra service
+    setCurrentExtraService(service);
+    // Close the popup and move to time selection
+    setShowPopup(false);
+    setIsSelectingTimeForExtra(true);
+    // Reset time selection for new time slot
+    setSelectedTime(null);
+    // Move directly to time selection
+    setCurrentStep(3);
+  };
+
+  // Get all services (main + extra)
+  const getAllServices = (): Service[] => {
+    return [...mainServices, ...selectedExtraServices];
+  };
+
+  // Format services for SalonCard
+  const formatServicesForSalonCard = (services: Service[]): FormattedService[] => {
+    return services.map(service => ({
+      name: service.name,
+      time: service.timeSlot || service.duration,
+      professional: service.professional || selectedProfessionalName,
+      price: `LKR ${service.price.toLocaleString()}`
+    }));
+  };
+
+  // Calculate total price
+  const calculateTotal = (): string => {
+    const allServices = getAllServices();
+    const total = allServices.reduce((sum, service) => sum + service.price, 0);
+    return `LKR ${total.toLocaleString()}`;
+  };
 
   const selectedSalon = {
     name: "Saloon Dmesh",
@@ -133,60 +253,98 @@ export default function SelectTime() {
   };
 
   const handleContinue = () => {
-    console.log("Continue button clicked!");
+    if (!selectedDate || !selectedTime) {
+      alert("Please select a date and time before continuing");
+      return;
+    }
     setShowPopup(true);
   };
 
   const navigateToConfirm = () => {
-    console.log("Navigating to Confirm page");
+    // All services have time slots, proceed to confirmation
+    // Pass all the selected services and other booking details via query params or state
+    const allServices = getAllServices();
+    
+    // Store the data in sessionStorage or localStorage for the confirmation page to access
+    sessionStorage.setItem('bookingServices', JSON.stringify(allServices));
+    sessionStorage.setItem('bookingProfessional', selectedProfessionalName);
+    sessionStorage.setItem('bookingDate', selectedDate || '');
+    sessionStorage.setItem('bookingTime', selectedTime || '');
+    
     router.push(`/service/${params.id}/confirm`);
+  };
+
+  const renderStepIndicator = () => {
+    return (
+      <div className="flex items-center mb-6">
+        <div className="flex items-center">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 1 ? "bg-purple-700 text-white" : "bg-gray-300"}`}>
+            1
+          </div>
+          <span className="ml-2 font-medium">Professional</span>
+        </div>
+        <div className={`h-0.5 w-12 mx-2 ${currentStep >= 2 ? "bg-purple-700" : "bg-gray-300"}`}></div>
+        <div className="flex items-center">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 2 ? "bg-purple-700 text-white" : "bg-gray-300"}`}>
+            2
+          </div>
+          <span className="ml-2 font-medium">Date</span>
+        </div>
+        <div className={`h-0.5 w-12 mx-2 ${currentStep >= 3 ? "bg-purple-700" : "bg-gray-300"}`}></div>
+        <div className="flex items-center">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${currentStep >= 3 ? "bg-purple-700 text-white" : "bg-gray-300"}`}>
+            3
+          </div>
+          <span className="ml-2 font-medium">Time</span>
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="p-12 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto">
-      <BookingNavigation salonId={Number(useParams().id)}/>
-      <h2 className="pl-6 text-2xl font-bold mb-4">Select Time</h2>
-
+      <BookingNavigation salonId={Number(params.id)}/>
+      <h2 className="pl-6 text-2xl font-bold mb-4">
+        {isSelectingTimeForExtra 
+          ? `Select Time for ${currentExtraService?.name}` 
+          : "Select Time"}
+      </h2>
+      
       <div className="w-full lg:w-1/2 p-4 space-y-6">
-        {/* Professional Selection */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-4">Select Professional</h3>
-          <div className="grid grid-cols-3 gap-4">
+        {renderStepIndicator()}
+
+        {/* Step 1: Professional Selection */}
+        <div className={`bg-white p-6 rounded-lg shadow-lg ${isSelectingTimeForExtra ? "opacity-50 pointer-events-none" : ""}`}>
+          <h3 className="text-lg font-semibold mb-4">1. Select Professional</h3>
+          <select
+            value={selectedProfessional || "any"}
+            onChange={(e) => handleSelectProfessional(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-lg text-sm"
+            disabled={isSelectingTimeForExtra}
+          >
             {professionals.map((professional) => (
-              <button
-                key={professional.id}
-                onClick={() => setSelectedProfessional(professional.id)}
-                className={`p-4 rounded-lg border transition-all flex flex-col items-center 
-                  ${
-                    selectedProfessional === professional.id
-                      ? "border-purple-700 shadow-lg"
-                      : "border-gray-300"
-                  }`}
-              >
-                <img
-                  src={professional.image}
-                  alt={professional.name}
-                  className="w-20 h-20 rounded-full mb-2"
-                />
-                <p className="text-md font-semibold">{professional.name}</p>
-                <p className="text-sm text-gray-500">
-                  {professional.specialty}
-                </p>
-              </button>
+              <option key={professional.id} value={professional.id}>
+                {professional.name} - {professional.specialty}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
-        {/* Calendar */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
+        {/* Step 2: Calendar */}
+        <div className={`bg-white p-6 rounded-lg shadow-lg ${
+          isSelectingTimeForExtra ? "opacity-50 pointer-events-none" : ""
+        }`}>
+          <h3 className="text-lg font-semibold mb-4">
+            2. Select Date
+          </h3>
           <div className="flex justify-between items-center mb-4">
-            <button onClick={() => handleMonthChange(-1)}>
+            <button onClick={() => handleMonthChange(-1)} disabled={isSelectingTimeForExtra}>
               <ChevronLeft />
             </button>
             <h2 className="text-lg font-semibold">
               {months[currentMonth]} {currentYear}
             </h2>
-            <button onClick={() => handleMonthChange(1)}>
+            <button onClick={() => handleMonthChange(1)} disabled={isSelectingTimeForExtra}>
               <ChevronRight />
             </button>
           </div>
@@ -200,12 +358,13 @@ export default function SelectTime() {
               {week.map((day, j) => (
                 <button
                   key={j}
-                  onClick={() => day && setSelectedDate(day.toString())}
+                  onClick={() => handleSelectDate(day)}
+                  disabled={!day || isSelectingTimeForExtra}
                   className={`w-10 h-10 rounded-full text-sm font-semibold transition-all 
                     ${
                       selectedDate === day?.toString()
                         ? "bg-purple-700 text-white"
-                        : "bg-gray-200 text-black"
+                        : day ? "bg-gray-200 text-black hover:bg-gray-300" : "opacity-0"
                     } 
                     ${!day ? "opacity-0" : ""}`}
                 >
@@ -216,15 +375,27 @@ export default function SelectTime() {
           ))}
         </div>
 
-        {/* Time Slot Selection */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Select a Time Slot</h2>
+        {/* Step 3: Time Slot Selection - Only visible after date selection */}
+        <div className={`bg-white p-6 rounded-lg shadow-lg ${
+          (currentStep < 3 && !isSelectingTimeForExtra) ? "opacity-50 pointer-events-none" : ""
+        }`}>
+          <h3 className="text-lg font-semibold mb-4">
+            {isSelectingTimeForExtra 
+              ? `3. Select Time for ${currentExtraService?.name}` 
+              : "3. Select a Time Slot"}
+            {currentStep < 3 && !isSelectingTimeForExtra && (
+              <span className="ml-2 text-sm text-purple-700 flex items-center">
+                <AlertCircle size={16} className="mr-1" />
+                Please select a date first
+              </span>
+            )}
+          </h3>
           <div className="w-full max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 space-y-2 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
             {timeSlots.map((slot, index) => (
               <button
                 key={index}
-                disabled={slot.status === "unavailable"}
-                onClick={() => setSelectedTime(slot.time)}
+                disabled={slot.status === "unavailable" || (currentStep < 3 && !isSelectingTimeForExtra)}
+                onClick={() => handleSelectTime(slot.time)}
                 className={`w-full p-4 flex justify-between items-center rounded-lg text-sm font-medium
                   ${
                     slot.status === "unavailable"
@@ -242,56 +413,55 @@ export default function SelectTime() {
           </div>
         </div>
 
-        {/* Your Information */}
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-lg font-semibold mb-4">Your Information</h2>
-          <div className="space-y-4 w-full">
-            <div>
-              <label className="block font-medium">Full Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-            </div>
-
-            <div>
-              <label className="block font-medium">Phone Number</label>
-              <input
-                type="tel"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                placeholder="Enter your phone number"
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
-        </div>
-
         {/* Salon Card with Continue Button */}
         <SalonCard
           salonName="Saloon Dmesh"
-          services={services}
-          total="LKR 8,000"
+          services={formatServicesForSalonCard(getAllServices())}
+          total={calculateTotal()}
           selectedSalon={selectedSalon}
           selectedProfessionalId={selectedProfessional}
-          selectedProfessionalName={selectedProfessionalName || ""}
+          selectedProfessionalName={selectedProfessionalName}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
-          onContinue={handleContinue}
-          buttonText="Continue"
+          onContinue={isSelectingTimeForExtra 
+            ? () => {
+                // Handle time selection for the current extra service
+                if (selectedTime && currentExtraService) {
+                  // Add the service with its time slot to our selected services
+                  setSelectedExtraServices(prev => [
+                    ...prev, 
+                    { 
+                      ...currentExtraService, 
+                      timeSlot: selectedTime, 
+                      professional: selectedProfessionalName 
+                    }
+                  ]);
+                  
+                  // Reset for next selection
+                  setCurrentExtraService(null);
+                  setIsSelectingTimeForExtra(false);
+                  setSelectedTime(null);
+                  
+                  // Show popup again to potentially select another service
+                  setShowPopup(true);
+                } else {
+                  alert("Please select a time for this service");
+                }
+              }
+            : handleContinue
+          }
+          buttonText={isSelectingTimeForExtra 
+            ? `Confirm Time for ${currentExtraService?.name}` 
+            : "Continue"
+          }
         />
 
-        {/* Popup for Extra Service */}
+        {/* Modified Popup for Single Extra Service Selection */}
         {showPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-96">
               <div className="flex justify-between items-center border-b pb-2 mb-4">
-                <h3 className="text-lg font-semibold">Add An Extra Service?</h3>
+                <h3 className="text-lg font-semibold">Add Extra Service</h3>
                 <button 
                   onClick={() => setShowPopup(false)}
                   className="text-2xl font-bold"
@@ -299,28 +469,54 @@ export default function SelectTime() {
                   ×
                 </button>
               </div>
+              
+              <div className="mb-4 text-sm text-gray-600">
+                Select an extra service to add
+              </div>
 
               <div className="max-h-60 overflow-y-auto space-y-2">
-                {extraServices.map((service) => (
-                  <div
-                    key={service.id}
-                    className="p-3 bg-purple-100 rounded-lg mb-2"
-                  >
-                    <p className="font-semibold">{service.name}</p>
-                    <p className="text-sm text-gray-600">{service.duration}</p>
-                    <p className="text-sm">
-                      From LKR {service.price.toLocaleString()}
-                    </p>
-                  </div>
-                ))}
+                {extraServices.map((service) => {
+                  // Check if this service is already selected
+                  const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
+                  
+                  return (
+                    <div
+                      key={service.id}
+                      className={`p-3 rounded-lg mb-2 ${
+                        isAlreadySelected 
+                          ? "bg-green-100 cursor-not-allowed" 
+                          : "bg-purple-100 cursor-pointer hover:bg-purple-200 transition-colors"
+                      }`}
+                      onClick={() => !isAlreadySelected && handleSelectExtraService(service)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold">{service.name}</p>
+                          <p className="text-sm text-gray-600">{service.duration}</p>
+                          <p className="text-sm">
+                            From LKR {service.price.toLocaleString()}
+                          </p>
+                        </div>
+                        {isAlreadySelected && (
+                          <div className="text-green-600 font-bold">✓</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               
-              <button 
-                className="mt-4 w-full bg-gradient-to-r from-[#8E44AD] to-[#6B0EAD] text-white py-3 rounded-2xl text-lg"
-                onClick={navigateToConfirm}
-              >
-                No Thanks
-              </button>
+              <div className="flex flex-col space-y-2 mt-4">
+                <button 
+                  className="w-full bg-transparent border border-purple-700 text-purple-700 py-3 rounded-2xl text-lg"
+                  onClick={navigateToConfirm}
+                >
+                  {selectedExtraServices.length > 0 
+                    ? "Proceed with Selected Services" 
+                    : "Skip Extra Services"
+                  }
+                </button>
+              </div>
             </div>
           </div>
         )}
