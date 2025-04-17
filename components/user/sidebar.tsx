@@ -41,11 +41,7 @@ const routes = [
     icon: CreditCard,
     href: "/user/payments",
   },
-  {
-    label: "Financial Summary",
-    icon: BarChart3,
-    href: "/user/financial-summary",
-  },
+  
   {
     label: "Notifications",
     icon: BellIcon,
