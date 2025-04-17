@@ -62,7 +62,9 @@
 
 ### 1. Login Screen and signup screens
 - **Login URL**: /sign-in
-- **SignUp URL**: /sign-up
+- **SignUp URL**: /sign-up - two buttons - join as user / join as salon owner
+- **Salon Owner SignUp URL**: /sign-up/salon-owner
+- **SignUp URL**: /sign-up/user
 
 ---
 
@@ -95,12 +97,6 @@
 
 
 ### Dineth Bandara
-
-### 1. Login Screen and signup screens
-- **Login URL**: /salon-owner/sign-in
-- **SignUp URL**: /salon-owner/sign-up
-
----
 
 ### 2. salon-owner profile screen
 - **URL**: `/salon-owner/profile
