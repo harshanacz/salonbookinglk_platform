@@ -210,6 +210,7 @@ if pay by card - URL: user/booking/payment-success
 - **URLs**:
   - `/salon-owner/staff` – Staff list
   - `/salon-owner/staff/[id]` – Individual staff details
+  - `/salon-owner/staff/create` - Create staff member
 
 ---
 
