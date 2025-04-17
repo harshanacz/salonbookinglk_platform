@@ -1,7 +1,9 @@
 "use client";
 
+// Import React hooks and components
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -28,11 +30,16 @@ import { format } from "date-fns";
 import { Save } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
+// Main component for salon settings page
 export default function SalonSettings() {
+  // Initialize toast notification system
   const { toast } = useToast();
+  
+  // State for storing selected holiday dates
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
-  // Sample business hours
+  // State for business hours configuration
+  // Default hours for each day of the week
   const [businessHours, setBusinessHours] = useState({
     monday: { open: "09:00", close: "18:00", isOpen: true },
     tuesday: { open: "09:00", close: "18:00", isOpen: true },
@@ -43,6 +50,10 @@ export default function SalonSettings() {
     sunday: { open: "10:00", close: "14:00", isOpen: false },
   });
 
+  // Handler for updating business hours
+  // day: day of the week to update
+  // field: either 'open' or 'close' time
+  // value: new time value
   const handleBusinessHoursChange = (
     day: keyof typeof businessHours,
     field: "open" | "close",
@@ -57,6 +68,8 @@ export default function SalonSettings() {
     });
   };
 
+  // Toggles a day between open/closed status
+  // day: day of the week to toggle
   const handleDayToggle = (day: keyof typeof businessHours) => {
     setBusinessHours({
       ...businessHours,
@@ -67,8 +80,11 @@ export default function SalonSettings() {
     });
   };
 
+  // Handles date selection for holidays/special days
+  // date: Date object to add/remove from selection
   const handleDateSelect = (date: Date) => {
     setSelectedDates((prev) => {
+      // Check if date already exists in selection
       const dateExists = prev.some(
         (d) =>
           d.getDate() === date.getDate() &&
@@ -76,6 +92,7 @@ export default function SalonSettings() {
           d.getFullYear() === date.getFullYear()
       );
 
+      // If date exists, remove it; otherwise add it
       if (dateExists) {
         return prev.filter(
           (d) =>
@@ -91,108 +108,119 @@ export default function SalonSettings() {
     });
   };
 
-  const saveSettings = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your salon settings have been updated successfully.",
-    });
-  };
+  // Function to handle saving settings and show success toast notification
+const saveSettings = () => {
+  toast({
+    title: "Settings saved",
+    description: "Your salon settings have been updated successfully.",
+  });
+};
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold">Salon Settings</h1>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button className="w-full sm:w-auto" onClick={saveSettings}>
-            <Save className="mr-2 h-4 w-4" /> Save Changes
-          </Button>
-        </div>
+// Main component render
+return (
+  <div className="space-y-6">
+    {/* Header section with title and save button */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <h1 className="text-3xl font-bold">Salon Settings</h1>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        {/* Save changes button with icon */}
+        <Button className="w-full sm:w-auto" onClick={saveSettings}>
+          <Save className="mr-2 h-4 w-4" /> Save Changes
+        </Button>
       </div>
+    </div>
 
-      <Tabs defaultValue="general">
-        <TabsList className="mb-6">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="business-hours">Business Hours</TabsTrigger>
-          <TabsTrigger value="closed-days">Closed Days</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security-and-privacy">Security & Privacy</TabsTrigger>
-          <TabsTrigger value="verify">Verify Saloon</TabsTrigger>
-        </TabsList>
+    {/* Settings tabs navigation */}
+    <Tabs defaultValue="general">
+      {/* Tab list for different settings sections */}
+      <TabsList className="mb-6">
+        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="business-hours">Business Hours</TabsTrigger>
+        <TabsTrigger value="closed-days">Closed Days</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+        <TabsTrigger value="security-and-privacy">Security & Privacy</TabsTrigger>
+        <TabsTrigger value="verify">Verify Saloon</TabsTrigger>
+      </TabsList>
 
-        <TabsContent value="general" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Salon Information</CardTitle>
-              <CardDescription>
-                Update your salon's basic information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="salon-name">Salon Name</Label>
-                  <Input id="salon-name" defaultValue="Salon Amaya" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-email">Email Address</Label>
-                  <Input
-                    id="salon-email"
-                    type="email"
-                    defaultValue="contact@salonamaya.lk"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-phone">Phone Number</Label>
-                  <Input id="salon-phone" defaultValue="+94 77 123 4567" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-website">Website</Label>
-                  <Input
-                    id="salon-website"
-                    defaultValue="https://salonamaya.lk"
-                  />
-                </div>
-              </div>
-
-              <Separator />
-
+      {/* General settings tab content */}
+      <TabsContent value="general" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Salon Information</CardTitle>
+            <CardDescription>
+              Update your salon's basic information
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Salon information form grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="salon-address">Address</Label>
-                <Input id="salon-address" defaultValue="123 Galle Road" />
+                <Label htmlFor="salon-name">Salon Name</Label>
+                <Input id="salon-name" defaultValue="Salon Amaya" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="salon-city">City</Label>
-                  <Input id="salon-city" defaultValue="Moratuwa" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-province">Province</Label>
-                  <Input id="salon-province" defaultValue="Western" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-postal-code">Postal Code</Label>
-                  <Input id="salon-postal-code" defaultValue="10400" />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="salon-email">Email Address</Label>
+                <Input
+                  id="salon-email"
+                  type="email"
+                  defaultValue="contact@salonamaya.lk"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <div className="space-y-2">
+                <Label htmlFor="salon-phone">Phone Number</Label>
+                <Input id="salon-phone" defaultValue="+94 77 123 4567" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salon-website">Website</Label>
+                <Input
+                  id="salon-website"
+                  defaultValue="https://salonamaya.lk"
+                />
+              </div>
+            </div>
 
-        <TabsContent value="business-hours" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Hours</CardTitle>
-              <CardDescription>
-                Set your salon's regular operating hours
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(businessHours).map(([day, hours]) => (
-                  <div
-                    key={day}
-                    className="flex items-center justify-between border-b pb-4"
-                  >
+            <Separator />
+
+            {/* Address information section */}
+            <div className="space-y-2">
+              <Label htmlFor="salon-address">Address</Label>
+              <Input id="salon-address" defaultValue="123 Galle Road" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="salon-city">City</Label>
+                <Input id="salon-city" defaultValue="Moratuwa" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salon-province">Province</Label>
+                <Input id="salon-province" defaultValue="Western" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="salon-postal-code">Postal Code</Label>
+                <Input id="salon-postal-code" defaultValue="10400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Business hours settings tab content */}
+      <TabsContent value="business-hours" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Business Hours</CardTitle>
+            <CardDescription>
+              Set your salon's regular operating hours
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Loop through each day's business hours */}
+              {Object.entries(businessHours).map(([day, hours]) => (
+                <div
+                  key={day}
+                  className="flex items-center justify-between border-b pb-4"
+                >
                     <div className="flex items-center gap-4">
                       <Switch
                         checked={hours.isOpen}
@@ -415,14 +443,18 @@ export default function SalonSettings() {
           <p className="text-sm text-gray-500 mb-4">
             Update your password to keep your account secure.
           </p>
-          <Button variant="default" size="lg">Change Password</Button>
+          <Link href ="/salon-owner/settings/change-password">
+          <Button variant="default" size="lg" >Change Password</Button>
+          </Link>
         </div>
         <div>
           <h3 className="text-lg font-medium mb-4 text-red-600">Deactivate Account</h3>
           <p className="text-sm text-gray-500 mb-4">
             Deactivating your account will disable your profile and remove access.
           </p>
+          <Link href="/salon-owner/settings/deactivate-account">
           <Button variant="destructive" size="lg">Deactivate My Account</Button>
+          </Link>
         </div>
       </div>
     </CardContent>

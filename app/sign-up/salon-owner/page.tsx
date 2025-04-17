@@ -12,30 +12,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeft } from "lucide-react"
 
+// Main component for salon booking signup process
 export default function SalonBookingSignup() {
+  // State for tracking current tab in multi-step form
   const [tab, setTab] = useState("general")
 
-  // Account Info
+  // Account Info state
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [error, setError] = useState("")
 
-  // Business Info
+  // Business Info state
   const [businessName, setBusinessName] = useState("")
   const [website, setWebsite] = useState("")
   const [regNumber, setRegNumber] = useState("")
   const [category, setCategory] = useState("")
 
-  // Contact Info
+  // Contact Info state
   const [phone, setPhone] = useState("")
   const [street, setStreet] = useState("")
   const [city, setCity] = useState("")
   const [postalCode, setPostalCode] = useState("")
   const [country, setCountry] = useState("Sri Lanka")
 
-  // Working Hours
+  // Working Hours state - initializes with all days of week
   const [workingHours, setWorkingHours] = useState(
     ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => ({
       day,
@@ -44,9 +46,10 @@ export default function SalonBookingSignup() {
     }))
   )
 
-  // Working Days
+  // Working Days state - initializes with weekdays (excludes Sunday by default)
   const [workingDays, setWorkingDays] = useState(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"])
 
+  // Handler for general info form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) {
@@ -61,27 +64,32 @@ export default function SalonBookingSignup() {
     setTab("business-details")
   }
 
+  // Handler for business details form submission
   const handleBusinessSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setTab("contact-details")
   }
 
+  // Handler for contact details form submission
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setTab("working-hours")
   }
 
+  // Handler for working hours form submission
   const handleWorkingHoursSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setTab("working-days")
   }
 
+  // Toggles a day in/out of working days array
   const toggleWorkingDay = (day: string) => {
     setWorkingDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
     )
   }
 
+  // Back button component for navigation between tabs
   const BackButton = ({ to }: { to: string }) => (
     <button
       type="button"
@@ -95,9 +103,10 @@ export default function SalonBookingSignup() {
   return (
     <Tabs value={tab} onValueChange={setTab}>
       <div className="flex w-full">
-        {/* Account Creation */}
+        {/* Account Creation Tab */}
         <TabsContent value="general" className="w-full p-8 bg-[#FFF5FF]">
           <div className="max-w-6xl mx-auto flex h-[600px]">
+            {/* Left: Form Section */}
             <Card className="flex-1 rounded-r-none h-full">
               <CardHeader>
                 <CardTitle>Create an Account</CardTitle>
@@ -134,20 +143,21 @@ export default function SalonBookingSignup() {
                 </form>
               </CardContent>
             </Card>
+
+            {/* Right: Image Section */}
             <div className="flex-1 hidden md:block h-full">
-              <div className="h-full bg-gray-100 rounded-lg rounded-l-none flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <p className="text-lg font-medium mb-4">Image</p>
-                    <p className="text-gray-500">(image)</p>
-                  </div>
-                </div>
+              <div className="h-full w-full bg-gradient-to-br from-purple-100 to-pink-100 rounded-l-none rounded-r-lg overflow-hidden">
+                <img 
+                  src="/images/signup/signup-image.jpg" 
+                  alt="Signup Illustration" 
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>
         </TabsContent>
 
-        {/* Business Details */}
+        {/* Business Details Tab */}
         <TabsContent value="business-details" className="w-full p-8 bg-[#FFF5FF]">
           <div className="max-w-xl mx-auto h-[600px]">
             <Card className="h-full">
@@ -190,7 +200,7 @@ export default function SalonBookingSignup() {
           </div>
         </TabsContent>
 
-        {/* Contact Details */}
+        {/* Contact Details Tab */}
         <TabsContent value="contact-details" className="w-full p-8 bg-[#FFF5FF]">
           <div className="max-w-xl mx-auto h-[600px]">
             <Card className="h-full">
@@ -234,7 +244,7 @@ export default function SalonBookingSignup() {
           </div>
         </TabsContent>
 
-        {/* Working Hours */}
+        {/* Working Hours Tab */}
         <TabsContent value="working-hours" className="w-full p-8 bg-[#FFF5FF]">
           <div className="max-w-3xl mx-auto h-[600px]">
             <Card className="h-full">
@@ -274,7 +284,7 @@ export default function SalonBookingSignup() {
           </div>
         </TabsContent>
 
-        {/* Working Days */}
+        {/* Working Days Tab */}
         <TabsContent value="working-days" className="w-full p-8 bg-[#FFF5FF]">
           <Card className="max-w-xl mx-auto">
             <CardHeader><CardTitle>Working Days</CardTitle></CardHeader>
@@ -292,7 +302,9 @@ export default function SalonBookingSignup() {
                   </div>
                 ))}
               </div>
+              <Link href="/salon-owner/profile">
               <Button className="w-full mt-4">Finish</Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
