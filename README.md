@@ -15,7 +15,7 @@
 
 ### 2. Search Screen
 - **Detail**: Type keywords or use filters → See relevant services + map
-- **URL**: `/search?location=test`
+- **URL**: `/search?keyword=test`
 
 ---
 
