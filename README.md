@@ -152,15 +152,14 @@ Select payment method
 Confirm booking
 URL: service/[id]/confirm
 
-4. Payment Flow (if "Pay via Credit/Debit Card" is selected)
-Navigate to Add or Select Payment Card
-URL: user/payments/add-card/payment-card
 
 5. After Confirmation
 Redirect to User Appointments Page
-URL: user/booking/user-appointments
+if pay at venue - URL: user/booking/user-appointments |
+if pay by card - URL: user/booking/payment-success
+
 ---
----
+
 
 ### Salon Owner Workflows(Janith)
 
