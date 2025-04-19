@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import RateDialog from "@/components/user/rate-popup"; 
 
 export const UserAppointments = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [reviewOpenId, setReviewOpenId] = useState<number | null>(null);
 
   const userName = "Naduni"; // Replace with actual user data if available
   const bookedDate = "Monday, March 18"; // Replace with dynamic date if available
@@ -34,6 +36,13 @@ export const UserAppointments = () => {
   ];
 
   const total = overview.reduce((sum, service) => sum + service.price, 0);
+
+  // Handle rate submit (dummy implementation)
+  const handleRateSubmit = (rating: number, appointmentId: number) => {
+    // TODO: handle rate save logic, e.g., send to server
+    alert(`Rated appointment ${appointmentId}: ${rating} stars`);
+    setReviewOpenId(null);
+  };
 
   return (
     <div className="grid md:grid-cols-3 gap-6">
@@ -64,8 +73,22 @@ export const UserAppointments = () => {
                 <Link href="/book" className="text-purple-500 underline">Book Again</Link>
               </div>
               <div className="flex flex-col items-start">
-                <button className="text-black underline m-4 border-2 rounded-lg border-black p-2">Review</button>
+                <button
+                  className="text-black underline m-4 border-2 rounded-lg border-black p-2"
+                  onClick={() => setReviewOpenId(appointment.id)}
+                >
+                  Rate
+                </button>
                 <Link href="/user/add-complaint" className="text-black underline">Complain</Link>
+                {/* Rate Dialog for this appointment */}
+                {reviewOpenId === appointment.id && (
+                  <RateDialog
+                    open={true}
+                    onClose={() => setReviewOpenId(null)}
+                    onSubmit={(rating) => handleRateSubmit(rating, appointment.id)}
+                    serviceName={appointment.name}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -121,7 +144,7 @@ export const UserAppointments = () => {
         </div>
       </div>
 
-      {/* Popup */}
+      {/* Manage Appointments Popup */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
@@ -150,4 +173,4 @@ export const UserAppointments = () => {
       )}
     </div>
   );
-}; 
+};
