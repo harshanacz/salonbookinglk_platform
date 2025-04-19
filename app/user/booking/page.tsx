@@ -6,7 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle, 
 } from "@/components/ui/card";
 import { Calendar, XCircle } from "lucide-react";
 import { UserAppointments } from "@/components/user/booking/user-appointments";
