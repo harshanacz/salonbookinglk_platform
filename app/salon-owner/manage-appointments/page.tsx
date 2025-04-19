@@ -31,15 +31,15 @@ export default function ManageAppointments() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Sample appointments data
-  const appointments = [
+  // Sample appointments data with useState to make it mutable
+  const [appointments, setAppointments] = useState([
     {
       id: 1,
       clientName: "Sarah Johnson",
       service: "Haircut & Styling",
       date: "2024-04-10",
       time: "10:00 AM",
-      status: "confirmed",
+      status: "pending",
       phone: "+94 71 234 5678",
     },
     {
@@ -60,14 +60,23 @@ export default function ManageAppointments() {
       status: "cancelled",
       phone: "+94 71 456 7890",
     },
-  ];
+  ]);
 
-  const getStatusColor = (status: string) => {
+  // Function to handle cancelling an appointment
+  const handleCancelAppointment = (id:number) => {
+    setAppointments(
+      appointments.map((appointment) =>
+        appointment.id === id
+          ? { ...appointment, status: "cancelled" }
+          : appointment
+      )
+    );
+  };
+
+  const getStatusColor = (status:string) => {
     switch (status) {
-      case "confirmed":
-        return "text-green-600 bg-green-50";
       case "pending":
-        return "text-yellow-600 bg-yellow-50";
+        return "text-gray-600 bg-gray-50";
       case "cancelled":
         return "text-red-600 bg-red-50";
       default:
@@ -77,8 +86,6 @@ export default function ManageAppointments() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "confirmed":
-        return <CheckCircle className="h-4 w-4" />;
       case "pending":
         return <AlertCircle className="h-4 w-4" />;
       case "cancelled":
@@ -127,7 +134,6 @@ export default function ManageAppointments() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Appointments</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
@@ -167,22 +173,19 @@ export default function ManageAppointments() {
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-2">
-                  <Button variant="outline" size="sm">
-                    Reschedule
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={
-                      appointment.status === "confirmed"
-                        ? "text-red-600 hover:text-red-700"
-                        : "text-green-600 hover:text-green-700"
-                    }
-                  >
-                    {appointment.status === "confirmed" ? "Cancel" : "Confirm"}
-                  </Button>
-                </div>
+                {/* Only show Cancel button if not already cancelled */}
+                {appointment.status !== "cancelled" && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => handleCancelAppointment(appointment.id)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
 
