@@ -11,14 +11,8 @@ declare global {
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/sign-up/user(.*)",
-  "/sign-up/salon-owner(.*)",
-  "/after-sign-up(.*)",
-]);
+// All routes except salon owner and customer routes are public
+const isPublicRoute = createRouteMatcher(["/((?!salon-owner|user).*)"]);
 
 const isSalonOwnerRoute = createRouteMatcher(["/salon-owner(.*)"]);
 
@@ -30,6 +24,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     const authObject = await auth();
     const { sessionClaims } = authObject;
+
     const role = sessionClaims?.metadata?.role as string;
 
     if (role === "salon-owner" && isCustomerRoute(req)) {
