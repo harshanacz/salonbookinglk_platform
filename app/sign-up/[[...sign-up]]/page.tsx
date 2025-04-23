@@ -21,9 +21,7 @@ export default function Page() {
         routing="path"
         path="/sign-up"
         signInUrl="/sign-in"
-        afterSignUpUrl={
-          role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
-        }
+        afterSignUpUrl="/after-sign-up"
         signInForceRedirectUrl={
           role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
         }
