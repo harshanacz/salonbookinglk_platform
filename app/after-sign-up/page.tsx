@@ -14,7 +14,7 @@ export default function AfterSignUpPage() {
 
       try {
         // Get role from metadata
-        const role = user.unsafeMetadata.role as string;
+        const type = user.unsafeMetadata.type as string;
 
         // Create user in our database
         const response = await fetch("/api/user", {
@@ -23,7 +23,7 @@ export default function AfterSignUpPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            type: role,
+            type: type,
             userName: user.username || user.firstName,
             email: user.primaryEmailAddress?.emailAddress,
             mobileNumber: user.phoneNumbers[0]?.phoneNumber,
@@ -37,7 +37,7 @@ export default function AfterSignUpPage() {
 
         // Redirect based on role
         router.push(
-          role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
+          type === "SALON_OWNER" ? "/salon-owner/profile" : "/user/profile"
         );
       } catch (error) {
         console.error("Error creating user:", error);

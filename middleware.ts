@@ -3,7 +3,7 @@ export {};
 declare global {
   interface CustomJwtSessionClaims {
     metadata: {
-      role: string;
+      type: string;
     };
   }
 }
@@ -25,7 +25,7 @@ export default clerkMiddleware(async (auth, req) => {
     const authObject = await auth();
     const { sessionClaims } = authObject;
 
-    const role = sessionClaims?.metadata?.role as string;
+    const role = sessionClaims?.metadata?.type as string;
 
     if (role === "salon-owner" && isCustomerRoute(req)) {
       return NextResponse.redirect(new URL("/salon-owner/profile", req.url));
