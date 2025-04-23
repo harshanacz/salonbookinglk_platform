@@ -41,8 +41,9 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: Object.values(Gender),
+      enum: [...Object.values(Gender), null],
       required: false,
+      default: null,
     },
     country: {
       type: String,
