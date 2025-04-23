@@ -66,12 +66,6 @@ export function Navbar() {
 
         {/* Right section: For Business + Sign In + Join */}
         <div className="hidden md:flex items-center gap-6">
-          <Link
-            href="/for-business"
-            className="text-sm font-medium text-gray-600 hover:text-black"
-          >
-            For Business
-          </Link>
           <Link href="/sign-in">
             <Button
               variant="ghost"
@@ -157,14 +151,6 @@ export function Navbar() {
                   </div>
                 )}
               </div>
-
-              <Link
-                href="/for-business"
-                className="font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                For Business
-              </Link>
 
               <hr className="my-2" />
 
