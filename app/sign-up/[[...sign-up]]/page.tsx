@@ -20,7 +20,6 @@ export default function Page() {
         routing="path"
         path="/sign-up"
         signInUrl="/sign-in"
-        afterSignUpUrl="/after-sign-up"
         unsafeMetadata={{
           type: role === "salon-owner" ? "SALON_OWNER" : "CUSTOMER",
         }}
