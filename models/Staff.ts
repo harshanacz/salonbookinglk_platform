@@ -1,23 +1,26 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const staffSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+const staffSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    profileImage: String,
+    mobileNumber: {
+      type: String,
+      required: true,
+    },
+    bio: String,
   },
-  name: {
-    type: String,
-    required: true
-  },
-  profileImage: String,
-  mobileNumber: {
-    type: String,
-    required: true
-  },
-  bio: String
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
-export default mongoose.models.Staff || mongoose.model('Staff', staffSchema); 
+export default mongoose.models.Staff || mongoose.model("Staff", staffSchema);
