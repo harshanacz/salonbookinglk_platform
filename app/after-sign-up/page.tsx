@@ -14,7 +14,7 @@ export default function AfterSignUpPage() {
 
       try {
         // Get role from metadata
-        const role = user.publicMetadata.role as string;
+        const role = user.unsafeMetadata.role as string;
 
         // Create user in our database
         const response = await fetch("/api/user", {
