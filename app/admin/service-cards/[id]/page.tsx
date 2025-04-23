@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +9,13 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ServiceApprovalPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ServiceApprovalPage({
-  params,
-}: ServiceApprovalPageProps) {
+export default function ServiceApprovalPage(props: ServiceApprovalPageProps) {
+  const params = use(props.params);
   const { toast } = useToast();
 
   // In a real app, you would fetch this data based on the ID
@@ -102,7 +102,6 @@ export default function ServiceApprovalPage({
         </Button>
         <h1 className="text-2xl font-bold">{service.title}</h1>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           <div>
