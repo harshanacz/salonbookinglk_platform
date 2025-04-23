@@ -43,10 +43,10 @@ const services = [
 
 export default function ServiceCategoryPage(
   props: {
-    params: Promise<{ category: string }>;
+    params: { category: string };
   }
 ) {
-  const params = use(props.params);
+  const { params } = props;
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
