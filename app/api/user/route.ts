@@ -21,17 +21,6 @@ export async function POST(req: Request) {
       profileImage,
     } = body;
 
-    // Validate that the type matches the role in Clerk metadata
-    const user = await currentUser();
-    const role = user?.unsafeMetadata.role as string;
-
-    if (
-      (role === "salon-owner" && type !== "SALON_OWNER") ||
-      (role === "customer" && type !== "CUSTOMER")
-    ) {
-      return new NextResponse("Invalid user type for role", { status: 400 });
-    }
-
     const clerk = await clerkClient();
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {
