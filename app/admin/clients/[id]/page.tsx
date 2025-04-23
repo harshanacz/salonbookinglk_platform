@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -109,11 +109,12 @@ const mockBookings = {
   ],
 };
 
-export default function ClientDetailsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ClientDetailsPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const clientId = parseInt(params.id);
   const [client, setClient] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);
