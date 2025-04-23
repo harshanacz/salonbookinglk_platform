@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -41,11 +41,12 @@ const services = [
   // Add more sample services...
 ];
 
-export default function ServiceCategoryPage({
-  params,
-}: {
-  params: { category: string };
-}) {
+export default function ServiceCategoryPage(
+  props: {
+    params: Promise<{ category: string }>;
+  }
+) {
+  const params = use(props.params);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 

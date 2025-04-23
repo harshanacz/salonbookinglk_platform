@@ -1,4 +1,5 @@
-"use client";
+"use client";;
+import { use } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,12 +10,13 @@ import { ServiceCard } from "@/components/service-card";
 import { useCheckoutStore } from "@/store/checkoutStore";
 
 interface ServicePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ServicePage({ params }: ServicePageProps) {
+export default function ServicePage(props: ServicePageProps) {
+  const params = use(props.params);
   const addService = useCheckoutStore((state) => state.addService);
 
   const service = {
