@@ -111,10 +111,10 @@ const mockBookings = {
 
 export default function ClientDetailsPage(
   props: {
-    params: Promise<{ id: string }>;
+    params: { id: string };
   }
 ) {
-  const params = use(props.params);
+  const { params } = props;
   const clientId = parseInt(params.id);
   const [client, setClient] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);

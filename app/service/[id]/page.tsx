@@ -10,13 +10,13 @@ import { ServiceCard } from "@/components/service-card";
 import { useCheckoutStore } from "@/store/checkoutStore";
 
 interface ServicePageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default function ServicePage(props: ServicePageProps) {
-  const params = use(props.params);
+  const { params } = props;
   const addService = useCheckoutStore((state) => state.addService);
 
   const service = {
