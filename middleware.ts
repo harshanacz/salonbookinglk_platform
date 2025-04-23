@@ -3,8 +3,8 @@ export {};
 declare global {
   interface CustomJwtSessionClaims {
     metadata: {
-      role: string
-    }
+      role: string;
+    };
   }
 }
 
@@ -17,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/sign-up/user(.*)",
   "/sign-up/salon-owner(.*)",
+  "/after-sign-up(.*)",
 ]);
 
 const isSalonOwnerRoute = createRouteMatcher(["/salon-owner(.*)"]);
