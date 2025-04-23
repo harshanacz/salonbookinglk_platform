@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, ChevronDown } from "lucide-react";
+import { useAuth, SignOutButton } from "@clerk/nextjs";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const { isSignedIn } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
@@ -66,31 +68,45 @@ export function Navbar() {
 
         {/* Right section: For Business + Sign In + Join */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/sign-in">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-gray-600 hover:text-black font-medium"
-            >
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/sign-up?role=customer">
-            <Button
-              size="sm"
-              className="bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-[15px] font-medium"
-            >
-              Join as Customer
-            </Button>
-          </Link>
-          <Link href="/sign-up?role=salon-owner">
-            <Button
-              size="sm"
-              className="bg-primary text-white hover:bg-primary/90 rounded-[15px] font-medium"
-            >
-              Join as Salon Owner
-            </Button>
-          </Link>
+          {isSignedIn ? (
+            <SignOutButton>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:text-black font-medium"
+              >
+                Sign Out
+              </Button>
+            </SignOutButton>
+          ) : (
+            <>
+              <Link href="/sign-in">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-black font-medium"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/sign-up?role=customer">
+                <Button
+                  size="sm"
+                  className="bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-[15px] font-medium"
+                >
+                  Join as Customer
+                </Button>
+              </Link>
+              <Link href="/sign-up?role=salon-owner">
+                <Button
+                  size="sm"
+                  className="bg-primary text-white hover:bg-primary/90 rounded-[15px] font-medium"
+                >
+                  Join as Salon Owner
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -162,23 +178,33 @@ export function Navbar() {
 
               <hr className="my-2" />
 
-              <Link
-                href="/sign-in"
-                className="font-medium"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign In
-              </Link>
-              <Link href="/sign-up?role=customer" onClick={() => setIsOpen(false)}>
-                <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300 mb-2">
-                  Join as Customer
-                </Button>
-              </Link>
-              <Link href="/sign-up?role=salon-owner" onClick={() => setIsOpen(false)}>
-                <Button className="w-full bg-primary text-white hover:bg-primary/90">
-                  Join as Salon Owner
-                </Button>
-              </Link>
+              {isSignedIn ? (
+                <SignOutButton>
+                  <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300">
+                    Sign Out
+                  </Button>
+                </SignOutButton>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="font-medium"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link href="/sign-up?role=customer" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300 mb-2">
+                      Join as Customer
+                    </Button>
+                  </Link>
+                  <Link href="/sign-up?role=salon-owner" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                      Join as Salon Owner
+                    </Button>
+                  </Link>
+                </>
+              )}
             </nav>
           </SheetContent>
         </Sheet>
