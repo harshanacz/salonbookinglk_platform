@@ -75,12 +75,20 @@ export function Navbar() {
               Sign In
             </Button>
           </Link>
-          <Link href="/sign-up">
+          <Link href="/sign-up?role=customer">
             <Button
               size="sm"
-              className="bg-white text-white hover:bg-gray-100 border border-gray-300 rounded-[15px] font-medium"
+              className="bg-white text-black hover:bg-gray-100 border border-gray-300 rounded-[15px] font-medium"
             >
-              Join
+              Join as Customer
+            </Button>
+          </Link>
+          <Link href="/sign-up?role=salon-owner">
+            <Button
+              size="sm"
+              className="bg-primary text-white hover:bg-primary/90 rounded-[15px] font-medium"
+            >
+              Join as Salon Owner
             </Button>
           </Link>
         </div>
@@ -161,9 +169,14 @@ export function Navbar() {
               >
                 Sign In
               </Link>
-              <Link href="/sign-up" onClick={() => setIsOpen(false)}>
-                <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300">
-                  Join
+              <Link href="/sign-up?role=customer" onClick={() => setIsOpen(false)}>
+                <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300 mb-2">
+                  Join as Customer
+                </Button>
+              </Link>
+              <Link href="/sign-up?role=salon-owner" onClick={() => setIsOpen(false)}>
+                <Button className="w-full bg-primary text-white hover:bg-primary/90">
+                  Join as Salon Owner
                 </Button>
               </Link>
             </nav>
