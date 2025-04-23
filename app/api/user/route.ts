@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {
-        role: type,
+        type: type,
       },
     });
 
