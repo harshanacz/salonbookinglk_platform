@@ -7,22 +7,31 @@ import { useSearchParams } from "next/navigation";
 export default function Page() {
   const { theme } = useTheme();
   const searchParams = useSearchParams();
-  const role = searchParams.get("role");
-  
+  const role = searchParams.get("role") || "customer";
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
-      <SignUp 
+      <SignUp
         appearance={{
           elements: {
             formButtonPrimary: "bg-primary",
-            footerActionLink: "text-primary hover:text-primary-dark"
-          }
+            footerActionLink: "text-primary hover:text-primary-dark",
+          },
         }}
         routing="path"
         path="/sign-up"
         signInUrl="/sign-in"
-        afterSignUpUrl={role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"}
+        afterSignUpUrl={
+          role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
+        }
+        signInForceRedirectUrl={
+          role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
+        }
+        unsafeMetadata={{
+          role: role,
+          type: role === "salon-owner" ? "SALON_OWNER" : "CUSTOMER"
+        }}
       />
     </div>
   );
-} 
+}
