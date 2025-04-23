@@ -15,7 +15,7 @@ export default function AfterSignUpPage() {
       try {
         // Get role from metadata
         const role = user.publicMetadata.role as string;
-        
+
         // Create user in our database
         const response = await fetch("/api/user", {
           method: "POST",
@@ -23,7 +23,7 @@ export default function AfterSignUpPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            type: role === "salon-owner" ? "SALON_OWNER" : "CUSTOMER",
+            type: role,
             userName: user.username || user.firstName,
             email: user.primaryEmailAddress?.emailAddress,
             mobileNumber: user.phoneNumbers[0]?.phoneNumber,
