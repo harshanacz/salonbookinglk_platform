@@ -5,7 +5,6 @@ import { useTheme } from "next-themes";
 import { useSearchParams } from "next/navigation";
 
 export default function Page() {
-  const { theme } = useTheme();
   const searchParams = useSearchParams();
   const role = searchParams.get("role") || "customer";
 
@@ -21,13 +20,8 @@ export default function Page() {
         routing="path"
         path="/sign-up"
         signInUrl="/sign-in"
-        afterSignUpUrl="/after-sign-up"
-        signInForceRedirectUrl={
-          role === "salon-owner" ? "/salon-owner/profile" : "/user/profile"
-        }
         unsafeMetadata={{
-          role: role,
-          type: role === "salon-owner" ? "SALON_OWNER" : "CUSTOMER"
+          type: role === "salon-owner" ? "SALON_OWNER" : "CUSTOMER",
         }}
       />
     </div>
