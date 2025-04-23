@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/user/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -26,13 +27,15 @@ export default function RootLayout({
   const isSalonOwnerPage = pathname.startsWith("/salon-owner");
 
   return (
-    <html lang="en">
-      <body className={montserrat.className}>
-        {!isAdminPage && !isSalonOwnerPage && <Navbar />}
-        <main>{children}</main>
-        {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={montserrat.className}>
+          {!isAdminPage && !isSalonOwnerPage && <Navbar />}
+          <main>{children}</main>
+          {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
