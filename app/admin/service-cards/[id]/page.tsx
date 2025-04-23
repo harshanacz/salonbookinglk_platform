@@ -9,13 +9,13 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ServiceApprovalPageProps {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 export default function ServiceApprovalPage(props: ServiceApprovalPageProps) {
-  const params = use(props.params);
+  const { params } = props;
   const { toast } = useToast();
 
   // In a real app, you would fetch this data based on the ID
