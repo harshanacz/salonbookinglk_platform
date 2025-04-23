@@ -58,6 +58,7 @@
     "npm": "^11.3.0",
     "react": "19.1.0",
     "react-chartjs-2": "latest",
+    "react-day-picker": "^9.6.7",
     "react-dom": "19.1.0",
     "react-hook-form": "latest",
     "react-leaflet": "latest",
