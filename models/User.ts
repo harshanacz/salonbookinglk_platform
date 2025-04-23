@@ -1,60 +1,65 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 export enum UserType {
-  USER = 'USER',
-  SALON_OWNER = 'SALON_OWNER',
-  ADMIN = 'ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN'
+  CUSTOMER = "CUSTOMER",
+  SALON_OWNER = "SALON_OWNER",
+  ADMIN = "ADMIN",
+  SUPER_ADMIN = "SUPER_ADMIN",
 }
 
 export enum Gender {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  OTHER = 'OTHER'
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
 }
 
-const userSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    enum: Object.values(UserType),
-    required: true
+const userSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: Object.values(UserType),
+      required: true,
+    },
+    mobileNumber: {
+      type: String,
+      required: false,
+    },
+    clerkUserId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    userName: {
+      type: String,
+      required: false,
+    },
+    email: {
+      type: String,
+      required: false,
+      unique: true,
+      sparse: true, // Allows multiple null/undefined values
+    },
+    gender: {
+      type: String,
+      enum: Object.values(Gender),
+      required: false,
+    },
+    country: {
+      type: String,
+      required: false,
+    },
+    profileImage: {
+      type: String,
+      required: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
-  mobileNumber: {
-    type: String,
-    required: true
-  },
-  clerkUserId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  userName: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  gender: {
-    type: String,
-    enum: Object.values(Gender),
-    required: true
-  },
-  country: {
-    type: String,
-    required: true
-  },
-  profileImage: {
-    type: String
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
-export default mongoose.models.User || mongoose.model('User', userSchema); 
+export default mongoose.models.User || mongoose.model("User", userSchema);
