@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     } = body;
 
     const clerk = await clerkClient();
+
     await clerk.users.updateUserMetadata(userId, {
       publicMetadata: {
         role: type,
