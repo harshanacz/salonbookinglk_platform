@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
@@ -10,7 +10,7 @@ import { CategoryButton } from "@/components/category-button";
 import { PromoBanner } from "@/components/user/home/promo-banner";
 import { StylesGallery } from "@/components/user/home/styles-gallery";
 import { UserTypeCards } from "@/components/user/home/user-type-cards";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/home/hero-section";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
@@ -49,6 +49,18 @@ const nearbySalons = [
 export default function Home() {
   const [location, setLocation] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Check for redirect_type param
+    const redirectType = searchParams.get("redirect_type");
+    if (redirectType) {
+      const redirectPath = redirectType === "SALON_OWNER" 
+        ? "/salon-owner/profile" 
+        : "/user/profile";
+      window.location.href = redirectPath;
+    }
+  }, [searchParams]);
 
   const handleSearch = () => {
     router.push(`/search?location=${encodeURIComponent(location)}`);

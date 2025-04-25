@@ -40,8 +40,8 @@ export default function AfterSignUpPage() {
         // Add delay to ensure Clerk session is updated with new metadata
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Redirect based on role with full page reload
-        window.location.href = "/";
+        // Redirect to homepage with user type as search param
+        window.location.href = `/?redirect_type=${type}`;
       } catch (error) {
         console.error("Error creating user:", error);
         // You might want to show an error message to the user here
