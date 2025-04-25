@@ -12,11 +12,15 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // All routes except salon owner and customer routes are public
-const isPublicRoute = createRouteMatcher(["/((?!salon-owner|user).*)"]);
+const isPublicRoute = createRouteMatcher([
+  "/((?!salon-owner|user|super-admin).*)",
+]);
 
 const isSalonOwnerRoute = createRouteMatcher(["/salon-owner(.*)"]);
 
 const isCustomerRoute = createRouteMatcher(["/user(.*)"]);
+
+const isSuperAdminRoute = createRouteMatcher(["/super-admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
@@ -26,6 +30,16 @@ export default clerkMiddleware(async (auth, req) => {
     const { sessionClaims } = authObject;
 
     const type = sessionClaims?.metadata?.type as string;
+
+    console.log(type);
+
+    // Early return for super-admin route protection
+    if (type === "SUPER_ADMIN") {
+      if (!isSuperAdminRoute(req)) {
+        return NextResponse.redirect(new URL("/super-admin", req.url));
+      }
+      return NextResponse.next();
+    }
 
     if (type === "SALON_OWNER" && isCustomerRoute(req)) {
       return NextResponse.redirect(new URL("/salon-owner/profile", req.url));
