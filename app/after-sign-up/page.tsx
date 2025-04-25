@@ -1,20 +1,23 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AfterSignUpPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     async function createUser() {
       if (!user) return;
 
       try {
-        // Get role from metadata
-        const type = user.unsafeMetadata.type as string;
+        // Get role from metadata or search params as fallback
+        const metadataType = user.unsafeMetadata.type as string;
+        const searchParamsType = searchParams.get("type");
+        const type = metadataType || searchParamsType;
 
         // Create user in our database
         const response = await fetch("/api/user", {
@@ -48,7 +51,7 @@ export default function AfterSignUpPage() {
     if (isLoaded && user) {
       createUser();
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
