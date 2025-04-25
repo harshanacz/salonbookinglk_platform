@@ -17,7 +17,7 @@ export default function AfterSignUpPage() {
         // Get role from metadata or search params as fallback
         const metadataType = user.unsafeMetadata.type as string;
         const searchParamsType = searchParams.get("type");
-        const type = metadataType || searchParamsType || "CUSTOMER";
+        const type = metadataType || searchParamsType;
 
         // Create user in our database
         const response = await fetch("/api/user", {
