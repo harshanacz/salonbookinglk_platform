@@ -54,6 +54,7 @@ export default clerkMiddleware(async (auth, req) => {
     const { sessionClaims } = authObject;
     const userType = sessionClaims?.metadata?.type as string | undefined;
 
+    console.log("User type:", userType);
     // If user type is not set, treat them as a customer
     // This helps during initial sign up before the type is set
     if (!userType) {

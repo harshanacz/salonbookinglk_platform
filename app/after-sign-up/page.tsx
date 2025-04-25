@@ -1,12 +1,11 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AfterSignUpPage() {
   const { user, isLoaded } = useUser();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -38,10 +37,9 @@ export default function AfterSignUpPage() {
           throw new Error("Failed to create user");
         }
 
-        // Redirect based on role
-        router.push(
-          type === "SALON_OWNER" ? "/salon-owner/profile" : "/user/profile"
-        );
+        // Redirect based on role with full page reload
+        window.location.href =
+          type === "SALON_OWNER" ? "/salon-owner/profile" : "/user/profile";
       } catch (error) {
         console.error("Error creating user:", error);
         // You might want to show an error message to the user here
@@ -51,7 +49,7 @@ export default function AfterSignUpPage() {
     if (isLoaded && user) {
       createUser();
     }
-  }, [isLoaded, user, router, searchParams]);
+  }, [isLoaded, user, searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
