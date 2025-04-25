@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
@@ -10,7 +10,7 @@ import { CategoryButton } from "@/components/category-button";
 import { PromoBanner } from "@/components/user/home/promo-banner";
 import { StylesGallery } from "@/components/user/home/styles-gallery";
 import { UserTypeCards } from "@/components/user/home/user-type-cards";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/home/hero-section";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
@@ -48,7 +48,34 @@ const nearbySalons = [
 
 export default function Home() {
   const [location, setLocation] = useState("");
+  const [hasRedirected, setHasRedirected] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const redirectType = searchParams.get("redirect_type");
+    if (redirectType && !hasRedirected) {
+      setHasRedirected(true);
+      
+      // Try redirect multiple times with increasing delays
+      const delays = [1000, 2000, 3000]; // 1s, 2s, 3s delays
+      
+      delays.forEach((delay, index) => {
+        setTimeout(() => {
+          const redirectPath = redirectType === "SALON_OWNER" 
+            ? "/salon-owner/profile" 
+            : "/user/profile";
+          
+          // On last attempt, use replace. Otherwise use assign
+          if (index === delays.length - 1) {
+            window.location.replace(redirectPath);
+          } else {
+            window.location.assign(redirectPath);
+          }
+        }, delay);
+      });
+    }
+  }, [searchParams, hasRedirected]);
 
   const handleSearch = () => {
     router.push(`/search?location=${encodeURIComponent(location)}`);
