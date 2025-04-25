@@ -37,6 +37,9 @@ export default function AfterSignUpPage() {
           throw new Error("Failed to create user");
         }
 
+        // Add delay to ensure Clerk session is updated with new metadata
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        
         // Redirect based on role with full page reload
         window.location.href =
           type === "SALON_OWNER" ? "/salon-owner/profile" : "/user/profile";
