@@ -14,14 +14,12 @@ import { AdminList } from "@/components/super-admin/admin-list";
 import { ActivityLogs } from "@/components/super-admin/activity-logs";
 import { AddAdminForm } from "@/components/super-admin/add-admin-form";
 import { UserCog, Activity, UserPlus, LogOut } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function SuperAdminDashboard() {
   const [selectedAdmin, setSelectedAdmin] = useState<string | null>(null);
-
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
-  };
+  const router = useRouter();
 
   return (
     <div className="container w-full mx-auto py-6 space-y-6">
@@ -35,14 +33,15 @@ export default function SuperAdminDashboard() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button
-            variant="outline"
-            className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
-            onClick={handleLogout}
-          >
-            <LogOut className="mr-2 h-5 w-5" />
-            Logout
-          </Button>
+          <SignOutButton redirectUrl="/">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
+            >
+              <LogOut className="mr-2 h-5 w-5" />
+              Logout
+            </Button>
+          </SignOutButton>
         </div>
       </div>
 
