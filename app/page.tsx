@@ -48,19 +48,34 @@ const nearbySalons = [
 
 export default function Home() {
   const [location, setLocation] = useState("");
+  const [hasRedirected, setHasRedirected] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check for redirect_type param
     const redirectType = searchParams.get("redirect_type");
-    if (redirectType) {
-      const redirectPath = redirectType === "SALON_OWNER" 
-        ? "/salon-owner/profile" 
-        : "/user/profile";
-      window.location.href = redirectPath;
+    if (redirectType && !hasRedirected) {
+      setHasRedirected(true);
+      
+      // Try redirect multiple times with increasing delays
+      const delays = [1000, 2000, 3000]; // 1s, 2s, 3s delays
+      
+      delays.forEach((delay, index) => {
+        setTimeout(() => {
+          const redirectPath = redirectType === "SALON_OWNER" 
+            ? "/salon-owner/profile" 
+            : "/user/profile";
+          
+          // On last attempt, use replace. Otherwise use assign
+          if (index === delays.length - 1) {
+            window.location.replace(redirectPath);
+          } else {
+            window.location.assign(redirectPath);
+          }
+        }, delay);
+      });
     }
-  }, [searchParams]);
+  }, [searchParams, hasRedirected]);
 
   const handleSearch = () => {
     router.push(`/search?location=${encodeURIComponent(location)}`);
