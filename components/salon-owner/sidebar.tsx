@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SignOutButton } from "@clerk/nextjs";
 
 const sidebarItems = [
   {
@@ -82,7 +83,7 @@ export function SalonOwnerSidebar() {
 
   // Hide sidebar on auth pages
   if (
-    pathname === "/salon-owner/sign-up" || 
+    pathname === "/salon-owner/sign-up" ||
     pathname === "/salon-owner/sign-in" ||
     pathname === "/salon-owner/forgot-password"
   ) {
@@ -91,11 +92,6 @@ export function SalonOwnerSidebar() {
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
   };
 
   return (
@@ -152,14 +148,15 @@ export function SalonOwnerSidebar() {
 
         {/* Logout Button */}
         <div className="p-4 border-t border-[#D9D9D9]">
-          <Button
-            variant="ghost"
-            className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={handleLogout}
-          >
-            <LogOut className="h-5 w-5" />
-            <span>Logout</span>
-          </Button>
+          <SignOutButton>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </Button>
+          </SignOutButton>
         </div>
       </div>
     </div>

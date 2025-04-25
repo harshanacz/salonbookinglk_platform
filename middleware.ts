@@ -11,49 +11,83 @@ declare global {
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// All routes except salon owner and customer routes are public
-const isPublicRoute = createRouteMatcher([
-  "/((?!salon-owner|user|super-admin).*)",
-]);
+// Define route patterns and their allowed user types
+const ROUTE_CONFIG = {
+  salonOwner: {
+    pattern: createRouteMatcher(["/salon-owner(.*)"]),
+    allowedTypes: ["SALON_OWNER"],
+    redirectPath: "/salon-owner/profile",
+  },
+  superAdmin: {
+    pattern: createRouteMatcher(["/super-admin(.*)"]),
+    allowedTypes: ["SUPER_ADMIN"],
+    redirectPath: "/super-admin",
+  },
+};
 
-const isSalonOwnerRoute = createRouteMatcher(["/salon-owner(.*)"]);
-
-const isCustomerRoute = createRouteMatcher(["/user(.*)"]);
-
-const isSuperAdminRoute = createRouteMatcher(["/super-admin(.*)"]);
+// Get the designated route for a user type
+const getHomeRouteForUserType = (type: string): string => {
+  switch (type) {
+    case "SUPER_ADMIN":
+      return "/super-admin";
+    case "SALON_OWNER":
+      return "/salon-owner/profile";
+    case "CUSTOMER":
+    case undefined:
+    case null:
+      return "/";
+    default:
+      return "/";
+  }
+};
 
 export default clerkMiddleware(async (auth, req) => {
   const authObject = await auth();
 
-  // If not authenticated, allow access to public routes
-  if (!authObject.userId) {
-    return NextResponse.next();
-  }
+  // Check if the current route is a protected route
+  const isProtectedRoute = Object.values(ROUTE_CONFIG).some((config) =>
+    config.pattern(req)
+  );
 
-  const { sessionClaims } = authObject;
-  const type = sessionClaims?.metadata?.type as string;
+  // If authenticated, handle user type specific redirects
+  if (authObject.userId) {
+    const { sessionClaims } = authObject;
+    const userType = sessionClaims?.metadata?.type as string | undefined;
 
-  console.log(type);
-
-  // Handle SUPER_ADMIN routes
-  if (type === "SUPER_ADMIN") {
-    if (!isSuperAdminRoute(req)) {
-      return NextResponse.redirect(new URL("/super-admin", req.url));
+    console.log("User type:", userType);
+    // If user type is not set, treat them as a customer
+    // This helps during initial sign up before the type is set
+    if (!userType) {
+      if (isProtectedRoute) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+      return NextResponse.next();
     }
-    return NextResponse.next();
-  }
 
-  // Handle SALON_OWNER routes
-  if (type === "SALON_OWNER") {
-    if (!isSalonOwnerRoute(req)) {
-      return NextResponse.redirect(new URL("/salon-owner/profile", req.url));
+    // If it's not a protected route and user is not a customer,
+    // redirect them to their respective section
+    if (!isProtectedRoute && userType !== "CUSTOMER") {
+      return NextResponse.redirect(
+        new URL(getHomeRouteForUserType(userType), req.url)
+      );
     }
-    return NextResponse.next();
-  }
 
-  // Handle CUSTOMER routes
-  if (type === "CUSTOMER" && isSalonOwnerRoute(req)) {
-    return NextResponse.redirect(new URL("/user/profile", req.url));
+    // For protected routes, check permissions
+    if (isProtectedRoute) {
+      for (const [key, config] of Object.entries(ROUTE_CONFIG)) {
+        if (config.pattern(req)) {
+          if (!config.allowedTypes.includes(userType)) {
+            return NextResponse.redirect(
+              new URL(getHomeRouteForUserType(userType), req.url)
+            );
+          }
+          return NextResponse.next();
+        }
+      }
+    }
+  } else if (isProtectedRoute) {
+    // If not authenticated and trying to access protected route
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
   return NextResponse.next();
