@@ -20,7 +20,7 @@ export default function Page() {
         routing="path"
         path="/sign-in"
         signUpUrl="/sign-up"
-        forceRedirectUrl="/after-sign-up?type=CUSTOMER"
+        signUpForceRedirectUrl="/after-sign-up?type=CUSTOMER"
       />
     </div>
   );
