@@ -32,7 +32,6 @@ const formSchema = z.object({
       message: "Password must contain at least one lowercase letter",
     })
     .regex(/[0-9]/, { message: "Password must contain at least one number" }),
-  sendInvitation: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,7 +45,6 @@ export function AddAdminForm() {
       name: "",
       email: "",
       password: "",
-      sendInvitation: true,
     },
   });
 
@@ -54,15 +52,24 @@ export function AddAdminForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Call API to create the admin
+      const response = await fetch("/api/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName: data.name,
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
-      // In a real app, you would call an API to create the admin
-      console.log("Form data:", data);
+      if (!response.ok) {
+        throw new Error("Failed to create admin");
+      }
 
       toast({
         title: "Admin created successfully",
-        description: `An invitation email has been sent to ${data.email}`,
+        description: `An admin account has been created for ${data.email}`,
       });
 
       // Reset form
