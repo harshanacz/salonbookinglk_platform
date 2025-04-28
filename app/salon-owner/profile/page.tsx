@@ -50,6 +50,7 @@ export default function SalonOwnerProfile() {
     const fetchData = async () => {
       try {
         const userRes = await fetch("/api/user");
+        console.log("[USER_RES]", userRes);
         if (!userRes.ok) throw new Error("Failed to fetch user");
         const user = await userRes.json();
         setUserData({
