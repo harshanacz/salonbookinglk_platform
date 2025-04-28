@@ -4,8 +4,10 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 
 export async function POST(req: Request) {
+  console.log("[USER_POST] called");
   try {
     const { userId } = await auth();
+    console.log("[USER_POST] userId:", userId);
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -52,8 +54,10 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  console.log("[USER_PATCH] called");
   try {
     const { userId } = await auth();
+    console.log("[USER_PATCH] userId:", userId);
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -83,8 +87,10 @@ export async function PATCH(req: Request) {
 }
 
 export async function GET(req: Request) {
+  console.log("[USER_GET] called");
   try {
     const { userId } = await auth();
+    console.log("[USER_GET] userId:", userId);
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }

@@ -49,6 +49,11 @@ const getHomeRouteForUserType = (type: string): string => {
 };
 
 export default clerkMiddleware(async (auth, req) => {
+  // Skip user-type-based redirects for API routes
+  if (req.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   const authObject = await auth();
 
   // Check if the current route is a protected route
