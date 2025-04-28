@@ -50,3 +50,52 @@ export async function POST(req: Request) {
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+export async function PATCH(req: Request) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const body = await req.json();
+    await dbConnect();
+
+    // Find the user by clerkUserId
+    const user = await User.findOne({ clerkUserId: userId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+
+    // Only update fields provided in the request body
+    Object.keys(body).forEach((key) => {
+      if (body[key] !== undefined) {
+        user[key] = body[key];
+      }
+    });
+
+    await user.save();
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("[USER_PATCH]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+    await dbConnect();
+    const user = await User.findOne({ clerkUserId: userId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("[USER_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
