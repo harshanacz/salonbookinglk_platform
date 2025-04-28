@@ -1,54 +1,165 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { UploadButton } from "@/lib/uploadthing";
+
+// Add types for userData and salonData
+interface UserData {
+  ownerName: string;
+  email: string;
+  phone: string;
+  profileImage: string;
+}
+interface SalonData {
+  salonName: string;
+  description: string;
+  address: string;
+  website: string;
+  openingHours: string;
+  businessRegistration: string;
+}
 
 export default function SalonOwnerProfile() {
-  const [salonData, setSalonData] = useState({
-    salonName: "Glamour Studio",
-    ownerName: "John Doe",
-    email: "john@glamourstudio.com",
-    phone: "+94 71 234 5678",
-    address: "123 Beauty Lane, Colombo 07",
-    description:
-      "Premier salon offering a wide range of beauty and hair services. Specializing in modern cuts, coloring, and bridal packages.",
-    website: "www.glamourstudio.com",
-    openingHours: "9:00 AM - 8:00 PM",
-    businessRegistration: "REG123456",
+  const [userData, setUserData] = useState<UserData>({
+    ownerName: "",
+    email: "",
+    phone: "",
+    profileImage: "",
   });
-
-  const [editingField, setEditingField] = useState<string | null>(null);
+  const [salonData, setSalonData] = useState<SalonData>({
+    salonName: "",
+    description: "",
+    address: "",
+    website: "",
+    openingHours: "",
+    businessRegistration: "",
+  });
+  const [editingField, setEditingField] = useState<
+    keyof UserData | keyof SalonData | null
+  >(null);
   const [tempValue, setTempValue] = useState("");
-  const [profileImage, setProfileImage] = useState("/images/salon/profile.jpg");
 
-  const handleEditClick = (field: keyof typeof salonData) => {
+  // Fetch user and salon context data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userRes = await fetch("/api/user");
+        if (!userRes.ok) throw new Error("Failed to fetch user");
+        const user = await userRes.json();
+        setUserData({
+          ownerName: user.userName || "",
+          email: user.email || "",
+          phone: user.mobileNumber || "",
+          profileImage: user.profileImage || "/images/salon/profile.jpg",
+        });
+        const salonRes = await fetch("/api/salon-owner/salon-profile");
+        if (!salonRes.ok) throw new Error("Failed to fetch salon context");
+        const salon = await salonRes.json();
+        setSalonData({
+          salonName: salon.businessName || "",
+          description: salon.businessCategory || "",
+          address: salon.streetAddress || "",
+          website: salon.website || "",
+          openingHours:
+            salon.workingHours && salon.workingHours.length
+              ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
+              : "",
+          businessRegistration: salon.businessRegistrationNumber || "",
+        });
+      } catch (err) {
+        console.error("[PROFILE_FETCH]", err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Handle edit click
+  const handleEditClick = (field: keyof UserData | keyof SalonData) => {
     setEditingField(field);
-    setTempValue(salonData[field]);
-  };
-
-  const handleSave = () => {
-    if (editingField) {
-      setSalonData((prevData) => ({
-        ...prevData,
-        [editingField]: tempValue,
-      }));
-      setEditingField(null);
+    if (field in salonData) {
+      setTempValue(salonData[field as keyof SalonData] ?? "");
+    } else if (field in userData) {
+      setTempValue(userData[field as keyof UserData] ?? "");
+    } else {
+      setTempValue("");
     }
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+  // Save changes to backend
+  const handleSave = async () => {
+    try {
+      if (!editingField) return;
+      // Determine which table to update
+      if (["ownerName", "email", "phone"].includes(editingField)) {
+        const patch: Partial<UserData> & {
+          userName?: string;
+          mobileNumber?: string;
+        } = {};
+        if (editingField === "ownerName") patch.userName = tempValue;
+        else if (editingField === "phone") patch.mobileNumber = tempValue;
+        else patch[editingField as keyof UserData] = tempValue;
+        const res = await fetch("/api/user", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!res.ok) throw new Error("Failed to update user");
+        setUserData((prev) => ({
+          ...prev,
+          [editingField as keyof UserData]: tempValue,
+        }));
+      } else {
+        const patch: Partial<SalonData> & {
+          businessName?: string;
+          businessCategory?: string;
+          streetAddress?: string;
+          businessRegistrationNumber?: string;
+        } = {};
+        if (editingField === "salonName") patch.businessName = tempValue;
+        else if (editingField === "description")
+          patch.businessCategory = tempValue;
+        else if (editingField === "address") patch.streetAddress = tempValue;
+        else if (editingField === "businessRegistration")
+          patch.businessRegistrationNumber = tempValue;
+        else patch[editingField as keyof SalonData] = tempValue;
+        const res = await fetch("/api/salon-owner/salon-profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+        if (!res.ok) throw new Error("Failed to update salon context");
+        setSalonData((prev) => ({
+          ...prev,
+          [editingField as keyof SalonData]: tempValue,
+        }));
+      }
+      setEditingField(null);
+    } catch (err) {
+      console.error("[PROFILE_SAVE]", err);
+    }
+  };
+
+  // Handle profile image upload
+  const handleImageUpload = async (res: any) => {
+    if (!res || !res[0]?.url) return;
+    const imageUrl = res[0].url;
+    try {
+      const patch = { profileImage: imageUrl };
+      const resp = await fetch("/api/user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!resp.ok) throw new Error("Failed to update profile image");
+      setUserData((prev) => ({ ...prev, profileImage: imageUrl }));
+    } catch (err) {
+      console.error("[PROFILE_IMAGE_UPLOAD]", err);
     }
   };
 
@@ -69,23 +180,19 @@ export default function SalonOwnerProfile() {
         <Card className="p-6 md:col-span-1">
           <div className="flex flex-col items-center space-y-4">
             <Avatar className="w-32 h-32">
-              <AvatarImage src={profileImage} />
-              <AvatarFallback>GS</AvatarFallback>
+              <AvatarImage src={userData.profileImage} />
+              <AvatarFallback>SO</AvatarFallback>
             </Avatar>
-            <label className="cursor-pointer">
-              <Input
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageChange}
-              />
-              <span className="text-sm text-purple-600 hover:text-purple-700">
-                Change Photo
-              </span>
-            </label>
+            <UploadButton
+              endpoint="imageUploader"
+              onClientUploadComplete={handleImageUpload}
+              onUploadError={(error: Error) => {
+                alert(`ERROR! ${error.message}`);
+              }}
+            />
             <div className="text-center">
               <h2 className="text-xl font-semibold">{salonData.salonName}</h2>
-              <p className="text-gray-500">{salonData.ownerName}</p>
+              <p className="text-gray-500">{userData.ownerName}</p>
             </div>
           </div>
         </Card>
@@ -169,7 +276,7 @@ export default function SalonOwnerProfile() {
                       className="flex-1"
                     />
                   ) : (
-                    <span>{salonData.phone}</span>
+                    <span>{userData.phone}</span>
                   )}
                   <Button
                     variant="ghost"
@@ -189,7 +296,7 @@ export default function SalonOwnerProfile() {
                       className="flex-1"
                     />
                   ) : (
-                    <span>{salonData.email}</span>
+                    <span>{userData.email}</span>
                   )}
                   <Button
                     variant="ghost"
@@ -215,6 +322,28 @@ export default function SalonOwnerProfile() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEditClick("website")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <label className="text-sm text-gray-500">Owner Name</label>
+                    {editingField === "ownerName" ? (
+                      <Input
+                        value={tempValue}
+                        onChange={(e) => setTempValue(e.target.value)}
+                        className="max-w-sm"
+                      />
+                    ) : (
+                      <p>{userData.ownerName}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditClick("ownerName")}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>

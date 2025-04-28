@@ -23,6 +23,11 @@ const ROUTE_CONFIG = {
     allowedTypes: ["SUPER_ADMIN"],
     redirectPath: "/super-admin",
   },
+  admin: {
+    pattern: createRouteMatcher(["/admin(.*)"]),
+    allowedTypes: ["ADMIN"],
+    redirectPath: "/admin",
+  },
 };
 
 // Get the designated route for a user type
@@ -32,6 +37,8 @@ const getHomeRouteForUserType = (type: string): string => {
       return "/super-admin";
     case "SALON_OWNER":
       return "/salon-owner/profile";
+    case "ADMIN":
+      return "/admin";
     case "CUSTOMER":
     case undefined:
     case null:
