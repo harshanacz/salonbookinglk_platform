@@ -2,7 +2,6 @@ let userConfig = undefined
 try {
   userConfig = await import('./v0-user-next.config')
 } catch (e) {
-  // ignore error
 }
 
 /** @type {import('next').NextConfig} */
@@ -15,7 +14,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['i.ibb.co', 'utfs.io'], // Add 'utfs.io' to allowed domains
+    domains: ['i.ibb.co', 'utfs.io'], 
   },
   experimental: {
     webpackBuildWorker: true,
