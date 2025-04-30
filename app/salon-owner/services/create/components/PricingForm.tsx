@@ -15,7 +15,7 @@ export default function PricingForm({ formData, updateFormData }: PricingFormPro
     <div className="w-full flex flex-col items-center md:items-start"> {/* Center items on mobile */}
       <div className="w-full flex flex-col gap-4 md:flex-row md:gap-8 mt-6">
         <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-          <label htmlFor="duration" className="block font-bold">Duration (minutes)</label> {/* Added font-bold */}
+          <label htmlFor="duration" className="block font-bold mb-2">Duration (minutes)</label> {/* Added font-bold */}
           <select
             id="duration"
             name="duration"
@@ -33,7 +33,7 @@ export default function PricingForm({ formData, updateFormData }: PricingFormPro
           </select>
         </div>
         <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-          <label htmlFor="price" className="block font-bold">Price (LKR)</label> {/* Added font-bold */}
+          <label htmlFor="price" className="block font-bold mb-2">Price (LKR)</label> {/* Added font-bold */}
           <input
             id="price"
             name="price"
@@ -51,7 +51,7 @@ export default function PricingForm({ formData, updateFormData }: PricingFormPro
         </p>
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-            <label htmlFor="extraTimeType" className="block font-bold">Type</label> {/* Added font-bold */}
+            <label htmlFor="extraTimeType" className="block font-bold mb-2">Type</label> {/* Added font-bold */}
             <select
               id="extraTimeType"
               name="extraTimeType"
@@ -64,7 +64,7 @@ export default function PricingForm({ formData, updateFormData }: PricingFormPro
             </select>
           </div>
           <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-            <label htmlFor="extraTimeDuration" className="block font-bold">Duration</label> {/* Added font-bold */}
+            <label htmlFor="extraTimeDuration" className="block font-bold mb-2">Duration</label> {/* Added font-bold */}
             <select
               id="extraTimeDuration"
               name="extraTimeDuration"
