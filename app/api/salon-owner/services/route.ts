@@ -75,4 +75,38 @@ export async function POST(req: Request) {
   }
 }
 
-// a GET endpoint to fetch services 
+export async function GET(req: Request) {
+  try {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+    await dbConnect();
+
+    const user = await User.findOne({ clerkUserId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+    if (user.type !== UserType.SALON_OWNER) {
+      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+    }
+
+    const services = await Service.find({ userId: user._id });
+    const response = services.map((service) => ({
+      id: service._id,
+      title: service.title,
+      image: service.images[0] || "",
+      price: service.price,
+      status: service.status.toLowerCase(),
+      impressions: 0,
+      clicks: 0,
+      appointments: 0,
+      staffAssigned: Array.isArray(service.staffAssigned) ? service.staffAssigned.length : 0,
+    }));
+
+    return NextResponse.json(response);
+  } catch (error: any) {
+    console.error("[SERVICE_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
