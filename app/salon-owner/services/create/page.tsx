@@ -153,7 +153,12 @@ export default function CreateServicePage() {
     <div className="space-y-8">
       <TabNavigation currentStep={currentStep} setCurrentStep={setCurrentStep} />
 
-      <div>{renderStep()}</div>
+      {/* Adjusted container for full-width desktop and centered mobile */}
+      <div
+        className="w-full bg-[#F3E5F5] border border-purple-200 rounded-3xl md:rounded-2xl shadow-lg p-4 md:p-8 transition-all duration-200 mx-auto md:mx-0"
+      >
+        {renderStep()}
+      </div>
 
       <div className="flex justify-between mt-10">
         <Button

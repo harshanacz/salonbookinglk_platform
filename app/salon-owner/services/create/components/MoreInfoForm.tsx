@@ -13,9 +13,9 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-8 mt-6">
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
+    <div className="grid md:grid-cols-2 gap-8 mt-6 items-start"> {/* Use items-start for desktop alignment */}
+      <div className="space-y-6 flex flex-col items-center md:items-start"> {/* Center items on mobile */}
+        <div className="flex items-center gap-2 w-full justify-center md:justify-start"> {/* Center checkbox/label on mobile */}
           <input
             id="onlineBooking"
             name="onlineBooking"
@@ -24,13 +24,13 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
             checked={!!formData.onlineBooking}
             onChange={handleChange}
           />
-          <label htmlFor="onlineBooking" className="block font-medium">Online Booking</label>
+          <label htmlFor="onlineBooking" className="block font-bold">Online Booking</label> {/* Added font-bold */}
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 text-center md:text-left"> {/* Center text on mobile */}
           Allow clients to book this service online via the SalonBooking.lk Marketplace, socials and your own custom booking links.
         </p>
-        <div>
-          <label htmlFor="availableFor" className="block font-medium">Available For</label>
+        <div className="w-full"> {/* Ensure full width on mobile */}
+          <label htmlFor="availableFor" className="block font-bold">Available For</label> {/* Added font-bold */}
           <select
             id="availableFor"
             name="availableFor"
@@ -43,8 +43,8 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
             <option value="FEMALE">Female</option>
           </select>
         </div>
-        <div>
-          <label htmlFor="clientInstructions" className="block font-medium">Instructions for Clients</label>
+        <div className="w-full"> {/* Ensure full width on mobile */}
+          <label htmlFor="clientInstructions" className="block font-bold">Instructions for Clients</label> {/* Added font-bold */}
           <textarea
             id="clientInstructions"
             name="clientInstructions"
@@ -54,12 +54,12 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
           />
         </div>
       </div>
-      <div>
+      <div className="flex flex-col items-center md:items-start"> {/* Center items on mobile */}
         {/* Only show image preview, not upload */}
         {formData.images && formData.images.length > 0 && (
-          <div>
-            <label className="block font-medium mb-2">Service Images Preview</label>
-            <div className="flex gap-2 flex-wrap">
+          <div className="w-full"> {/* Ensure full width on mobile */}
+            <label className="block font-bold mb-2 text-center md:text-left">Service Images Preview</label> {/* Added font-bold and centering */}
+            <div className="flex gap-2 flex-wrap justify-center md:justify-start"> {/* Center images on mobile */}
               {formData.images.map((url: string, idx: number) => (
                 <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden flex flex-col items-center">
                   <img src={url} alt={`Service Image ${idx + 1}`} className="object-cover w-full h-full" />
@@ -69,10 +69,13 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-1">First image is used as the header image.</p>
+            <p className="text-xs text-gray-500 mt-1 text-center md:text-left">First image is used as the header image.</p> {/* Center text on mobile */}
           </div>
         )}
-        {children}
+        {/* Ensure children content is also centered/aligned appropriately if needed */} 
+        <div className="w-full flex flex-col items-center md:items-start"> 
+          {children}
+        </div>
       </div>
     </div>
   );
