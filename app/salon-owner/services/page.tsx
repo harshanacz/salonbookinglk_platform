@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,79 +31,54 @@ import { Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
-// Sample services data
-const services = [
-  {
-    id: 1,
-    title: "Custom Hair Coloring And Highlights | Red, Black, Gray Colors",
-    image: "/placeholder.svg?height=100&width=100",
-    price: 1500,
-    status: "active",
-    impressions: 220,
-    clicks: 15,
-    appointments: 13,
-    staffAssigned: 3,
-  },
-  {
-    id: 2,
-    title: "Acrylic Nail Extensions With Custom Art",
-    image: "/placeholder.svg?height=100&width=100",
-    price: 1200,
-    status: "active",
-    impressions: 180,
-    clicks: 12,
-    appointments: 8,
-    staffAssigned: 2,
-  },
-  {
-    id: 3,
-    title: "Full Body Massage with Essential Oils",
-    image: "/placeholder.svg?height=100&width=100",
-    price: 2500,
-    status: "pending",
-    impressions: 0,
-    clicks: 0,
-    appointments: 0,
-    staffAssigned: 1,
-  },
-  {
-    id: 4,
-    title: "Bridal Makeup Package",
-    image: "/placeholder.svg?height=100&width=100",
-    price: 5000,
-    status: "pending",
-    impressions: 0,
-    clicks: 0,
-    appointments: 0,
-    staffAssigned: 2,
-  },
-  {
-    id: 5,
-    title: "Men's Haircut and Styling",
-    image: "/placeholder.svg?height=100&width=100",
-    price: 800,
-    status: "inactive",
-    impressions: 50,
-    clicks: 3,
-    appointments: 0,
-    staffAssigned: 0,
-  },
-];
+interface Service {
+  id: string;
+  title: string;
+  image: string;
+  price: number;
+  status: string;
+  impressions: number;
+  clicks: number;
+  appointments: number;
+  staffAssigned: number;
+}
 
 export default function ServicesManagement() {
+  const [services, setServices] = useState<Service[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadServices() {
+      try {
+        const res = await fetch("/api/salon-owner/services");
+        if (!res.ok) throw new Error("Failed to fetch services");
+        const data: Service[] = await res.json();
+        setServices(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadServices();
+  }, []);
 
   const filteredServices = services
     .filter(
-      (service) =>
-        (activeTab === "active" && service.status === "active") ||
-        (activeTab === "pending" && service.status === "pending") ||
-        (activeTab === "inactive" && service.status === "inactive")
+      (svc) =>
+        (activeTab === "active" && svc.status === "active") ||
+        (activeTab === "pending" && svc.status === "pending") ||
+        (activeTab === "inactive" && svc.status === "inactive")
     )
-    .filter((service) =>
-      service.title.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter((svc) =>
+      svc.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+  if (loading) {
+    return <div>Loading services...</div>;
+  }
 
   return (
     <div className="space-y-6">
