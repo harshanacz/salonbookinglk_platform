@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 export enum ServiceStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
+  PENDING = "PENDING", // Added PENDING status
 }
 
 export enum ServiceType {
@@ -25,7 +26,7 @@ const serviceSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: Object.values(ServiceStatus),
-      default: ServiceStatus.ACTIVE,
+      default: ServiceStatus.PENDING, // Default to PENDING on creation
     },
     title: {
       type: String,
@@ -38,14 +39,35 @@ const serviceSchema = new mongoose.Schema(
     },
     description: String,
     images: {
-      type: [String],
+      type: [String], // Array of image URLs from UploadThing
+      validate: [arrayLimit, '{PATH} exceeds the limit of 3'], // Limit to 3 images
       default: [],
     },
+    price: { // Added price field
+      type: Number,
+      required: true,
+    },
+    duration: { // Added duration field (e.g., in minutes)
+      type: Number, // Assuming duration is stored in minutes
+      required: true,
+    },
+    staffAssigned: { // Changed staff assigned field to accept string IDs
+      type: [String], // Accept string IDs for development
+      default: [],
+    },
+    // Add any other fields collected from the form steps
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.models.Service ||
-  mongoose.model("Service", serviceSchema);
+// Validator function for array length
+function arrayLimit(val: string[]) {
+  return val.length <= 3;
+}
+
+// Clear cached model to ensure schema updates are applied
+delete mongoose.models.Service;
+
+export default mongoose.model("Service", serviceSchema);

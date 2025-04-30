@@ -1,32 +1,51 @@
-export default function StaffForm() {
-    const staff = [
-      { name: "Shamila", role: "Hair Dresser", image: "/staff1.jpg" },
-      { name: "Shamila", role: "Hair Dresser", image: "/staff2.jpg" },
-    ];
-  
-    return (
-      <div className="mt-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {staff.map((person, index) => (
-            <div key={index} className="flex flex-col items-center gap-2">
-              <img
-                src={person.image}
-                alt={person.name}
-                className="w-24 h-24 rounded-full object-cover"
-              />
-              <div className="text-center">
-                <p className="font-medium">{person.name}</p>
-                <p className="text-sm text-gray-500">{person.role}</p>
-              </div>
-              <button className="text-red-500 text-sm">−</button>
+import React from 'react';
+
+interface StaffFormProps {
+  formData: any; 
+  updateFormData: (data: any) => void;
+}
+
+//FETCH STAFF DATA - now hardcoded
+const staff = [
+  { id: 'staff1', name: 'Shamila', role: 'Hair Dresser', image: '/placeholder-user.jpg' },
+  { id: 'staff2', name: 'Kamal', role: 'Beautician', image: '/placeholder-user.jpg' },
+];
+
+export default function StaffForm({ formData, updateFormData }: StaffFormProps) {
+  const handleToggle = (id: string) => {
+    const assigned = formData.staffAssigned || [];
+    let updated: string[];
+    if (assigned.includes(id)) {
+      updated = assigned.filter((sid: string) => sid !== id);
+    } else {
+      updated = [...assigned, id];
+    }
+    updateFormData({ staffAssigned: updated });
+  };
+
+  return (
+    <div className="mt-6 flex flex-col items-center md:items-start"> {/* Center items on mobile */}
+      <p className="mb-4 text-sm text-gray-600 text-center md:text-left">Select the staff members who can perform this service.</p> {/* Center text on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full justify-items-center"> {/* Center grid items */}
+        {staff.map((person) => (
+          <label key={person.id} className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
+            (formData.staffAssigned || []).includes(person.id) ? 'border-purple-600' : 'border-gray-200'
+          }`}>
+            <img src={person.image} alt={person.name} className="w-24 h-24 rounded-full object-cover" />
+            <div className="text-center">
+              <p className="font-bold">{person.name}</p> {/* Added font-bold */}
+              <p className="text-sm text-gray-500">{person.role}</p>
             </div>
-          ))}
-          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg h-36">
-            <p className="text-2xl font-medium">+</p>
-            <p className="text-sm text-gray-500">Add</p>
-          </div>
-        </div>
+            <input
+              type="checkbox"
+              checked={(formData.staffAssigned || []).includes(person.id)}
+              onChange={() => handleToggle(person.id)}
+              className="mt-2"
+            />
+            <span className="text-xs">Select</span>
+          </label>
+        ))}
       </div>
-    );
-  }
-  
+    </div>
+  );
+}
