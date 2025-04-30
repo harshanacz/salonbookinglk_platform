@@ -2,7 +2,7 @@ import React from 'react';
 
 const categories = [
   { id: 1, name: "Hair Cuts", value: "HAIRCUT", icon: "✂️" },
-  { id: 2, name: "Nail Arts", value: "NAIL_ARTS", icon: "💅" },
+  { id: 2, name: "Nail Arts", value: "NAILS", icon: "💅" }, 
   { id: 3, name: "Skin Care", value: "SKIN_CARE", icon: "✨" },
   { id: 4, name: "Brows & Lashes", value: "BROWS_LASHES", icon: "👁️" },
   { id: 5, name: "Makeup", value: "MAKEUP", icon: "💄" },
