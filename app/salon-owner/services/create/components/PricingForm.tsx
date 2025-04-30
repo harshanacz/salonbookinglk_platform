@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PricingFormProps {
-  formData: any; // Replace 'any' with a more specific type if possible
+  formData: any; 
   updateFormData: (data: any) => void;
 }
 

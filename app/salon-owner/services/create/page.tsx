@@ -31,7 +31,7 @@ export default function CreateServicePage() {
       return formData.staffAssigned && formData.staffAssigned.length > 0;
     }
     if (currentStep === 4) {
-      return true; // All fields optional in last step
+      return true; 
     }
     return false;
   };
@@ -65,7 +65,7 @@ export default function CreateServicePage() {
         body: JSON.stringify(finalData),
       });
 
-      if (!response.ok) {
+      if (!response.ok) { 
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to create service");
       }

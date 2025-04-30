@@ -1,10 +1,11 @@
 import React from 'react';
 
 interface StaffFormProps {
-  formData: any; // Replace 'any' with a more specific type if possible
+  formData: any; 
   updateFormData: (data: any) => void;
 }
 
+//FETCH STAFF DATA - now hardcoded
 const staff = [
   { id: 'staff1', name: 'Shamila', role: 'Hair Dresser', image: '/placeholder-user.jpg' },
   { id: 'staff2', name: 'Kamal', role: 'Beautician', image: '/placeholder-user.jpg' },
