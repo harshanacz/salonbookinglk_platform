@@ -15,7 +15,7 @@ export default function CreateServicePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<any>({});
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [isLoading, setIsLoading] = useState(false); 
   const { toast } = useToast();
 
   const totalSteps = 4;
