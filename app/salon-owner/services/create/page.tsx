@@ -9,11 +9,13 @@ import MoreInfoForm from "./components/MoreInfoForm";
 import { Button } from "@/components/ui/button";
 import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react"; 
 
 export default function CreateServicePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<any>({});
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const { toast } = useToast();
 
   const totalSteps = 4;
@@ -54,6 +56,7 @@ export default function CreateServicePage() {
   };
 
   const handleFinalSubmit = async () => {
+    setIsLoading(true); // Start loading
     const finalData = { ...formData, images: imageUrls };
 
     try {
@@ -85,6 +88,8 @@ export default function CreateServicePage() {
         description: error.message || "An unexpected error occurred.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false); // Stop loading regardless of outcome
     }
   };
 
@@ -163,15 +168,18 @@ export default function CreateServicePage() {
       <div className="flex justify-between mt-10">
         <Button
           onClick={handlePrevious}
-          disabled={currentStep === 1}
+          disabled={currentStep === 1 || isLoading} // Disable when loading
           variant="outline"
         >
           Previous
         </Button>
         <Button
           onClick={isLastStep ? handleFinalSubmit : handleNext}
-          disabled={!isStepValid()}
+          disabled={!isStepValid() || isLoading} // Disable when loading
         >
+          {isLoading && isLastStep ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> // Show loader icon
+          ) : null}
           {isLastStep ? "Save & Submit for Review" : "Next"}
         </Button>
       </div>
