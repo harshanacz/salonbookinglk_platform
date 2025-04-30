@@ -13,23 +13,32 @@ export default function TabNavigation({
   setCurrentStep: (step: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-4 text-sm font-medium text-gray-400">
+    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-sm font-medium w-full">
       {steps.map((label, index) => {
-        // Highlight current and next step
         const isActive = currentStep === index + 1;
-        const isNext = currentStep + 1 === index + 1;
         return (
-          <div key={label} className="flex items-center gap-2">
+          <div
+            key={label}
+            className={cn(
+              "items-center gap-2 w-full md:w-auto",
+              isActive ? "flex" : "hidden md:flex"
+            )}
+          >
             <button
               onClick={() => setCurrentStep(index + 1)}
               className={cn(
-                "transition-colors",
-                isActive ? "text-purple-600 font-bold" : isNext ? "text-purple-400" : "hover:text-black"
+                "transition-all px-4 py-2 rounded-full border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-300 w-full md:w-auto",
+                isActive
+                  ? "bg-gradient-to-r from-purple-500 to-fuchsia-400 text-white shadow-md scale-105"
+                  : "bg-[#F3E5F5] text-purple-700 hover:bg-purple-100 hover:text-purple-900"
               )}
+              style={{ minWidth: 120 }}
             >
               {label}
             </button>
-            {index < steps.length - 1 && <span className="text-gray-300">➔</span>}
+            {index < steps.length - 1 && (
+              <span className="hidden md:inline text-purple-200 text-lg font-bold">⟶</span>
+            )}
           </div>
         );
       })}

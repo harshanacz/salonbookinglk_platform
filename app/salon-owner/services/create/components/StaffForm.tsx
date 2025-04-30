@@ -24,16 +24,16 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
   };
 
   return (
-    <div className="mt-6">
-      <p className="mb-4 text-sm text-gray-600">Select the staff members who can perform this service.</p>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <div className="mt-6 flex flex-col items-center md:items-start"> {/* Center items on mobile */}
+      <p className="mb-4 text-sm text-gray-600 text-center md:text-left">Select the staff members who can perform this service.</p> {/* Center text on mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full justify-items-center"> {/* Center grid items */}
         {staff.map((person) => (
-          <label key={person.id} className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer ${
+          <label key={person.id} className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
             (formData.staffAssigned || []).includes(person.id) ? 'border-purple-600' : 'border-gray-200'
           }`}>
             <img src={person.image} alt={person.name} className="w-24 h-24 rounded-full object-cover" />
             <div className="text-center">
-              <p className="font-medium">{person.name}</p>
+              <p className="font-bold">{person.name}</p> {/* Added font-bold */}
               <p className="text-sm text-gray-500">{person.role}</p>
             </div>
             <input

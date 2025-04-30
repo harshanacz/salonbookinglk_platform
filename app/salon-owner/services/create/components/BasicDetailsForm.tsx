@@ -25,10 +25,10 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-8 mt-6">
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="title" className="block font-medium">Service Card Title</label>
+    <div className="w-full flex flex-col items-center md:items-start"> {/* Center items on mobile */}
+      <div className="w-full flex flex-col gap-4 md:flex-row md:gap-8 mt-6">
+        <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
+          <label htmlFor="title" className="block font-bold">Service Card Title</label> {/* Added font-bold */}
           <input
             id="title"
             name="title"
@@ -36,13 +36,13 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
             value={formData.title || ''}
             onChange={handleChange}
           />
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1 text-center md:text-left"> {/* Center text on mobile */}
             As your storefront title, include keywords buyers might search.
           </p>
         </div>
-        <div>
-          <label className="block font-medium mb-2">Service Category</label>
-          <div className="flex flex-wrap gap-2">
+        <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
+          <label className="block font-bold mb-2">Service Category</label> {/* Added font-bold */}
+          <div className="flex flex-wrap gap-2 justify-center md:justify-start"> {/* Center buttons on mobile */}
             {categories.map(cat => (
               <button
                 type="button"
@@ -50,23 +50,22 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
                 className={`px-3 py-2 rounded border ${formData.type === cat.value ? 'bg-purple-600 text-white' : 'bg-white text-black'}`}
                 onClick={() => handleCategorySelect(cat.value)}
               >
-             {cat.name}
+                {cat.name}
               </button>
             ))}
           </div>
         </div>
-        <div>
-          <label htmlFor="description" className="block font-medium">Description (Optional)</label>
-          <textarea
-            id="description"
-            name="description"
-            className="w-full border p-2 rounded-md min-h-[100px]"
-            value={formData.description || ''}
-            onChange={handleChange}
-          />
-        </div>
       </div>
-      
+      <div className="mt-4 w-full"> {/* Ensure full width on mobile */}
+        <label htmlFor="description" className="block font-bold">Description (Optional)</label> {/* Added font-bold */}
+        <textarea
+          id="description"
+          name="description"
+          className="w-full border p-2 rounded-md min-h-[100px]"
+          value={formData.description || ''}
+          onChange={handleChange}
+        />
+      </div>
     </div>
   );
 }
