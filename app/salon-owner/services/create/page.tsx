@@ -72,7 +72,7 @@ export default function CreateServicePage() {
 
       toast({
         title: "Success!",
-        description: "Service created successfully and submitted for review.",
+        description: "Service created successfully and is now pending review.",
         variant: "default",
       });
       setCurrentStep(1);
