@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useToast } from "@/hooks/use-toast";
 
 interface Service {
   id: string;
@@ -48,6 +49,7 @@ export default function ServicesManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function loadServices() {
@@ -64,6 +66,22 @@ export default function ServicesManagement() {
     }
     loadServices();
   }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this service?")) return;
+    try {
+      const res = await fetch("/api/salon-owner/services", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("Failed to delete service");
+      setServices((prev) => prev.filter((svc) => svc.id !== id));
+      toast({ title: "Service deleted" });
+    } catch (err: any) {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    }
+  };
 
   const filteredServices = services
     .filter(
@@ -200,7 +218,10 @@ export default function ServicesManagement() {
                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                   </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => handleDelete(service.id)}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -287,7 +308,10 @@ export default function ServicesManagement() {
                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                   </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => handleDelete(service.id)}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -380,7 +404,10 @@ export default function ServicesManagement() {
                                 <DropdownMenuItem>
                                   <Eye className="mr-2 h-4 w-4" /> Activate
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-red-600">
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => handleDelete(service.id)}
+                                >
                                   <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
