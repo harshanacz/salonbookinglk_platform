@@ -15,14 +15,12 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['i.ibb.co', 'utfs.io'], // Add 'utfs.io' to allowed domains
   },
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
-  },
-  images: {
-    domains: ['i.ibb.co'],
   },
 }
 

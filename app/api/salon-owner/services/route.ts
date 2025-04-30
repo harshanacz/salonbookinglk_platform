@@ -75,4 +75,102 @@ export async function POST(req: Request) {
   }
 }
 
-// a GET endpoint to fetch services 
+export async function GET(req: Request) {
+  try {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+    await dbConnect();
+
+    const user = await User.findOne({ clerkUserId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+    if (user.type !== UserType.SALON_OWNER) {
+      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+    }
+
+    const services = await Service.find({ userId: user._id });
+    const response = services.map((service) => ({
+      id: service._id,
+      title: service.title,
+      image: service.images[0] || "",
+      price: service.price,
+      status: service.status.toLowerCase(),
+      impressions: 0,
+      clicks: 0,
+      appointments: 0,
+      staffAssigned: Array.isArray(service.staffAssigned) ? service.staffAssigned.length : 0,
+    }));
+
+    return NextResponse.json(response);
+  } catch (error: any) {
+    console.error("[SERVICE_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+    await dbConnect();
+    const user = await User.findOne({ clerkUserId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+    if (user.type !== UserType.SALON_OWNER) {
+      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+    }
+    const body = await req.json();
+    const { id, ...updateData } = body;
+    if (!id) {
+      return new NextResponse("Missing service id", { status: 400 });
+    }
+    const service = await Service.findOneAndUpdate(
+      { _id: id, userId: user._id },
+      updateData,
+      { new: true }
+    );
+    if (!service) {
+      return new NextResponse("Service not found", { status: 404 });
+    }
+    return NextResponse.json(service);
+  } catch (error: any) {
+    console.error("[SERVICE_PUT]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { userId: clerkUserId } = await auth();
+    if (!clerkUserId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+    await dbConnect();
+    const user = await User.findOne({ clerkUserId });
+    if (!user) {
+      return new NextResponse("User not found", { status: 404 });
+    }
+    if (user.type !== UserType.SALON_OWNER) {
+      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+    }
+    const body = await req.json();
+    const { id } = body;
+    if (!id) {
+      return new NextResponse("Missing service id", { status: 400 });
+    }
+    const deleted = await Service.findOneAndDelete({ _id: id, userId: user._id });
+    if (!deleted) {
+      return new NextResponse("Service not found", { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error("[SERVICE_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
