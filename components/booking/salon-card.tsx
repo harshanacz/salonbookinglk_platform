@@ -79,7 +79,7 @@ const SalonCard = ({
   };
 
   return (
-    <div className="bg-white p-6 shadow-md rounded-lg min-h-[700px] w-full max-w-[700px] lg:absolute lg:top-20 lg:right-20 lg:w-[550px] md:relative md:mt-0 md:min-h-[500px]">
+    <div className="bg-white p-6 shadow-md rounded-lg min-h-[700px] w-full max-w-[700px] lg:absolute lg:top-20 lg:right-20 lg:w-[570px] md:relative md:mt-0 md:min-h-[500px]">
       {/* Salon Info Section */}
       <div className="flex items-center gap-5 w-full pr-6 mb-4">
         <img
