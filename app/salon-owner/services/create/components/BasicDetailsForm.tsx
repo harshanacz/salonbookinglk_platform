@@ -28,7 +28,7 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
     <div className="w-full flex flex-col items-center md:items-start"> {/* Center items on mobile */}
       <div className="w-full flex flex-col gap-4 md:flex-row md:gap-8 mt-6">
         <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-          <label htmlFor="title" className="block font-bold">Service Card Title</label> {/* Added font-bold */}
+          <label htmlFor="title" className="block font-bold mb-2">Service Card Title</label> {/* Added font-bold */}
           <input
             id="title"
             name="title"
@@ -57,7 +57,7 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
         </div>
       </div>
       <div className="mt-4 w-full"> {/* Ensure full width on mobile */}
-        <label htmlFor="description" className="block font-bold">Description (Optional)</label> {/* Added font-bold */}
+        <label htmlFor="description" className="block font-bold mb-2">Description (Optional)</label> {/* Added font-bold */}
         <textarea
           id="description"
           name="description"

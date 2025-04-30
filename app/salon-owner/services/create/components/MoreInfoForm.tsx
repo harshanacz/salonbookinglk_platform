@@ -30,7 +30,7 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
           Allow clients to book this service online via the SalonBooking.lk Marketplace, socials and your own custom booking links.
         </p>
         <div className="w-full"> {/* Ensure full width on mobile */}
-          <label htmlFor="availableFor" className="block font-bold">Available For</label> {/* Added font-bold */}
+          <label htmlFor="availableFor" className="block font-bold mb-2">Available For</label> {/* Added font-bold */}
           <select
             id="availableFor"
             name="availableFor"
@@ -44,7 +44,7 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
           </select>
         </div>
         <div className="w-full"> {/* Ensure full width on mobile */}
-          <label htmlFor="clientInstructions" className="block font-bold">Instructions for Clients</label> {/* Added font-bold */}
+          <label htmlFor="clientInstructions" className="block font-bold mb-2">Instructions for Clients</label> {/* Added font-bold */}
           <textarea
             id="clientInstructions"
             name="clientInstructions"

@@ -155,7 +155,7 @@ export default function CreateServicePage() {
 
       {/* Adjusted container for full-width desktop and centered mobile */}
       <div
-        className="w-full bg-[#F3E5F5] border border-purple-200 rounded-3xl md:rounded-2xl shadow-lg p-4 md:p-8 transition-all duration-200 mx-auto md:mx-0"
+        className="w-full bg-purple-100 border border-purple-100 rounded-3xl md:rounded-2xl shadow-lg p-4 md:p-8 transition-all duration-200 mx-auto md:mx-0"
       >
         {renderStep()}
       </div>
