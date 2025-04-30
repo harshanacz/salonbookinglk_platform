@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("[SERVICE_POST]", error);
-     // Handle potential validation errors from Mongoose
+
      if (error.name === 'ValidationError') {
         return new NextResponse(error.message, { status: 400 });
     }
