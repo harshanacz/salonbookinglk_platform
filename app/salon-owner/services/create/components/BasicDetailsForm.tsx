@@ -9,12 +9,12 @@ const categories = [
 ];
 
 interface BasicDetailsFormProps {
-  formData: any; // Replace 'any' with a more specific type if possible
+  formData: any; 
   updateFormData: (data: any) => void;
 }
 
 export default function BasicDetailsForm({ formData, updateFormData }: BasicDetailsFormProps) {
-  // Handle text/category changes
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     updateFormData({ [name]: value });
@@ -50,7 +50,7 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
                 className={`px-3 py-2 rounded border ${formData.type === cat.value ? 'bg-purple-600 text-white' : 'bg-white text-black'}`}
                 onClick={() => handleCategorySelect(cat.value)}
               >
-                <span className="mr-1">{cat.icon}</span>{cat.name}
+             {cat.name}
               </button>
             ))}
           </div>
@@ -66,10 +66,7 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
           />
         </div>
       </div>
-      <div>
-        {/* Image upload moved to final step. Show info only. */}
-        <p className="text-sm text-gray-500">You will upload and preview images in the final step.</p>
-      </div>
+      
     </div>
   );
 }
