@@ -48,13 +48,13 @@ export default function AdminClientsPage() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const response = await fetch('/api/admin/users?type=CUSTOMER');
+
+        const response = await fetch("/api/admin/users?type=CUSTOMER");
         const data = await response.json();
         setClients(data);
       } catch (err) {
-        console.error('Error fetching clients:', err);
-        setError('Failed to load clients data');
+        console.error("Error fetching clients:", err);
+        setError("Failed to load clients data");
       } finally {
         setIsLoading(false);
       }
@@ -65,9 +65,12 @@ export default function AdminClientsPage() {
 
   const filteredClients = clients.filter(
     (client) =>
-      (client.userName?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (client.email?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (client.mobileNumber?.includes(searchQuery) || '')
+      client.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      "" ||
+      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      "" ||
+      client.mobileNumber?.includes(searchQuery) ||
+      ""
   );
 
   return (
@@ -128,22 +131,24 @@ export default function AdminClientsPage() {
                       <TableCell className="font-medium">
                         <div className="flex items-center">
                           <Avatar className="h-8 w-8 mr-2">
-                            <AvatarImage src={client.profileImage || ''} />
+                            <AvatarImage src={client.profileImage || ""} />
                             <AvatarFallback>
                               <User className="h-4 w-4" />
                             </AvatarFallback>
                           </Avatar>
-                          {client.userName || 'N/A'}
+                          {client.userName || "N/A"}
                         </div>
                       </TableCell>
-                      <TableCell>{client.email || 'N/A'}</TableCell>
-                      <TableCell>{client.mobileNumber || 'N/A'}</TableCell>
+                      <TableCell>{client.email || "N/A"}</TableCell>
+                      <TableCell>{client.mobileNumber || "N/A"}</TableCell>
                       <TableCell>{client.totalBookings || 0}</TableCell>
                       <TableCell>
                         LKR {(client.totalSpent || 0).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString() : 'N/A'}
+                        {client.lastVisit
+                          ? new Date(client.lastVisit).toLocaleDateString()
+                          : "N/A"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button asChild size="sm">
