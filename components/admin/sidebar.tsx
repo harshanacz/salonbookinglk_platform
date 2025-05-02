@@ -19,9 +19,10 @@ import {
   CircleUserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useUser, useClerk } from "@clerk/nextjs";
 
 const sidebarItems = [
   {
@@ -78,15 +79,22 @@ const sidebarItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logging out...");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      router.push("/sign-in");
+    } catch (err) {
+      console.error("Error during logout:", err);
+    }
   };
 
   return (
@@ -118,7 +126,12 @@ export function AdminSidebar() {
           <div className="flex items-center gap-2">
             <CircleUserRound className="h-10 w-10 text-[var(--secondary)]]" />
             <div>
-              <div className="font-medium text-sm">John Doe</div>
+              <div className="font-medium text-sm">
+                {user?.fullName || "Admin"}
+              </div>
+              <div className="text-xs text-gray-500">
+                {user?.primaryEmailAddress?.emailAddress}
+              </div>
             </div>
           </div>
         </div>
@@ -133,6 +146,7 @@ export function AdminSidebar() {
                 "flex items-center gap-2 px-4 mr-3 rounded-r-full py-3 hover:bg-[var(--superAccent2)] text-[var(--darkPurple)]",
                 pathname === item.href && "bg-[var(--superAccent2)]"
               )}
+              onClick={() => setIsSidebarOpen(false)}
             >
               <item.icon className="h-5 w-5 mx-4" />
               <span>{item.title}</span>
@@ -142,16 +156,16 @@ export function AdminSidebar() {
 
         {/* Logout Button */}
         <div className="p-4 border-t border-[var(lightGreyColor)]">
-            <div className="flex justify-center">
+          <div className="flex justify-center">
             <Button
               variant="cancel"
-              className="border-none"
+              className="border-none w-full"
               onClick={handleLogout}
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-5 w-5 mr-2" />
               <span>Logout</span>
             </Button>
-            </div>
+          </div>
         </div>
       </div>
     </div>
