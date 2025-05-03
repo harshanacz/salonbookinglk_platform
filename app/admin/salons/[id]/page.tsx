@@ -163,20 +163,67 @@ const SalonDetailPage = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadSampleData = setTimeout(() => {
-      setSalon(sampleSalon);
-      setServices(sampleServices);
-      setBookings(sampleBookings);
-      setLoading(false);
-    }, 1000);
+    const fetchSalonDetails = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/admin/users?id=${salonId}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("Salon not found");
+          }
+          throw new Error("Failed to fetch salon details");
+        }
+        
+        const data = await response.json();
+        
+        // Map the API data to the Salon type
+        const formattedSalon: Salon = {
+          id: data._id,
+          name: data.name || 'Unnamed Salon',
+          image: data.image || 'https://placehold.co/400x400',
+          email: data.email || '',
+          contactNumber: data.phoneNumber || data.contactNumber || '',
+          location: data.address || data.location || '',
+          status: data.status || 'Pending',
+          startedDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : '',
+          updatedDate: data.updatedAt ? new Date(data.updatedAt).toISOString().split('T')[0] : '',
+          description: data.description || '',
+        };
+        
+        setSalon(formattedSalon);
+        
+        // For now, we'll keep using sample data for services and bookings
+        // In a real implementation, you would fetch these from their respective endpoints
+        setServices(sampleServices);
+        setBookings(sampleBookings);
+      } catch (error) {
+        console.error('Error fetching salon details:', error);
+        setError(`Failed to load salon details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(loadSampleData);
-  }, []);
+    fetchSalonDetails();
+  }, [salonId]);
 
   if (loading) {
-    return <div className="text-center p-12">Loading...</div>;
+    return <div className="text-center p-12">Loading salon details...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-12">
+        <div className="text-red-500 mb-4">{error}</div>
+        <Button variant="outline" onClick={() => router.push('/admin/salons')}>
+          Back to Salons
+        </Button>
+      </div>
+    );
   }
 
   if (!salon) {
