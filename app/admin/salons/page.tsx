@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -42,48 +42,46 @@ type Salon = {
 const Page = () => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("All");
+  const [salons, setSalons] = useState<Salon[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample salon data
-  const salonData: Salon[] = [
-    {
-      id: "1",
-      name: "Elegance Salon",
-      image: "",
-      email: "elegance@example.com",
-      contactNumber: "+94 75 123 4567",
-      location: "Colombo 03",
-      status: "Approved",
-    },
-    {
-      id: "2",
-      name: "Glamour Studio",
-      image: "",
-      email: "glamour@example.com",
-      contactNumber: "+94 77 987 6543",
-      location: "Kandy",
-      status: "Approved",
-    },
-    {
-      id: "3",
-      name: "Bliss Beauty",
-      image: "",
-      email: "bliss@example.com",
-      contactNumber: "+94 71 456 7890",
-      location: "Galle",
-      status: "Pending",
-    },
-    {
-      id: "4",
-      name: "Trendy Cuts",
-      image: "",
-      email: "trendy@example.com",
-      contactNumber: "+94 76 234 5678",
-      location: "Negombo",
-      status: "Rejected",
-    },
-  ];
+  useEffect(() => {
+    const fetchSalons = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/admin/users?type=SALON_OWNER");
 
-  const filteredSalons = salonData.filter((salon) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch salons");
+        }
+
+        const data = await response.json();
+
+        // Map the API data to the Salon type
+        const formattedSalons: Salon[] = data.map((salon: any) => ({
+          id: salon._id,
+          name: salon.userName || "Unnamed Salon",
+          image: salon.profileImage || "",
+          email: salon.email || "",
+          contactNumber: salon.phoneNumber || salon.contactNumber || "",
+          location: salon.address || salon.location || "",
+          status: salon.status || "Pending",
+        }));
+
+        setSalons(formattedSalons);
+      } catch (error) {
+        console.error("Error fetching salons:", error);
+        setError("Failed to load salons. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSalons();
+  }, []);
+
+  const filteredSalons = salons.filter((salon) => {
     const matchesSearch = salon.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
@@ -134,60 +132,74 @@ const Page = () => {
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Salon</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSalons.map((salon: Salon) => (
-                <TableRow key={salon.id}>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarImage src={salon.image} />
-                        <AvatarFallback>
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{salon.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{salon.email}</TableCell>
-                  <TableCell>{salon.contactNumber}</TableCell>
-                  <TableCell>{salon.location}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        salon.status === "Approved"
-                          ? "default"
-                          : salon.status === "Pending"
-                          ? "pending"
-                          : salon.status === "Rejected"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {salon.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Link href={`/admin/salons/${salon.id}`}>
-                      <Button size="sm">
-                        <Eye className="mr-2 h-4 w-4" /> View
-                      </Button>
-                    </Link>
-                  </TableCell>
+          {isLoading ? (
+            <div className="text-center py-8">Loading salons...</div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-8">{error}</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Salon</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredSalons.length > 0 ? (
+                  filteredSalons.map((salon: Salon) => (
+                    <TableRow key={salon.id}>
+                      <TableCell>
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarImage src={salon.image} />
+                            <AvatarFallback>
+                              <User className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{salon.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{salon.email}</TableCell>
+                      <TableCell>{salon.contactNumber}</TableCell>
+                      <TableCell>{salon.location}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            salon.status === "Approved"
+                              ? "default"
+                              : salon.status === "Pending"
+                              ? "pending"
+                              : salon.status === "Rejected"
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {salon.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/admin/salons/${salon.id}`}>
+                          <Button size="sm">
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      No salons found
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
