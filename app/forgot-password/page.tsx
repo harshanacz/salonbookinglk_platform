@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="bg-[#FFF5FF] min-h-screen w-full">
+    <div className="bg-[var(--pageBackground)] min-h-screen w-full">
       <div className="max-w-2xl mx-auto py-12 px-4">
         {/* Page Header */}
         <div className="flex items-center gap-2 mb-12">
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
 
               {/* Submit Button */}
               <div className="flex justify-end mt-6">
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Button type="submit" className="bg-[var(--primary2)] hover:bg-[var(--secondary2)] text-[var(--whiteColor)]">
                   Request Password Change
                 </Button>
               </div>

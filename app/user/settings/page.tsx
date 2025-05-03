@@ -88,7 +88,7 @@ export default function SettingsPage() {
           <Button variant="outline" className="text-red-500 border-red-500 hover:bg-red-50 hover:text-red-600">
             Deactivate my account
           </Button>
-          </Link>
+        </Link>
         </div>
       </div>
     </div>

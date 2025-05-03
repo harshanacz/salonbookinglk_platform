@@ -9,13 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil, MapPin, Phone, Mail, Globe } from "lucide-react";
 import { UploadButton } from "@/lib/uploadthing";
 
-// Add types for userData and salonData
+// Type definitions for user and salon data
 interface UserData {
   ownerName: string;
   email: string;
   phone: string;
   profileImage: string;
 }
+
 interface SalonData {
   salonName: string;
   description: string;
@@ -26,12 +27,15 @@ interface SalonData {
 }
 
 export default function SalonOwnerProfile() {
+  // State for user profile data
   const [userData, setUserData] = useState<UserData>({
     ownerName: "",
     email: "",
     phone: "",
     profileImage: "",
   });
+
+  // State for salon business data
   const [salonData, setSalonData] = useState<SalonData>({
     salonName: "",
     description: "",
@@ -40,15 +44,20 @@ export default function SalonOwnerProfile() {
     openingHours: "",
     businessRegistration: "",
   });
+
+  // State for tracking which field is being edited
   const [editingField, setEditingField] = useState<
     keyof UserData | keyof SalonData | null
   >(null);
+
+  // Temporary value storage during editing
   const [tempValue, setTempValue] = useState("");
 
-  // Fetch user and salon context data on mount
+  // Fetch user and salon data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch user profile data
         const userRes = await fetch("/api/user");
         console.log("[USER_RES]", userRes);
         if (!userRes.ok) throw new Error("Failed to fetch user");
@@ -59,6 +68,8 @@ export default function SalonOwnerProfile() {
           phone: user.mobileNumber || "",
           profileImage: user.profileImage || "/images/salon/profile.jpg",
         });
+
+        // Fetch salon business data
         const salonRes = await fetch("/api/salon-owner/salon-profile");
         if (!salonRes.ok) throw new Error("Failed to fetch salon context");
         const salon = await salonRes.json();
@@ -80,7 +91,7 @@ export default function SalonOwnerProfile() {
     fetchData();
   }, []);
 
-  // Handle edit click
+  // Handle edit button click
   const handleEditClick = (field: keyof UserData | keyof SalonData) => {
     setEditingField(field);
     if (field in salonData) {
@@ -92,11 +103,12 @@ export default function SalonOwnerProfile() {
     }
   };
 
-  // Save changes to backend
+  // Save changes to backend API
   const handleSave = async () => {
     try {
       if (!editingField) return;
-      // Determine which table to update
+      
+      // Update user data
       if (["ownerName", "email", "phone"].includes(editingField)) {
         const patch: Partial<UserData> & {
           userName?: string;
@@ -105,17 +117,22 @@ export default function SalonOwnerProfile() {
         if (editingField === "ownerName") patch.userName = tempValue;
         else if (editingField === "phone") patch.mobileNumber = tempValue;
         else patch[editingField as keyof UserData] = tempValue;
+        
         const res = await fetch("/api/user", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(patch),
         });
         if (!res.ok) throw new Error("Failed to update user");
+        
+        // Update local state
         setUserData((prev) => ({
           ...prev,
           [editingField as keyof UserData]: tempValue,
         }));
-      } else {
+      } 
+      // Update salon data
+      else {
         const patch: Partial<SalonData> & {
           businessName?: string;
           businessCategory?: string;
@@ -129,12 +146,15 @@ export default function SalonOwnerProfile() {
         else if (editingField === "businessRegistration")
           patch.businessRegistrationNumber = tempValue;
         else patch[editingField as keyof SalonData] = tempValue;
+        
         const res = await fetch("/api/salon-owner/salon-profile", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(patch),
         });
         if (!res.ok) throw new Error("Failed to update salon context");
+        
+        // Update local state
         setSalonData((prev) => ({
           ...prev,
           [editingField as keyof SalonData]: tempValue,
@@ -146,11 +166,12 @@ export default function SalonOwnerProfile() {
     }
   };
 
-  // Handle profile image upload
+  // Handle profile image upload completion
   const handleImageUpload = async (res: any) => {
     if (!res || !res[0]?.url) return;
     const imageUrl = res[0].url;
     try {
+      // Update profile image in database
       const patch = { profileImage: imageUrl };
       const resp = await fetch("/api/user", {
         method: "PATCH",
@@ -158,6 +179,8 @@ export default function SalonOwnerProfile() {
         body: JSON.stringify(patch),
       });
       if (!resp.ok) throw new Error("Failed to update profile image");
+      
+      // Update local state
       setUserData((prev) => ({ ...prev, profileImage: imageUrl }));
     } catch (err) {
       console.error("[PROFILE_IMAGE_UPLOAD]", err);
@@ -166,18 +189,19 @@ export default function SalonOwnerProfile() {
 
   return (
     <div className="space-y-6">
+      {/* Header section with title and save button */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Salon Profile</h1>
         <Button
           onClick={handleSave}
-          className="bg-purple-600 hover:bg-purple-700"
+          className="bg-[var(--primary2)] hover:bg-[var(--secondary2)] text-[var(--whiteColor)]"
         >
           Save Changes
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Profile Image and Basic Info */}
+        {/* Profile Image and Basic Info Card */}
         <Card className="p-6 md:col-span-1">
           <div className="flex flex-col items-center space-y-4">
             <Avatar className="w-32 h-32">
@@ -193,20 +217,22 @@ export default function SalonOwnerProfile() {
             />
             <div className="text-center">
               <h2 className="text-xl font-semibold">{salonData.salonName}</h2>
-              <p className="text-gray-500">{userData.ownerName}</p>
+              <p className="text-[var(--greyColor)]">{userData.ownerName}</p>
             </div>
           </div>
         </Card>
 
-        {/* Contact and Business Information */}
+        {/* Contact and Business Information Card */}
         <Card className="p-6 md:col-span-2">
           <div className="space-y-6">
+            {/* Business Information Section */}
             <div>
               <h3 className="text-lg font-medium mb-4">Business Information</h3>
               <div className="space-y-4">
+                {/* Salon Name Field */}
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <label className="text-sm text-gray-500">Salon Name</label>
+                    <label className="text-sm text-[var(--greyColor)]">Salon Name</label>
                     {editingField === "salonName" ? (
                       <Input
                         value={tempValue}
@@ -226,9 +252,10 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Description Field */}
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <label className="text-sm text-gray-500">Description</label>
+                    <label className="text-sm text-[var(--greyColor)]">Description</label>
                     {editingField === "description" ? (
                       <Textarea
                         value={tempValue}
@@ -248,8 +275,9 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Address Field */}
                 <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <MapPin className="h-4 w-4 text-[var(--greyColor)]" />
                   {editingField === "address" ? (
                     <Input
                       value={tempValue}
@@ -268,8 +296,9 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Phone Field */}
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
+                  <Phone className="h-4 w-4 text-[var(--greyColor)]" />
                   {editingField === "phone" ? (
                     <Input
                       value={tempValue}
@@ -288,8 +317,9 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Email Field */}
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
+                  <Mail className="h-4 w-4 text-[var(--greyColor)]" />
                   {editingField === "email" ? (
                     <Input
                       value={tempValue}
@@ -308,8 +338,9 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Website Field */}
                 <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-gray-500" />
+                  <Globe className="h-4 w-4 text-[var(--greyColor)]" />
                   {editingField === "website" ? (
                     <Input
                       value={tempValue}
@@ -328,9 +359,10 @@ export default function SalonOwnerProfile() {
                   </Button>
                 </div>
 
+                {/* Owner Name Field */}
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <label className="text-sm text-gray-500">Owner Name</label>
+                    <label className="text-sm text-[var(--greyColor)]">Owner Name</label>
                     {editingField === "ownerName" ? (
                       <Input
                         value={tempValue}
@@ -352,6 +384,7 @@ export default function SalonOwnerProfile() {
               </div>
             </div>
 
+            {/* Business Hours Section */}
             <div>
               <h3 className="text-lg font-medium mb-4">Business Hours</h3>
               <div className="flex items-center gap-2">
@@ -374,10 +407,11 @@ export default function SalonOwnerProfile() {
               </div>
             </div>
 
+            {/* Legal Information Section */}
             <div>
               <h3 className="text-lg font-medium mb-4">Legal Information</h3>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">Business Registration:</span>
+                <span className="text-[var(--greyColor)]">Business Registration:</span>
                 {editingField === "businessRegistration" ? (
                   <Input
                     value={tempValue}

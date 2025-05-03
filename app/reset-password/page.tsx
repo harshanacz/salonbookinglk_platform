@@ -27,7 +27,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="bg-[#FFF5FF] min-h-screen w-full">
+    <div className="bg-[var(--pageBackground)] min-h-screen w-full">
       <div className="max-w-2xl mx-auto py-12 px-4">
         {/* Page Header */}
         <div className="flex items-center gap-2 mb-12">
@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-[var(--greyColor)] mt-2">
                     8 characters or longer. Combine upper and lowercase letters and numbers.
                   </p>
                 </div>
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
 
               {/* Confirm Button */}
               <div className="flex justify-end mt-6">
-                <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Button type="submit" className="bg-[var(--primary2)] hover:bg-[var(--secondary2)] text-[var(--whiteColor)]">
                   Confirm
                 </Button>
               </div>

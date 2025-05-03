@@ -9,15 +9,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
+/**
+ * Component for changing salon owner's password
+ * Handles form validation and submission
+ */
 export function ChangePasswordForm() {
+  // Initialize toast notification system
   const { toast } = useToast()
+  
+  // Loading state for form submission
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Form data state for all input fields
   const [formData, setFormData] = useState({
     email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
+  
+  // Error state for form validation
   const [errors, setErrors] = useState({
     email: "",
     currentPassword: "",
@@ -25,6 +36,10 @@ export function ChangePasswordForm() {
     confirmPassword: "",
   })
 
+  /**
+   * Handles input field changes and clears related errors
+   * @param e - Input change event
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -35,6 +50,10 @@ export function ChangePasswordForm() {
     }
   }
 
+  /**
+   * Validates all form fields before submission
+   * @returns boolean indicating if form is valid
+   */
   const validateForm = () => {
     let valid = true
     const newErrors = { ...errors }
@@ -72,6 +91,10 @@ export function ChangePasswordForm() {
     return valid
   }
 
+  /**
+   * Handles form submission and password change request
+   * @param e - Form submission event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -125,6 +148,7 @@ export function ChangePasswordForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Email input field */}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -136,9 +160,10 @@ export function ChangePasswordForm() {
               onChange={handleChange}
               disabled={isLoading}
             />
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
+            {errors.email && <p className="text-sm text-[var(--warning)]">{errors.email}</p>}
           </div>
 
+          {/* Current password input field */}
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
             <Input
@@ -149,9 +174,10 @@ export function ChangePasswordForm() {
               onChange={handleChange}
               disabled={isLoading}
             />
-            {errors.currentPassword && <p className="text-sm text-red-500">{errors.currentPassword}</p>}
+            {errors.currentPassword && <p className="text-sm text-[var(--warning)]">{errors.currentPassword}</p>}
           </div>
 
+          {/* New password input field */}
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
             <Input
@@ -162,9 +188,10 @@ export function ChangePasswordForm() {
               onChange={handleChange}
               disabled={isLoading}
             />
-            {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
+            {errors.newPassword && <p className="text-sm text-[var(--warning)]">{errors.newPassword}</p>}
           </div>
 
+          {/* Confirm new password input field */}
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input
@@ -175,12 +202,16 @@ export function ChangePasswordForm() {
               onChange={handleChange}
               disabled={isLoading}
             />
-            {errors.confirmPassword && <p className="text-sm text-red-500">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p className="text-sm text-[var(--warning)]">{errors.confirmPassword}</p>}
           </div>
         </CardContent>
 
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-[var(--primary2)] hover:bg-[var(--secondary2)] text-[var(--whiteColor)]" 
+            disabled={isLoading}
+          >
             {isLoading ? "Updating..." : "Update Password"}
           </Button>
         </CardFooter>
@@ -188,4 +219,5 @@ export function ChangePasswordForm() {
     </Card>
   )
 }
+
 export default ChangePasswordForm
