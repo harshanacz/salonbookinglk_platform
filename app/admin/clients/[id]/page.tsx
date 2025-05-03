@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -31,83 +31,28 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Mock client data (in a real app, this would come from an API)
-const clients = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+94 77 123 4567",
-    totalBookings: 15,
-    totalSpent: 15000,
-    lastVisit: "2024-01-10",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "+94 77 234 5678",
-    totalBookings: 22,
-    totalSpent: 22000,
-    lastVisit: "2024-01-05",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  // Additional clients from the original file would be here
-];
+// Interface for client data
+interface Client {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  totalBookings?: number;
+  totalSpent?: number;
+  lastVisit?: string;
+  avatar?: string;
+}
 
-// Mock bookings data
-const mockBookings = {
-  1: [
-    {
-      id: 101,
-      date: "2024-01-10",
-      time: "10:00 AM",
-      salon: "Elite Hair Salon",
-      service: "Haircut & Styling",
-      price: 2500,
-      status: "completed",
-    },
-    {
-      id: 102,
-      date: "2023-12-15",
-      time: "2:30 PM",
-      salon: "Elite Hair Salon",
-      service: "Hair Coloring",
-      price: 3500,
-      status: "completed",
-    },
-    {
-      id: 103,
-      date: "2024-01-25",
-      time: "11:00 AM",
-      salon: "Glow Beauty Spa",
-      service: "Facial Treatment",
-      price: 4000,
-      status: "upcoming",
-    },
-  ],
-  2: [
-    {
-      id: 201,
-      date: "2024-01-05",
-      time: "1:00 PM",
-      salon: "Serenity Spa",
-      service: "Full Body Massage",
-      price: 5000,
-      status: "completed",
-    },
-    {
-      id: 202,
-      date: "2023-12-20",
-      time: "3:00 PM",
-      salon: "Elite Hair Salon",
-      service: "Manicure & Pedicure",
-      price: 3000,
-      status: "completed",
-    },
-  ],
-};
+// Interface for booking data
+interface Booking {
+  id: string | number;
+  date: string;
+  time: string;
+  salon: string;
+  service: string;
+  price: number;
+  status: string;
+}
 
 export default function ClientDetailsPage(
   props: {
@@ -115,20 +60,44 @@ export default function ClientDetailsPage(
   }
 ) {
   const { params } = props;
-  const clientId = parseInt(params.id);
-  const [client, setClient] = useState<any>(null);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const clientId = params.id;
+  const [client, setClient] = useState<Client | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In a real app, fetch data from an API
-    const foundClient = clients.find((c) => c.id === clientId);
-    const clientBookings =
-      mockBookings[clientId as keyof typeof mockBookings] || [];
+    async function fetchData() {
+      try {
+        setLoading(true);
+        // Fetch client data
+        const response = await fetch(`/api/admin/users?id=${clientId}`);
+        const data = await response.json();
+        setClient(data);
+        
+        // Fetch bookings for this client
+        try {
+          const bookingsResponse = await fetch(`/api/admin/bookings?clientId=${clientId}`);
+          const bookingsData = await bookingsResponse.json();
+          setBookings(bookingsData);
+        } catch (bookingError) {
+          // If no booking endpoint exists yet, we'll just show empty bookings
+          console.error("Could not fetch bookings:", bookingError);
+          setBookings([]);
+        }
+        
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching client data:", err);
+        setError("Failed to load client data");
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    setClient(foundClient);
-    setBookings(clientBookings);
-    setLoading(false);
+    if (clientId) {
+      fetchData();
+    }
   }, [clientId]);
 
   if (loading) {
@@ -139,9 +108,36 @@ export default function ClientDetailsPage(
     );
   }
 
-  if (!client) {
-    return <div className="p-6">Client not found</div>;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <p className="text-red-500">{error}</p>
+          <Button asChild className="mt-4">
+            <Link href="/admin/clients">Back to clients</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
+
+  if (!client) {
+    return (
+      <div className="p-6 text-center">
+        <p>Client not found</p>
+        <Button asChild className="mt-4">
+          <Link href="/admin/clients">Back to clients</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Calculate client stats
+  const totalBookings = bookings.length || client.totalBookings || 0;
+  const totalSpent = bookings.reduce((sum, booking) => sum + booking.price, 0) || client.totalSpent || 0;
+  const lastVisit = client.lastVisit || (bookings.length > 0 ? 
+    bookings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date : 
+    "No visits yet");
 
   return (
     <div className="space-y-6">
@@ -159,7 +155,7 @@ export default function ClientDetailsPage(
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1 h-full p-4 flex flex-col justify-center items-center">
           <Avatar className="h-20 w-20 mb-4">
-            <AvatarImage src={client.avatar} />
+            <AvatarImage src={client.avatar || "/placeholder.svg?height=40&width=40"} />
             <AvatarFallback>
               <User className="h-10 w-10" />
             </AvatarFallback>
@@ -174,7 +170,7 @@ export default function ClientDetailsPage(
             </p>
             <p className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" /> Last visit:{" "}
-              {new Date(client.lastVisit).toLocaleDateString()}
+              {typeof lastVisit === 'string' ? lastVisit : new Date(lastVisit).toLocaleDateString()}
             </p>
           </div>
         </Card>
@@ -187,20 +183,20 @@ export default function ClientDetailsPage(
             <div className="bg-muted p-6 rounded-lg text-center">
               <Calendar className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Total Bookings</p>
-              <p className="text-2xl font-bold">{client.totalBookings}</p>
+              <p className="text-2xl font-bold">{totalBookings}</p>
             </div>
             <div className="bg-muted p-6 rounded-lg text-center">
               <DollarSign className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Total Spent</p>
               <p className="text-2xl font-bold">
-                LKR {client.totalSpent.toLocaleString()}
+                LKR {totalSpent.toLocaleString()}
               </p>
             </div>
             <div className="bg-muted p-6 rounded-lg text-center">
               <Clock className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Last Visit</p>
               <p className="text-2xl font-bold">
-                {new Date(client.lastVisit).toLocaleDateString()}
+                {typeof lastVisit === 'string' ? lastVisit : new Date(lastVisit).toLocaleDateString()}
               </p>
             </div>
           </CardContent>
@@ -245,7 +241,7 @@ export default function ClientDetailsPage(
   );
 }
 
-function BookingTable({ bookings }: { bookings: any[] }) {
+function BookingTable({ bookings }: { bookings: Booking[] }) {
   if (bookings.length === 0) {
     return (
       <div className="text-center py-6 text-muted-foreground">
