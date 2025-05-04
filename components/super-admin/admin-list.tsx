@@ -42,7 +42,7 @@ type Admin = {
 };
 
 type AdminListProps = {
-  onSelectAdmin: (adminId: string | null) => void;
+  onSelectAdmin: (data: { adminId: string; adminName: string }) => void;
 };
 
 export function AdminList({ onSelectAdmin }: AdminListProps) {
@@ -176,7 +176,12 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
-                            onClick={() => onSelectAdmin(admin.id)}
+                            onClick={() =>
+                              onSelectAdmin({
+                                adminId: admin.id,
+                                adminName: admin.name,
+                              })
+                            }
                           >
                             <Eye className="mr-2 h-4 w-4" />
                             View Activities

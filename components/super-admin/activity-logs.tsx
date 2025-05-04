@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -84,12 +84,20 @@ const mockActivities = [
 
 type ActivityLogsProps = {
   adminId: string | null;
+  adminName: string | null;
 };
 
-export function ActivityLogs({ adminId }: ActivityLogsProps) {
+export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+
+  // When admin name changes, update the search query
+  useEffect(() => {
+    if (adminName) {
+      setSearchQuery(adminName);
+    }
+  }, [adminName]);
 
   const filteredActivities = mockActivities
     .filter((activity) => {
