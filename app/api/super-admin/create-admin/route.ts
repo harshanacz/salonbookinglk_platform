@@ -8,7 +8,8 @@ export async function POST(req: Request) {
     const { email, password, userName } = await req.json();
 
     // 1. Create Clerk user
-    const clerkUser = await clerkClient.users.createUser({
+    const clerk = await clerkClient();
+    const clerkUser = await clerk.users.createUser({
       emailAddress: [email],
       password,
       username: userName,
@@ -26,8 +27,15 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, user: newUser });
-  } catch (error) {
-    console.error("[ADMIN_CREATE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+  } catch (error: any) {
+    // Try to return Clerk error details if available
+    if (error?.errors) {
+      return NextResponse.json({ errors: error.errors }, { status: 422 });
+    }
+    // Fallback: always return JSON
+    return NextResponse.json(
+      { errors: [{ message: "Internal Error" }] },
+      { status: 500 }
+    );
   }
-} 
+}
