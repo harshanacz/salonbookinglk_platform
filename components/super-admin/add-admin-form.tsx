@@ -14,7 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -76,20 +75,28 @@ export function AddAdminForm() {
           if (errorData?.errors?.[0]?.message) {
             errorMsg = errorData.errors[0].message;
           }
-        } catch (e) {
-          // fallback to default errorMsg
+        } catch (e:any) {
+          console.log(e.error);
         }
         console.log(errorMsg);
-        toast({ description: errorMsg });
+        toast({ 
+          variant: "destructive",
+          description: errorMsg 
+        });
         return;
       }
 
-      toast({ description: "Admin created successfully." });
+      toast({ 
+        title: "Success!",
+        description: "Admin account has been created successfully.",
+        variant: "default",
+      });
       form.reset();
     } catch (error) {
       toast({
-        description:
-          "There was an error creating the admin account. Please try again.",
+        variant: "destructive",
+        title: "Error",
+        description: "There was an error creating the admin account. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
