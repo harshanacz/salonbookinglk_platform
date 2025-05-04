@@ -13,7 +13,8 @@ export async function GET() {
     }).populate({
       path: "userId",
       select: "userName businessName", // Get salon name info
-    }).lean();
+      model: "User", // Explicitly specify the model
+    }).lean({ virtuals: true });
 
     if (!activeServices.length) {
       return NextResponse.json({
@@ -23,18 +24,27 @@ export async function GET() {
     }
 
     // Transform data for frontend
-    const transformedServices = activeServices.map(service => ({
-      id: service._id.toString(),
-      title: service.title,
-      image: service.images && service.images.length > 0 ? service.images[0] : "/placeholder.svg?height=300&width=400",
-      price: service.price,
-      salon: (service.userId as { businessName?: string })?.businessName || "Unknown Salon",
-      location: "Location data not available", // You might want to get this from salonContext
-      rating: service.averageRating || 4.5, // Default value if no rating
-      reviews: service.reviewCount || 0,
-      popularityScore: service.popularityScore || 0,
-      type: service.type,
-    }));
+    const transformedServices = activeServices.map(service => {
+      // Handle populated data or objectId
+      const userId = service.userId as any;
+      const businessName = 
+        userId && typeof userId === "object" && userId.businessName 
+          ? userId.businessName 
+          : "Unknown Salon";
+      
+      return {
+        id: service._id.toString(),
+        title: service.title,
+        image: service.images && service.images.length > 0 ? service.images[0] : "/placeholder.svg?height=300&width=400",
+        price: service.price,
+        salon: businessName,
+        location: "Colombo", // Default location
+        rating: service.averageRating || 4.5, // Default value if no rating
+        reviews: service.reviewCount || 0,
+        popularityScore: service.popularityScore || 0,
+        type: service.type,
+      };
+    });
 
     // Sort by popularity (views + bookings)
     const popularServices = [...transformedServices]
