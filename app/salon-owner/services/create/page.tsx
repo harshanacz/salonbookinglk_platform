@@ -68,9 +68,19 @@ export default function CreateServicePage() {
         body: JSON.stringify(finalData),
       });
 
-      if (!response.ok) { 
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create service");
+      if (!response.ok) {
+        // Check content type to handle non-JSON responses
+        const contentType = response.headers.get("content-type");
+        
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to create service");
+        } else {
+          // Handle non-JSON responses (like HTML error pages)
+          const errorText = await response.text();
+          console.error("Server responded with non-JSON content:", errorText);
+          throw new Error(`Server error (${response.status}): Please try again later`);
+        }
       }
 
       toast({
