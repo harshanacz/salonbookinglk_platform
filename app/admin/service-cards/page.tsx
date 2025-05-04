@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,60 +21,55 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Eye, User } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/components/ui/use-toast";
 
-// Sample services data
-const services = [
-  {
-    id: 1,
-    title: "Custom Hair Coloring And Highlights | Red, Black, Gray Colors",
-    image: "/placeholder.svg?height=100&width=100",
-    salon: "Salon Amaya",
-    status: "NEW",
-    startedDate: "-",
-    updatedDate: "Dec 16",
-  },
-  {
-    id: 2,
-    title: "Acrylic Nail Extensions With Custom Art",
-    image: "/placeholder.svg?height=100&width=100",
-    salon: "Beauty Hub",
-    status: "UPDATE",
-    startedDate: "Nov 11",
-    updatedDate: "Dec 16",
-  },
-  {
-    id: 3,
-    title: "Full Body Massage with Essential Oils",
-    image: "/placeholder.svg?height=100&width=100",
-    salon: "Wellness Spa",
-    status: "NEW",
-    startedDate: "-",
-    updatedDate: "Dec 15",
-  },
-  {
-    id: 4,
-    title: "Bridal Makeup Package",
-    image: "/placeholder.svg?height=100&width=100",
-    salon: "Glamour Studio",
-    status: "UPDATE",
-    startedDate: "Oct 25",
-    updatedDate: "Dec 14",
-  },
-  {
-    id: 5,
-    title: "Men's Haircut and Styling",
-    image: "/placeholder.svg?height=100&width=100",
-    salon: "Style Masters",
-    status: "NEW",
-    startedDate: "-",
-    updatedDate: "Dec 13",
-  },
-];
+// Define service type
+interface Service {
+  id: string;
+  title: string;
+  image: string;
+  salon: string;
+  status: string;
+  startedDate: string;
+  updatedDate: string;
+}
 
 export default function ServiceCards() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Fetch pending services on component mount
+  useEffect(() => {
+    const fetchPendingServices = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/admin/service-cards');
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setServices(data);
+      } catch (err) {
+        console.error("Failed to fetch pending services:", err);
+        setError("Failed to load pending services. Please try again later.");
+        toast({
+          title: "Error",
+          description: "Failed to load pending services. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPendingServices();
+  }, [toast]);
 
   const filteredServices = services.filter(
     (service) =>
@@ -108,61 +103,73 @@ export default function ServiceCards() {
             </div>
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Service</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Started Date</TableHead>
-                  <TableHead>Updated Date</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredServices.map((service) => (
-                  <TableRow key={service.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <Avatar className="h-8 w-8 mr-2">
-                          <AvatarImage src={service.image} />
-                          <AvatarFallback>
-                            <User className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="font-medium line-clamp-1">
-                            {service.title}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {service.salon}
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-10 text-red-500">{error}</div>
+          ) : filteredServices.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              {searchQuery ? "No services match your search" : "No pending services found"}
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Started Date</TableHead>
+                    <TableHead>Updated Date</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredServices.map((service) => (
+                    <TableRow key={service.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarImage src={service.image} />
+                            <AvatarFallback>
+                              <User className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium line-clamp-1">
+                              {service.title}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {service.salon}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          service.status === "NEW" ? "default" : "secondary"
-                        }
-                      >
-                        {service.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{service.startedDate}</TableCell>
-                    <TableCell>{service.updatedDate}</TableCell>
-                    <TableCell>
-                      <Button asChild size="sm">
-                        <Link href={`/admin/service-cards/${service.id}`}>
-                          <Eye className="mr-2 h-4 w-4" /> View
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            service.status === "NEW" ? "default" : "secondary"
+                          }
+                        >
+                          {service.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{service.startedDate}</TableCell>
+                      <TableCell>{service.updatedDate}</TableCell>
+                      <TableCell>
+                        <Button asChild size="sm">
+                          <Link href={`/admin/service-cards/${service.id}`}>
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
