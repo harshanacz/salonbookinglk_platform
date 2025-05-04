@@ -80,7 +80,7 @@ export async function PATCH(request: Request) {
     const updatedService = await Service.findByIdAndUpdate(
       serviceId,
       { 
-        status: approved ? ServiceStatus.ACTIVE : ServiceStatus.INACTIVE 
+        status: approved ? ServiceStatus.ACTIVE : ServiceStatus.REJECTED 
       },
       { new: true }
     );
