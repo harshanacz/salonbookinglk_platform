@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 export enum ServiceStatus {
   ACTIVE = "ACTIVE",
   INACTIVE = "INACTIVE",
-  PENDING = "PENDING", // Added PENDING status
+  PENDING = "PENDING",
+  REJECTED = "REJECTED", 
 }
 
 export enum ServiceType {
@@ -13,6 +14,7 @@ export enum ServiceType {
   FACIAL = "FACIAL",
   MASSAGE = "MASSAGE",
   NAILS = "NAILS",
+  SKIN_CARE = "SKIN_CARE", 
   OTHER = "OTHER",
 }
 

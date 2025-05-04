@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -27,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit, Eye, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
+import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
@@ -88,7 +87,7 @@ export default function ServicesManagement() {
       (svc) =>
         (activeTab === "active" && svc.status === "active") ||
         (activeTab === "pending" && svc.status === "pending") ||
-        (activeTab === "inactive" && svc.status === "inactive")
+        (activeTab === "inactive" && (svc.status === "inactive" || svc.status === "rejected"))
     )
     .filter((svc) =>
       svc.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -119,19 +118,6 @@ export default function ServicesManagement() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search services..."
-                className="pl-8 w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </div>
-
           <Tabs defaultValue="active" onValueChange={setActiveTab}>
             <TabsList className="mb-6">
               <TabsTrigger value="active">
@@ -142,8 +128,8 @@ export default function ServicesManagement() {
                 {services.filter((s) => s.status === "pending").length})
               </TabsTrigger>
               <TabsTrigger value="inactive">
-                Inactive (
-                {services.filter((s) => s.status === "inactive").length})
+                Inactive/Rejected (
+                {services.filter((s) => s.status === "inactive" || s.status === "rejected").length})
               </TabsTrigger>
             </TabsList>
 
@@ -328,7 +314,7 @@ export default function ServicesManagement() {
             <TabsContent value="inactive" className="space-y-4">
               {filteredServices.length === 0 ? (
                 <div className="text-center text-gray-500">
-                  You have no any inactive service yet.
+                  You have no inactive or rejected services yet.
                 </div>
               ) : (
                 <div className="rounded-md border">
@@ -371,12 +357,21 @@ export default function ServicesManagement() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant="outline"
-                              className="bg-gray-100 text-gray-800"
-                            >
-                              Inactive
-                            </Badge>
+                            {service.status === "rejected" ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-red-100 text-red-800"
+                              >
+                                Rejected by Admin
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="bg-gray-100 text-gray-800"
+                              >
+                                Inactive
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell>{service.staffAssigned}</TableCell>
                           <TableCell>
@@ -401,9 +396,11 @@ export default function ServicesManagement() {
                                     <Edit className="mr-2 h-4 w-4" /> Edit
                                   </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" /> Activate
-                                </DropdownMenuItem>
+                                {service.status !== "rejected" && (
+                                  <DropdownMenuItem>
+                                    <Eye className="mr-2 h-4 w-4" /> Activate
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                   className="text-red-600"
                                   onClick={() => handleDelete(service.id)}
