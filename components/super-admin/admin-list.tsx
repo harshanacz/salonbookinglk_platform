@@ -34,10 +34,11 @@ import { formatDistanceToNow } from "date-fns";
 
 type Admin = {
   id: string;
+  clerkId: string;
   name: string;
   email: string;
   role: string;
-  lastActive: string; // Expecting an ISO string from the API
+  lastActive: string;
 };
 
 type AdminListProps = {
@@ -47,7 +48,7 @@ type AdminListProps = {
 export function AdminList({ onSelectAdmin }: AdminListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [adminToDelete, setAdminToDelete] = useState<string | null>(null);
+  const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null);
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
         const res = await fetch("/api/super-admin/get-admin");
         if (!res.ok) throw new Error("Failed to fetch admins");
         const data = await res.json();
-        setAdmins(data.admins); // Adjust this based on your actual API response shape
+        setAdmins(data.admins);
       } catch (err: any) {
         setError(err.message || "An error occurred");
       } finally {
@@ -70,17 +71,36 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
     fetchAdmins();
   }, []);
 
-  const handleDeleteAdmin = (adminId: string) => {
-    setAdminToDelete(adminId);
+  const handleDeleteAdmin = (admin: Admin) => {
+    setAdminToDelete(admin);
     setDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (adminToDelete) {
-      // Ideally, you should also call the backend to delete
-      setAdmins(admins.filter((admin) => admin.id !== adminToDelete));
-      setDeleteDialogOpen(false);
-      setAdminToDelete(null);
+      try {
+        const response = await fetch("/api/super-admin/get-admin", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: adminToDelete.id,
+            clerkId: adminToDelete.clerkId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete admin");
+        }
+
+        setAdmins(admins.filter((admin) => admin.id !== adminToDelete.id));
+      } catch (err: any) {
+        setError(err.message || "Failed to delete admin");
+      } finally {
+        setDeleteDialogOpen(false);
+        setAdminToDelete(null);
+      }
     }
   };
 
@@ -164,7 +184,7 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteAdmin(admin.id)}
+                            onClick={() => handleDeleteAdmin(admin)}
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Admin
