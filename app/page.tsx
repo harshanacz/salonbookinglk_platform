@@ -14,7 +14,18 @@ import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/home/hero-section";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-// ... (keep existing imports and data)
+// Define service interface
+interface Service {
+  id: string;
+  title: string;
+  image: string;
+  price: number;
+  salon: string;
+  rating: number;
+  reviews: number;
+  location: string;
+  type: string;
+}
 
 const nearbySalons = [
   {
@@ -49,9 +60,40 @@ const nearbySalons = [
 export default function Home() {
   const [location, setLocation] = useState("");
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [popularServices, setPopularServices] = useState<Service[]>([]);
+  const [topRatedServices, setTopRatedServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Load services data on component mount
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/services/home');
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setPopularServices(data.popularServices || []);
+        setTopRatedServices(data.topRatedServices || []);
+      } catch (err) {
+        console.error("Failed to fetch services:", err);
+        // Fallback to empty arrays if fetching fails
+        setPopularServices([]);
+        setTopRatedServices([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchServices();
+  }, []);
+
+  // Redirect logic
   useEffect(() => {
     const redirectType = searchParams.get("redirect_type");
     if (redirectType && !hasRedirected) {
@@ -81,50 +123,7 @@ export default function Home() {
     router.push(`/search?location=${encodeURIComponent(location)}`);
   };
 
-  // Sample data for services
-  const popularServices = [
-    {
-      id: 1,
-      title: "Custom Hair Coloring And Highlights Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 620,
-      salon: "Salon Amayali",
-      rating: 4.8,
-      reviews: 120,
-      location: "Katubedda, Galle Road",
-    },
-    {
-      id: 2,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amayali",
-      rating: 4.9,
-      reviews: 130,
-      location: "Moipe Road, Moratuwa",
-    },
-    {
-      id: 3,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amayali",
-      rating: 4.8,
-      reviews: 150,
-      location: "Moipe Road, Moratuwa",
-    },
-    {
-      id: 4,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amayali",
-      rating: 4.9,
-      reviews: 130,
-      location: "Moipe Road, Moratuwa",
-    },
-  ];
-
+  // Sample fallback data for categories
   const categories = [
     { id: 1, name: "Hair Cuts", icon: "✂️" },
     { id: 2, name: "Nail Arts", icon: "💅" },
@@ -140,11 +139,29 @@ export default function Home() {
 
       <section className="container mx-auto px-4 py-10">
         <h2 className="text-2xl font-bold mb-6">Popular services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularServices.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                <CardContent className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : popularServices.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popularServices.map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            No popular services available at the moment.
+          </div>
+        )}
       </section>
 
       {/* Promo Banner */}
@@ -153,11 +170,29 @@ export default function Home() {
       {/* Top Rated */}
       <section className="container mx-auto px-4 py-10">
         <h2 className="text-2xl font-bold mb-6">Top rated</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularServices.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                <CardContent className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : topRatedServices.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {topRatedServices.map((service) => (
+              <ServiceCard key={service.id} service={service} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-gray-500">
+            No top-rated services available at the moment.
+          </div>
+        )}
       </section>
 
       {/* User Type Cards */}

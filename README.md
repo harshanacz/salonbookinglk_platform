@@ -1,5 +1,19 @@
 # Salon Booking LK
 
+# The Popularity Algorithm
+For determining popular services, I've implemented a simple weighted algorithm:
+
+## popularityScore = (views * 0.3) + (bookings * 0.7)
+
+This gives more weight to actual bookings (70%) than mere views (30%), which makes sense because bookings represent stronger user intent and commitment.
+
+
+For top-rated services, the algorithm sorts by:
+
+Rating value (higher ratings first)
+Number of reviews (if ratings are equal)
+
+
 ## ✅ User Flows
 
 ### Harshana AMK

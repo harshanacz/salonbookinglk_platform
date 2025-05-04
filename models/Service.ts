@@ -57,7 +57,34 @@ const serviceSchema = new mongoose.Schema(
       type: [String], // Accept string IDs for development
       default: [],
     },
-    // Add any other fields collected from the form steps
+    // Metrics for popularity and rating
+    views: {
+      type: Number,
+      default: 0,
+    },
+    bookings: {
+      type: Number,
+      default: 0,
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+    },
+    // For weighted popularity calculation
+    lastBookedAt: {
+      type: Date,
+      default: null,
+    },
+    popularityScore: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -68,6 +95,13 @@ const serviceSchema = new mongoose.Schema(
 function arrayLimit(val: string[]) {
   return val.length <= 3;
 }
+
+// Calculate popularity score before saving
+serviceSchema.pre('save', function(next) {
+  // Simple popularity algorithm: (views * 0.3) + (bookings * 0.7)
+  this.popularityScore = (this.views * 0.3) + (this.bookings * 0.7);
+  next();
+});
 
 // Clear cached model to ensure schema updates are applied
 delete mongoose.models.Service;
