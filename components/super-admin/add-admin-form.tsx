@@ -20,7 +20,11 @@ import { Loader2 } from "lucide-react";
 
 // Form validation schema - removed role field
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  name: z.string()
+    .min(2, { message: "Username must be at least 2 characters" })
+    .regex(/^[a-zA-Z0-9_-]+$/, {
+      message: "Username can only contain letters, numbers, '_' or '-'",
+    }),
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z
     .string()
@@ -100,9 +104,14 @@ export function AddAdminForm() {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>
+                Username{' '}
+                <span className="text-xs text-muted-foreground">
+                  (letters, numbers, '_' or '-')
+                </span>
+              </FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="e.g. john_doe" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -132,7 +141,12 @@ export function AddAdminForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>
+                Password{' '}
+                <span className="text-xs text-muted-foreground">
+                  (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
+                </span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="••••••••" type="password" {...field} />
               </FormControl>
