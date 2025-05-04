@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service from "@/models/Service";
+import SalonContext from "@/models/SalonContext";
 import { auth } from "@clerk/nextjs/server";
 
 export async function GET(
@@ -33,7 +34,7 @@ export async function GET(
     const service = await Service.findById(serviceId)
       .populate({
         path: "userId",
-        select: "userName businessName",
+        select: "userName businessName email mobileNumber profileImage clerkUserId type gender country",
       })
       .lean();
 
@@ -44,6 +45,12 @@ export async function GET(
       );
     }
 
+    // Fetch salon context information
+    let salonContext = null;
+    if (service.userId && service.userId._id) {
+      salonContext = await SalonContext.findOne({ userId: service.userId._id }).lean();
+    }
+
     // Create a serializable version of the service with string IDs
     const serializedService = {
       ...service,
@@ -51,7 +58,12 @@ export async function GET(
       userId: service.userId ? {
         ...service.userId,
         _id: service.userId._id ? service.userId._id.toString() : undefined
-      } : service.userId
+      } : service.userId,
+      salonContext: salonContext && !Array.isArray(salonContext) ? {
+        ...salonContext,
+        _id: (salonContext as { _id: any })._id.toString(),
+        userId: (salonContext as { userId?: any }).userId?.toString()
+      } : null
     };
 
     return NextResponse.json(serializedService);
