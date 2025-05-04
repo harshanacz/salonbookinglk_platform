@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 // Form validation schema - removed role field
@@ -38,6 +38,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export function AddAdminForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -52,8 +53,7 @@ export function AddAdminForm() {
     setIsSubmitting(true);
 
     try {
-      // Call API to create the admin
-      const response = await fetch("/api/admin", {
+      const response = await fetch("/api/super-admin/create-admin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -64,22 +64,28 @@ export function AddAdminForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create admin");
+        // Try to parse Clerk error
+        let errorMsg =
+          "There was an error creating the admin account. Please try again.";
+        try {
+          const errorData = await response.json();
+          if (errorData?.errors?.[0]?.message) {
+            errorMsg = errorData.errors[0].message;
+          }
+        } catch (e) {
+          // fallback to default errorMsg
+        }
+        console.log(errorMsg);
+        toast({ description: errorMsg });
+        return;
       }
 
-      toast({
-        title: "Admin created successfully",
-        description: `An admin account has been created for ${data.email}`,
-      });
-
-      // Reset form
+      toast({ description: "Admin created successfully." });
       form.reset();
     } catch (error) {
       toast({
-        title: "Error creating admin",
         description:
           "There was an error creating the admin account. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
