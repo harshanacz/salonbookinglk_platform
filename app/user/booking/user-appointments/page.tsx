@@ -355,7 +355,7 @@ const AppointmentSummary = () => {
               <div className="text-center p-8">
                 <h2 className="text-2xl font-bold mb-4">No Upcoming Appointment</h2>
                 <p className="text-gray-600 mb-6">You don't have any active appointments at the moment.</p>
-                <Link href="/book" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                <Link href="/" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
                   Book a New Appointment
                 </Link>
               </div>
