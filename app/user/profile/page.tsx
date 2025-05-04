@@ -5,7 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 
+/**
+ * User Profile Page Component
+ * Allows users to view and edit their personal information
+ */
 export default function UserProfile() {
+  // Initial user data state
   const [userData, setUserData] = useState({
     fullName: "Naduni Siriwardhane",
     email: "Naduni123@gmail.com", // This is the primary email
@@ -16,15 +21,27 @@ export default function UserProfile() {
     address: "No. 123,\nPeradeniya road,\nPiliyandala.",
   });
 
+  // State for tracking which field is being edited
   const [editingField, setEditingField] = useState<string | null>(null);
+  
+  // Temporary value for the field being edited
   const [tempValue, setTempValue] = useState("");
+  
+  // State for profile image
   const [profileImage, setProfileImage] = useState("/placeholder-user.jpg");
 
+  /**
+   * Handles clicking the edit button for a field
+   * @param field - The field to be edited
+   */
   const handleEditClick = (field: keyof typeof userData) => {
     setEditingField(field);
     setTempValue(userData[field]);
   };
 
+  /**
+   * Saves the edited field value to the user data state
+   */
   const handleSave = () => {
     if (editingField) {
       setUserData((prevData) => ({
@@ -35,6 +52,10 @@ export default function UserProfile() {
     }
   };
 
+  /**
+   * Handles profile image upload
+   * @param e - Change event from the file input
+   */
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -49,36 +70,37 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-pink-50 p-6">
+    <div className="min-h-screen bg-[var(--pageBackground)] p-6">
       <div className="max-w-3xl mx-auto">
-        {/* Profile Header */}
+        {/* Profile Header - User info and save button */}
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16 border-2 border-white">
+            <Avatar className="w-16 h-16 border-2 border-[var(--whiteColor)]">
               <AvatarImage src={profileImage} alt="Profile picture" />
               <AvatarFallback>NS</AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-lg font-medium">{userData.fullName}</h2>
-              <p className="text-sm text-gray-500">{userData.email}</p>
+              <p className="text-sm text-[var(--greyColor)]">{userData.email}</p>
             </div>
           </div>
           <Button
-            className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
+            className="bg-[var(--primary2)] hover:bg-[var(--secondary2)] text-[var(--whiteColor)] rounded-full px-6"
             onClick={handleSave}
           >
             Save
           </Button>
         </div>
 
-        {/* Profile Form */}
+        {/* Profile Form - Grid layout for form fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Full Name */}
+          {/* Full Name Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">
               Full Name
             </label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              {/* Conditional rendering based on edit state */}
               {editingField === "fullName" ? (
                 <input
                   type="text"
@@ -90,7 +112,7 @@ export default function UserProfile() {
                 <span>{userData.fullName}</span>
               )}
               <button
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[var(--greyColor)] hover:text-[var(--textPrimary)]"
                 aria-label="Edit Full Name"
                 onClick={() => handleEditClick("fullName")}
               >
@@ -99,12 +121,13 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Mobile Number */}
+          {/* Mobile Number Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">
               Mobile number
             </label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              {/* Conditional rendering based on edit state */}
               {editingField === "mobileNumber" ? (
                 <input
                   type="text"
@@ -116,7 +139,7 @@ export default function UserProfile() {
                 <span>{userData.mobileNumber}</span>
               )}
               <button
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[var(--greyColor)] hover:text-[var(--textPrimary)]"
                 aria-label="Edit Mobile Number"
                 onClick={() => handleEditClick("mobileNumber")}
               >
@@ -125,10 +148,11 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Gender */}
+          {/* Gender Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Gender</label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">Gender</label>
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              {/* Conditional rendering based on edit state */}
               {editingField === "gender" ? (
                 <select
                   value={tempValue}
@@ -143,7 +167,7 @@ export default function UserProfile() {
                 <span>{userData.gender}</span>
               )}
               <button
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[var(--greyColor)] hover:text-[var(--textPrimary)]"
                 aria-label="Edit Gender"
                 onClick={() => handleEditClick("gender")}
               >
@@ -152,10 +176,11 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Country */}
+          {/* Country Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Country</label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">Country</label>
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              {/* Conditional rendering based on edit state */}
               {editingField === "country" ? (
                 <select
                   value={tempValue}
@@ -166,13 +191,13 @@ export default function UserProfile() {
                   <option value="USA">USA</option>
                   <option value="UK">UK</option>
                   <option value="Canada">Canada</option>
-                  <option value="Canada">India</option>
+                  <option value="India">India</option>
                 </select>
               ) : (
                 <span>{userData.country}</span>
               )}
               <button
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[var(--greyColor)] hover:text-[var(--textPrimary)]"
                 aria-label="Edit Country"
                 onClick={() => handleEditClick("country")}
               >
@@ -181,29 +206,29 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* My email Address */}
+          {/* Email Address Field (read-only) */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">
               My email Address
             </label>
-            <div className="flex items-center gap-3 bg-white rounded-lg p-3 border border-gray-200">
-              <div className="w-5 h-5 bg-blue-100 rounded-sm flex items-center justify-center text-blue-500">
+            <div className="flex items-center gap-3 bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              <div className="w-5 h-5 bg-[var(--infoLight)] rounded-sm flex items-center justify-center text-[var(--info)]">
                 @
               </div>
               <div>
-                <div>{userData.email}</div>{" "}
-                {/* Now using the same email as the top */}
-                <div className="text-xs text-gray-400">
+                <div>{userData.email}</div>
+                <div className="text-xs text-[var(--greyColor)]">
                   {userData.emailUpdated}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Address */}
+          {/* Address Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">Address</label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">Address</label>
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
+              {/* Conditional rendering based on edit state */}
               {editingField === "address" ? (
                 <textarea
                   value={tempValue}
@@ -214,7 +239,7 @@ export default function UserProfile() {
                 <span className="whitespace-pre-line">{userData.address}</span>
               )}
               <button
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[var(--greyColor)] hover:text-[var(--textPrimary)]"
                 aria-label="Edit Address"
                 onClick={() => handleEditClick("address")}
               >
@@ -223,12 +248,12 @@ export default function UserProfile() {
             </div>
           </div>
 
-          {/* Profile Picture */}
+          {/* Profile Picture Upload Field */}
           <div>
-            <label className="block text-sm text-gray-600 mb-2">
+            <label className="block text-sm text-[var(--greyColor)] mb-2">
               Profile Picture
             </label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center justify-between bg-[var(--backgroundWhite)] rounded-lg p-3 border border-[var(--lightGreyColor)]">
               <input
                 type="file"
                 accept="image/*"
