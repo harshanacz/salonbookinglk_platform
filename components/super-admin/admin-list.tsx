@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -32,37 +32,13 @@ import {
 import { MoreVertical, Search, Eye, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-// Mock data for admins - Super Admin removed from the table
-const mockAdmins = [
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "Admin",
-    lastActive: new Date(2023, 2, 14, 9, 45),
-  },
-  {
-    id: "3",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    role: "Admin",
-    lastActive: new Date(2023, 2, 10, 16, 20),
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    email: "emily.davis@example.com",
-    role: "Admin",
-    lastActive: new Date(2023, 2, 13, 11, 15),
-  },
-  {
-    id: "5",
-    name: "Michael Wilson",
-    email: "michael.wilson@example.com",
-    role: "Admin",
-    lastActive: new Date(2023, 2, 8, 10, 0),
-  },
-];
+type Admin = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  lastActive: string; // Expecting an ISO string from the API
+};
 
 type AdminListProps = {
   onSelectAdmin: (adminId: string | null) => void;
@@ -72,7 +48,27 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<string | null>(null);
-  const [admins, setAdmins] = useState(mockAdmins);
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/super-admin/get-admin");
+        if (!res.ok) throw new Error("Failed to fetch admins");
+        const data = await res.json();
+        setAdmins(data.admins); // Adjust this based on your actual API response shape
+      } catch (err: any) {
+        setError(err.message || "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAdmins();
+  }, []);
 
   const handleDeleteAdmin = (adminId: string) => {
     setAdminToDelete(adminId);
@@ -81,19 +77,18 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
 
   const confirmDelete = () => {
     if (adminToDelete) {
-      // In a real app, you would call an API to delete the admin
+      // Ideally, you should also call the backend to delete
       setAdmins(admins.filter((admin) => admin.id !== adminToDelete));
       setDeleteDialogOpen(false);
       setAdminToDelete(null);
     }
   };
 
-  const filteredAdmins = admins.filter((admin) => {
-    return (
-      admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  const filteredAdmins = admins.filter(
+    (admin) =>
+      (admin.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (admin.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-4">
@@ -110,65 +105,79 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Last Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAdmins.length === 0 ? (
+        {loading ? (
+          <div className="p-4 text-center text-muted-foreground">
+            Loading admins...
+          </div>
+        ) : error ? (
+          <div className="p-4 text-center text-red-500">{error}</div>
+        ) : (
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="text-center py-6 text-muted-foreground"
-                >
-                  No admins found matching your filters
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Last Active</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : (
-              filteredAdmins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell className="font-medium">{admin.name}</TableCell>
-                  <TableCell>{admin.email}</TableCell>
-                  <TableCell>
-                    {formatDistanceToNow(admin.lastActive, { addSuffix: true })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => onSelectAdmin(admin.id)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Activities
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive"
-                          onClick={() => handleDeleteAdmin(admin.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete Admin
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+            </TableHeader>
+            <TableBody>
+              {filteredAdmins.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-6 text-muted-foreground"
+                  >
+                    No admins found matching your filters
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                filteredAdmins.map((admin) => (
+                  <TableRow key={admin.id}>
+                    <TableCell className="font-medium">{admin.name}</TableCell>
+                    <TableCell>{admin.email}</TableCell>
+                    <TableCell>
+                      {admin.lastActive &&
+                      !isNaN(new Date(admin.lastActive).getTime())
+                        ? formatDistanceToNow(new Date(admin.lastActive), {
+                            addSuffix: true,
+                          })
+                        : "Never Active"}
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => onSelectAdmin(admin.id)}
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Activities
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Admin
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -177,7 +186,7 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the
-              admin account and remove their data from our servers.
+              admin account and remove their data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
