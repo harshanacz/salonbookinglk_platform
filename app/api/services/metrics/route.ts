@@ -1,24 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service from "@/models/Service";
 
-// Endpoint to track service metrics (views, bookings)
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     
-    const { serviceId, metricType } = await req.json();
+    const { serviceId, metricType } = await request.json();
     
-    if (!serviceId) {
+    if (!serviceId || !metricType) {
       return NextResponse.json(
-        { error: "Service ID is required" },
-        { status: 400 }
-      );
-    }
-    
-    if (!metricType || !['view', 'booking'].includes(metricType)) {
-      return NextResponse.json(
-        { error: "Valid metric type (view or booking) is required" },
+        { error: "Missing required fields: serviceId and metricType" },
         { status: 400 }
       );
     }
@@ -33,7 +25,7 @@ export async function POST(req: Request) {
       );
     }
     
-    // Update the appropriate metric
+    // Update metrics based on the metric type
     if (metricType === 'view') {
       service.views += 1;
     } else if (metricType === 'booking') {
@@ -41,19 +33,17 @@ export async function POST(req: Request) {
       service.lastBookedAt = new Date();
     }
     
-    // Recalculate popularity score
+    // Recalculate popularity score: (views * 0.3) + (bookings * 0.7)
     service.popularityScore = (service.views * 0.3) + (service.bookings * 0.7);
     
-    // Save the updated service
     await service.save();
     
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      message: `Service ${metricType} count updated successfully` 
+      message: `Service ${metricType} recorded successfully`,
     });
-    
   } catch (error) {
-    console.error(`Error updating service ${req.method} metrics:`, error);
+    console.error(`Error updating service metrics:`, error);
     return NextResponse.json(
       { error: "Failed to update service metrics" },
       { status: 500 }
