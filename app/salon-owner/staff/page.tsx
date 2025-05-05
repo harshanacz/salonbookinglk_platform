@@ -200,7 +200,7 @@ export default function StaffManagement() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/update_attendace?id=${staff.id}`}>
+                          <Link href={`/salon-owner/staff/update-attendance?id=${staff.id}`}>
                             Update Attendance
                           </Link>
                         </DropdownMenuItem>

@@ -59,9 +59,18 @@ const staffFormSchema = z.object({
     .string()
     .min(10, { message: "Phone number must be at least 10 digits." }),
   bio: z.string().optional(),
+  role: z.string({
+    required_error: "Please select a role",
+  }),
   services: z
     .array(z.string())
     .min(1, { message: "Please select at least one service." }),
+  availability: z.string({
+    required_error: "Please select availability",
+  }),
+  workingDays: z
+    .array(z.string())
+    .min(1, { message: "Select at least one working day" }),
 });
 
 type StaffFormValues = z.infer<typeof staffFormSchema>;
@@ -77,7 +86,10 @@ export default function CreateStaffMember() {
       email: "",
       phone: "",
       bio: "",
+      role: "",
       services: [],
+      availability: "",
+      workingDays: [],
     },
   });
 
@@ -99,6 +111,15 @@ export default function CreateStaffMember() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleAvailabilityChange = (value: string) => {
+    const daysMap = {
+      "full-time": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      "part-time": ["monday", "wednesday", "friday"],
+      "weekends-only": ["saturday", "sunday"]
+    };
+    form.setValue("workingDays", daysMap[value as keyof typeof daysMap] || []);
   };
 
   return (
@@ -196,6 +217,46 @@ export default function CreateStaffMember() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="senior-stylist">
+                              Senior Stylist
+                            </SelectItem>
+                            <SelectItem value="junior-stylist">
+                              Junior Stylist
+                            </SelectItem>
+                            <SelectItem value="nail-technician">
+                              Nail Technician
+                            </SelectItem>
+                            <SelectItem value="beautician">
+                              Beautician
+                            </SelectItem>
+                            <SelectItem value="massage-therapist">
+                              Massage Therapist
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  
                 </div>
 
                 <div className="space-y-6">
@@ -212,6 +273,77 @@ export default function CreateStaffMember() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+<FormField
+                    control={form.control}
+                    name="availability"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Availability</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleAvailabilityChange(value);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select availability" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="full-time">Full-time</SelectItem>
+                            <SelectItem value="part-time">Part-time</SelectItem>
+                            <SelectItem value="weekends-only">
+                              Weekends Only
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="workingDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Working Days</FormLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday",
+                            "sunday",
+                          ].map((day) => (
+                            <div
+                              key={day}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={field.value?.includes(day)}
+                                onCheckedChange={(checked) => {
+                                  const newValue = checked
+                                    ? [...field.value, day]
+                                    : field.value.filter((d) => d !== day);
+                                  field.onChange(newValue);
+                                }}
+                              />
+                              <Label>
+                                {day.charAt(0).toUpperCase() + day.slice(1)}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
