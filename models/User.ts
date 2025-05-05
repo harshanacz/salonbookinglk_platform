@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 export enum UserType {
   CUSTOMER = "CUSTOMER",
@@ -7,47 +7,54 @@ export enum UserType {
   SUPER_ADMIN = "SUPER_ADMIN",
 }
 
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
-}
+// Ensure UserType values are available as an array
+const userTypeValues = Object.values(UserType);
 
-const userSchema = new mongoose.Schema(
+const UserSchema = new Schema(
   {
     type: {
       type: String,
-      enum: Object.values(UserType),
-      required: true,
-    },
-    mobileNumber: {
-      type: String,
-      required: false,
+      enum: {
+        values: userTypeValues,
+        message: "{VALUE} is not a valid user type",
+      },
+      required: [true, "User type is required"],
     },
     clerkUserId: {
       type: String,
-      required: true,
+      required: [true, "Clerk user ID is required"],
       unique: true,
     },
     userName: {
       type: String,
-      required: false,
+      required: [true, "User name is required"],
+      trim: true,
     },
     email: {
       type: String,
+      required: [true, "Email is required"],
+      trim: true,
+    },
+    mobileNumber: {
+      type: String,
       required: false,
-      unique: true,
-      sparse: true, // Allows multiple null/undefined values
+      trim: true,
     },
     gender: {
       type: String,
-      enum: [...Object.values(Gender), null],
-      required: false,
-      default: null,
+      // Simplify the enum definition to fix the validation issue
+      enum: ["Male", "Female", "Prefer not to say"],
+      default: "Prefer not to say",
     },
     country: {
       type: String,
+      default: "Sri Lanka",
+      trim: true,
+    },
+    address: {
+      type: String,
       required: false,
+      trim: true,
     },
     profileImage: {
       type: String,
@@ -63,4 +70,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.models.User || mongoose.model("User", userSchema);
+// Add this to clear the model from the cache before compiling it
+// This helps prevent errors when hot-reloading during development
+mongoose.models = {};
+
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
+
+export default User;
