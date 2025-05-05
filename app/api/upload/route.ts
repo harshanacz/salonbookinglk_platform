@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
-// This is a placeholder for image upload functionality
-// In a real app, you'd use a service like AWS S3, Cloudinary, or similar
 export async function POST(req: Request) {
   try {
     const { userId } = await auth();

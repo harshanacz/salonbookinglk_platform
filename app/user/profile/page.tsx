@@ -107,36 +107,38 @@ export default function UserProfile() {
 
     try {
       setUploadingImage(true);
-
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append("file", file);
-
-      // Simulate an upload with a timeout
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Create a temporary URL for preview
-      const imageUrl = URL.createObjectURL(file);
-
-      // Update the user profile with the new image URL
+      
+      // Create a temporary URL for preview - for instant feedback
+      const previewUrl = URL.createObjectURL(file);
+      
+      // Show the preview immediately
+      setUserData(prev => ({
+        ...prev,
+        profileImage: previewUrl
+      }));
+      
+      // In a real app, you'd upload the file to a server or cloud storage
+      // For now we're just using the local preview URL
+      // This is a placeholder for real image upload functionality
+      
+      // Simulate an upload delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update the user profile with the "uploaded" image URL
       const response = await fetch("/api/user", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          profileImage: imageUrl,
+          profileImage: previewUrl, // In a real app, this would be the URL from your server
         }),
       });
 
       if (!response.ok) {
         throw new Error("Failed to update profile image");
       }
-
-      setUserData((prev) => ({
-        ...prev,
-        profileImage: imageUrl,
-      }));
+      
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Failed to upload image. Please try again.");
