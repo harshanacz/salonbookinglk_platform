@@ -24,7 +24,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -37,20 +36,7 @@ import { z } from "zod";
 import { ArrowLeft, Upload } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
-
-// Sample services for assignment
-const availableServices = [
-  { id: "1", name: "Hair Coloring" },
-  { id: "2", name: "Haircut" },
-  { id: "3", name: "Hair Styling" },
-  { id: "4", name: "Manicure" },
-  { id: "5", name: "Pedicure" },
-  { id: "6", name: "Nail Art" },
-  { id: "7", name: "Facial" },
-  { id: "8", name: "Makeup" },
-  { id: "9", name: "Waxing" },
-  { id: "10", name: "Body Massage" },
-];
+import { useRouter } from "next/navigation";
 
 const staffFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -62,9 +48,6 @@ const staffFormSchema = z.object({
   role: z.string({
     required_error: "Please select a role",
   }),
-  services: z
-    .array(z.string())
-    .min(1, { message: "Please select at least one service." }),
   availability: z.string({
     required_error: "Please select availability",
   }),
@@ -78,6 +61,7 @@ type StaffFormValues = z.infer<typeof staffFormSchema>;
 export default function CreateStaffMember() {
   const [image, setImage] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
@@ -87,19 +71,58 @@ export default function CreateStaffMember() {
       phone: "",
       bio: "",
       role: "",
-      services: [],
       availability: "",
       workingDays: [],
     },
   });
 
-  function onSubmit(data: StaffFormValues) {
-    console.log(data);
-    toast({
-      title: "Staff member created",
-      description: `${data.name} has been added to your staff.`,
-    });
-    // In a real app, you would submit this data to your backend
+  async function onSubmit(data: StaffFormValues) {
+    try {
+      console.log("Submitting data:", data); // Debug log
+
+      const formData = {
+        name: data.name,
+        email: data.email,
+        mobileNumber: data.phone,
+        role: data.role,
+        bio: data.bio || "",
+        availability: data.availability,
+        workingDays: data.workingDays,
+        status: "Active", // Add default status
+        profileImage: image || "", // Add image if available
+      };
+
+      const response = await fetch('/api/salon-owner/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create staff member');
+      }
+
+      const result = await response.json();
+      console.log("Success:", result); // Debug log
+      
+      toast({
+        title: "Success",
+        description: `${data.name} has been added to your staff.`,
+      });
+
+      // Use Next.js router for navigation
+      router.push('/salon-owner/staff');
+    } catch (error: any) {
+      console.error("Error:", error); // Debug log
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create staff member. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -255,8 +278,6 @@ export default function CreateStaffMember() {
                       </FormItem>
                     )}
                   />
-
-                  
                 </div>
 
                 <div className="space-y-6">
@@ -278,7 +299,7 @@ export default function CreateStaffMember() {
                     )}
                   />
 
-<FormField
+                  <FormField
                     control={form.control}
                     name="availability"
                     render={({ field }) => (
