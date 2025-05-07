@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     console.log("Received body:", body); // Debug log
 
-    const { name, email, mobileNumber, role, availability, workingDays, bio, profileImage } = body;
+    const { name, email, mobileNumber, role, availability, workingDays, bio, profileImage, status } = body;
 
     // Validate required fields
     if (!name || !email || !mobileNumber || !role || !availability || !workingDays) {
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       workingDays,
       bio: bio || "",
       profileImage: profileImage || "",
-      status: "Active"
+      status: status || "Active" // Ensure status is set
     });
 
     console.log("Created staff:", newStaff); // Debug log
@@ -103,84 +103,47 @@ export async function GET(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
-  try {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
+// export async function PUT(req: Request) {
+//   try {
+//     const { userId: clerkUserId } = await auth();
+//     if (!clerkUserId) {
+//       return new NextResponse("Unauthorized", { status: 401 });
+//     }
 
-    await dbConnect();
-    const user = await User.findOne({ clerkUserId });
+//     await dbConnect();
+//     const user = await User.findOne({ clerkUserId });
 
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
+//     if (!user) {
+//       return new NextResponse("User not found", { status: 404 });
+//     }
 
-    if (user.type !== UserType.SALON_OWNER) {
-      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
-    }
+//     if (user.type !== UserType.SALON_OWNER) {
+//       return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+//     }
 
-    const body = await req.json();
-    const { id, ...updateData } = body;
+//     const body = await req.json();
+//     const { id, ...updateData } = body;
 
-    if (!id) {
-      return new NextResponse("Missing staff id", { status: 400 });
-    }
+//     if (!id) {
+//       return new NextResponse("Missing staff id", { status: 400 });
+//     }
 
-    const staff = await Staff.findOneAndUpdate(
-      { _id: id, userId: user._id },
-      updateData,
-      { new: true }
-    );
+//     const staff = await Staff.findOneAndUpdate(
+//       { _id: id, userId: user._id },
+//       updateData,
+//       { new: true }
+//     );
 
-    if (!staff) {
-      return new NextResponse("Staff not found", { status: 404 });
-    }
+//     if (!staff) {
+//       return new NextResponse("Staff not found", { status: 404 });
+//     }
 
-    return NextResponse.json(staff);
+//     return NextResponse.json(staff);
 
-  } catch (error: any) {
-    console.error("[STAFF_PUT]", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
-}
+//   } catch (error: any) {
+//     console.error("[STAFF_PUT]", error);
+//     return new NextResponse("Internal Error", { status: 500 });
+//   }
+// }
 
-export async function DELETE(req: Request) {
-  try {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return new NextResponse("Unauthorized", { status: 401 });
-    }
 
-    await dbConnect();
-    const user = await User.findOne({ clerkUserId });
-
-    if (!user) {
-      return new NextResponse("User not found", { status: 404 });
-    }
-
-    if (user.type !== UserType.SALON_OWNER) {
-      return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
-    }
-
-    const body = await req.json();
-    const { id } = body;
-
-    if (!id) {
-      return new NextResponse("Missing staff id", { status: 400 });
-    }
-
-    const deleted = await Staff.findOneAndDelete({ _id: id, userId: user._id });
-
-    if (!deleted) {
-      return new NextResponse("Staff not found", { status: 404 });
-    }
-
-    return NextResponse.json({ success: true });
-
-  } catch (error: any) {
-    console.error("[STAFF_DELETE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
-  }
-}
