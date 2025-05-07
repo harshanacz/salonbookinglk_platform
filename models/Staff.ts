@@ -14,7 +14,6 @@ const staffSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
     },
     profileImage: String,
     mobileNumber: {
@@ -50,6 +49,6 @@ const staffSchema = new mongoose.Schema(
 
 // Add indexes for better query performance
 staffSchema.index({ userId: 1 });
-staffSchema.index({ email: 1 }, { unique: true });
+staffSchema.index({ email: 1 });
 
 export default mongoose.models.Staff || mongoose.model("Staff", staffSchema);

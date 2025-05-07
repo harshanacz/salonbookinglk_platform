@@ -70,35 +70,97 @@ export default function EditStaffMember() {
     },
   });
 
-  useEffect(() => {
-    const fetchStaffMember = async () => {
-      // Simulated data - replace with actual API call
-      const mockData = {
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "1234567890",
-        role: "senior-stylist",
-        bio: "Experienced stylist with 10 years of experience",
-        availability: "full-time",
-        services: ["1", "2"],
-        workingDays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
-        image: "/path/to/image.jpg",
+  // useEffect(() => {
+  //   const fetchStaffMember = async () => {
+  //     try {
+  //       const response = await fetch(`/api/salon-owner/staff/${params.id}`);
+  //       if (!response.ok) {
+  //         throw new Error('Failed to fetch staff member');
+  //       }
+  //       const data = await response.json();
+        
+  //       // Reset form with fetched data
+  //       form.reset({
+  //         name: data.name,
+  //         email: data.email,
+  //         phone: data.mobileNumber,
+  //         role: data.role,
+  //         bio: data.bio || "",
+  //         availability: data.availability,
+  //         workingDays: data.workingDays || [],
+  //         services: [], // You might want to add services to your staff model if needed
+  //       });
+
+  //       // Set profile image if exists
+  //       if (data.profileImage) {
+  //         setImage(data.profileImage);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching staff member:', error);
+  //       toast({
+  //         title: "Error",
+  //         description: "Could not load staff member details",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   };
+
+  //   if (params.id) {
+  //     fetchStaffMember();
+  //   }
+  // }, [form, params.id, toast]);
+
+  async function onSubmit(data: StaffFormValues) {
+    try {
+      console.log('Submitting data:', data); // Debug log
+      console.log('Staff ID:', params.id); // Debug log
+
+      const submitData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        bio: data.bio || "",
+        availability: data.availability,
+        workingDays: data.workingDays,
+        
+        profileImage: image,
       };
 
-      form.reset(mockData);
-      setImage(mockData.image);
-    };
+      console.log('Request payload:', submitData); // Debug log
 
-    fetchStaffMember();
-  }, [form, params]);
+      const response = await fetch(`/api/salon-owner/staff/${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      });
 
-  function onSubmit(data: StaffFormValues) {
-    console.log(data);
-    toast({
-      title: "Staff member updated",
-      description: `${data.name}'s information has been updated.`,
-    });
-    router.push("/salon-owner/staff");
+      console.log('Response status:', response.status); // Debug log
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('Error response:', errorData); // Debug log
+        throw new Error(errorData?.message || 'Failed to update staff member');
+      }
+
+      const result = await response.json();
+      console.log('Success response:', result); // Debug log
+
+      toast({
+        title: "Success",
+        description: `${data.name}'s information has been updated.`,
+      });
+      router.push("/salon-owner/staff");
+    } catch (error) {
+      console.error('Update error:', error); // Debug log
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update staff member",
+        variant: "destructive",
+      });
+    }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,7 +388,7 @@ export default function EditStaffMember() {
                 <Button variant="outline" asChild>
                   <Link href="/salon-owner/staff">Cancel</Link>
                 </Button>
-                <Button type="submit">Update Staff Member</Button>
+                <Button type="submit">Update Staff</Button>
               </div>
             </form>
           </Form>
