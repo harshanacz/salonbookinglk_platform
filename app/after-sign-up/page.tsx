@@ -2,9 +2,9 @@
 
 import { useUser } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 
-export default function AfterSignUpPage() {
+function AfterSignUpContent() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
 
@@ -62,5 +62,22 @@ export default function AfterSignUpPage() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
       </div>
     </div>
+  );
+}
+
+export default function AfterSignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-4">
+            Loading...
+          </h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <AfterSignUpContent />
+    </Suspense>
   );
 }

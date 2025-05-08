@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   console.log("[USERS_GET] called");
   try {
