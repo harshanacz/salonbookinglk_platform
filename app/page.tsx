@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MapPin } from "lucide-react";
@@ -57,7 +57,7 @@ const nearbySalons = [
   },
 ];
 
-export default function Home() {
+function HomeContent() {
   const [location, setLocation] = useState("");
   const [hasRedirected, setHasRedirected] = useState(false);
   const [popularServices, setPopularServices] = useState<Service[]>([]);
@@ -206,5 +206,22 @@ export default function Home() {
         <StylesGallery />
       </section>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-4">
+            Loading...
+          </h1>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
