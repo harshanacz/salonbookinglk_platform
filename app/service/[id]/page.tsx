@@ -1,6 +1,6 @@
-"use client";;
-import { use } from "react";
+"use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heart, MapPin, Share2, Star } from "lucide-react";
@@ -15,77 +15,185 @@ interface ServicePageProps {
   };
 }
 
+// Define interfaces for our data
+interface ServiceData {
+  id: string;
+  title: string;
+  images: string[];
+  price: number;
+  type: string;
+  description: string[];
+  duration: number;
+  salon: {
+    id: string;
+    name: string;
+    rating: number;
+    reviews: number;
+    location: string;
+    isOpen: boolean;
+    openUntil: string;
+    bestSeller: boolean;
+  };
+  staffAssigned: string[];
+}
+
+interface StaffMember {
+  id: number;
+  name: string;
+  image: string;
+}
+
+interface RelatedService {
+  id: string;
+  title: string;
+  image: string;
+  price: number;
+  salon: string;
+  rating: number;
+  reviews: number;
+  location: string;
+}
+
 export default function ServicePage(props: ServicePageProps) {
   const { params } = props;
   const addService = useCheckoutStore((state) => state.addService);
 
-  const service = {
-    id: Number.parseInt(params.id),
-    title: "Custom Hair Coloring and Highlights",
-    image: "/placeholder.svg?height=600&width=800",
-    price: 1500,
-    salon: {
-      name: "Salon Amaya",
-      rating: 4.9,
-      reviews: 485,
-      location: "Molpe Road, Moratuwa",
-      isOpen: true,
-      openUntil: "7:30PM",
-      bestSeller: true,
-    },
-    description: [
-      "Wash your hair 1-2 days before coloring. Freshly washed hair can strip natural oils, making it more porous and potentially leading to uneven color.",
-      "Use a deep conditioner or hair mask to hydrate your hair. This helps protect it from the chemicals in the dye.",
-    ],
-    staff: Array.from({ length: 6 }).map((_, index) => ({
-      id: index + 1,
-      name: `Staff Member ${index + 1}`,
-      image: "/placeholder.svg?height=100&width=100",
-    })),
+  // Define state for our data
+  const [service, setService] = useState<ServiceData | null>(null);
+  const [relatedServices, setRelatedServices] = useState<RelatedService[]>([]);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  // Fetch service data
+  useEffect(() => {
+    const fetchServiceData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/services/${params.id}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        setService(data.service);
+        setRelatedServices(data.relatedServices);
+        setStaffMembers(data.staff);
+        
+        // Track the service view
+        trackServiceView(params.id);
+      } catch (err) {
+        console.error("Error fetching service:", err);
+        setError("Failed to load service details. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchServiceData();
+  }, [params.id]);
+
+  // Function to track service view
+  const trackServiceView = async (serviceId: string) => {
+    try {
+      // Don't await this request - fire and forget to avoid delaying navigation
+      fetch('/api/services/metrics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceId,
+          metricType: 'view'
+        }),
+      });
+    } catch (error) {
+      // Just log the error, don't disrupt the user experience
+      console.error('Failed to track service view:', error);
+    }
   };
 
-  const relatedServices = [
-    {
-      id: 2,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amaya",
-      rating: 4.9,
-      reviews: 130,
-      location: "Molpe Road, Moratuwa",
-    },
-    {
-      id: 3,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amaya",
-      rating: 4.8,
-      reviews: 150,
-      location: "Molpe Road, Moratuwa",
-    },
-    {
-      id: 4,
-      title: "Acrylic Nail Extensions With Custom Art",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 1500,
-      salon: "Salon Amaya",
-      rating: 4.9,
-      reviews: 130,
-      location: "Molpe Road, Moratuwa",
-    },
-    {
-      id: 5,
-      title: "Custom Hair Coloring And Highlights",
-      image: "/placeholder.svg?height=300&width=400",
-      price: 620,
-      salon: "Salon Amaya",
-      rating: 4.8,
-      reviews: 120,
-      location: "Katubedda, Galle Road",
-    },
-  ];
+  // Handle adding to checkout
+  const handleBookNow = () => {
+    if (service) {
+      addService({
+        id: service.id,
+        name: service.title,
+        price: service.price,
+        salonId: service.salon.id,
+        salonName: service.salon.name,
+        duration: service.duration || 60,
+      });
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-screen-xl mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="lg:w-2/3 w-full">
+            <div className="h-4 bg-gray-200 rounded w-1/3 mb-6 animate-pulse"></div>
+            <div className="h-8 bg-gray-200 rounded w-3/4 mb-6 animate-pulse"></div>
+            <div className="relative aspect-video w-full mb-4 rounded-lg overflow-hidden bg-gray-200 animate-pulse"></div>
+            <div className="flex gap-2 mb-6">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="w-20 h-20 rounded-md bg-gray-200 animate-pulse"></div>
+              ))}
+            </div>
+            <div className="h-6 bg-gray-200 rounded w-1/4 mb-4 animate-pulse"></div>
+            <div className="space-y-4 mb-8">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+          <div className="hidden lg:block lg:w-1/3">
+            <Card className="p-6 animate-pulse">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-full bg-gray-200"></div>
+                <div className="space-y-2">
+                  <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="h-10 bg-gray-200 rounded w-full mb-3"></div>
+              <div className="flex gap-2">
+                <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-10 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !service) {
+    return (
+      <div className="max-w-screen-xl mx-auto px-4 py-8">
+        <div className="py-10 text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            {error || "Service not found"}
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Sorry, we couldn't load the service details at this time.
+          </p>
+          <Link href="/">
+            <Button>Return to Home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 py-8">
@@ -93,10 +201,17 @@ export default function ServicePage(props: ServicePageProps) {
         <div className="lg:w-2/3 w-full">
           <nav className="text-sm mb-4">
             <Link
-              href="/services"
+              href="/"
               className="text-gray-500 hover:text-gray-700"
             >
-              Main HairCuts
+              Home
+            </Link>
+            <span className="mx-2 text-gray-400">/</span>
+            <Link
+              href={`/categories/${service.type.toLowerCase().replace(/_/g, '-')}`}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              {service.type.replace(/_/g, ' ')}
             </Link>
             <span className="mx-2 text-gray-400">/</span>
             <span className="text-gray-900">{service.title}</span>
@@ -106,7 +221,7 @@ export default function ServicePage(props: ServicePageProps) {
 
           <div className="relative aspect-video w-full mb-4 rounded-lg overflow-hidden">
             <Image
-              src={service.image}
+              src={service.images[selectedImage] || "/placeholder.svg?height=600&width=800"}
               alt={service.title}
               fill
               className="object-cover"
@@ -115,15 +230,16 @@ export default function ServicePage(props: ServicePageProps) {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
-            {[...Array(3)].map((_, i) => (
+            {service.images.map((image, i) => (
               <div
                 key={i}
-                className={`relative w-20 h-20 rounded-md overflow-hidden ${
-                  i === 0 ? "border-2 border-purple-600" : ""
+                className={`relative w-20 h-20 rounded-md overflow-hidden cursor-pointer ${
+                  i === selectedImage ? "border-2 border-purple-600" : ""
                 }`}
+                onClick={() => setSelectedImage(i)}
               >
                 <Image
-                  src="/placeholder.svg?height=100&width=100"
+                  src={image || "/placeholder.svg?height=100&width=100"}
                   alt={`Thumbnail ${i + 1}`}
                   fill
                   className="object-cover"
@@ -134,13 +250,17 @@ export default function ServicePage(props: ServicePageProps) {
 
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Instructions</h2>
-            <ul className="space-y-4">
-              {service.description.map((item, index) => (
-                <li key={index} className="text-gray-700">
-                  {item}
-                </li>
-              ))}
-            </ul>
+            {service.description.length > 0 ? (
+              <ul className="space-y-4">
+                {service.description.map((item, index) => (
+                  <li key={index} className="text-gray-700">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600">No instructions provided for this service.</p>
+            )}
           </div>
 
           {/* Booking Card: Mobile only */}
@@ -199,7 +319,11 @@ export default function ServicePage(props: ServicePageProps) {
               <div className="flex items-center text-sm text-gray-700 mb-6">
                 <MapPin className="h-5 w-5 mr-1 text-gray-500" />
                 <span>{service.salon.location}</span>
-                <Link href="#" className="ml-2 text-purple-600 hover:underline">
+                <Link 
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.salon.location)}`} 
+                  target="_blank"
+                  className="ml-2 text-purple-600 hover:underline"
+                >
                   Get direction
                 </Link>
               </div>
@@ -210,8 +334,11 @@ export default function ServicePage(props: ServicePageProps) {
                 </div>
               </div>
               <div className="space-y-3">
-                <Link href={`/service/${params.id}/time`}>
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                <Link href={`/user/booking?serviceId=${service.id}`}>
+                  <Button 
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={handleBookNow}
+                  >
                     Book now
                   </Button>
                 </Link>
@@ -230,7 +357,7 @@ export default function ServicePage(props: ServicePageProps) {
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Staff Members</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {service.staff.map((staff) => (
+              {staffMembers.map((staff) => (
                 <div key={staff.id} className="flex flex-col items-center">
                   <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
                     <Image
@@ -252,11 +379,15 @@ export default function ServicePage(props: ServicePageProps) {
             <h2 className="text-xl font-semibold mb-4">
               Services you may like
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {relatedServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
+            {relatedServices.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {relatedServices.map((relService) => (
+                  <ServiceCard key={relService.id} service={relService} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-600">No related services found.</p>
+            )}
           </div>
         </div>
 
@@ -277,7 +408,7 @@ export default function ServicePage(props: ServicePageProps) {
                   <div className="flex items-center text-yellow-500 mr-1">
                     <Star className="h-4 w-4 fill-current" />
                     <span className="ml-1 text-black">
-                      {service.salon.rating}
+                      {service.salon.rating.toFixed(1)}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500">
@@ -313,19 +444,31 @@ export default function ServicePage(props: ServicePageProps) {
             <div className="flex items-center text-sm text-gray-700 mb-6">
               <MapPin className="h-5 w-5 mr-1 text-gray-500" />
               <span>{service.salon.location}</span>
-              <Link href="#" className="ml-2 text-purple-600 hover:underline">
+              <Link 
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.salon.location)}`}
+                target="_blank" 
+                className="ml-2 text-purple-600 hover:underline"
+              >
                 Get direction
               </Link>
             </div>
             <div className="mb-6">
               <div className="text-gray-700 mb-1">From</div>
               <div className="text-2xl font-bold mb-4">
-                LKR {service.price}.00
+                LKR {service.price.toFixed(2)}
               </div>
+              {service.duration && (
+                <div className="text-sm text-gray-600">
+                  Duration: {service.duration} minutes
+                </div>
+              )}
             </div>
             <div className="space-y-3">
-              <Link href={`/service/${params.id}/time`}>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
+              <Link href={`/user/booking?serviceId=${service.id}`}>
+                <Button 
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  onClick={handleBookNow}
+                >
                   Book now
                 </Button>
               </Link>
@@ -337,9 +480,6 @@ export default function ServicePage(props: ServicePageProps) {
                   <Share2 className="h-4 w-4 mr-2" /> Share
                 </Button>
               </div>
-            </div>
-            <div className="text-xs text-gray-500 mt-4 text-center">
-              Something went wrong
             </div>
           </Card>
         </div>
