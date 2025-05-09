@@ -34,7 +34,7 @@ const routes = [
   {
     label: "My Bookings",
     icon: Calendar,
-    href: "/user/booking",
+    href: "/user/booking/user-appointments",
   },
   {
     label: "My Payments",
