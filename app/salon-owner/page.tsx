@@ -14,6 +14,7 @@ import {
   Users,
   Scissors,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import Link from "next/link";
 import { Bar, Line } from "react-chartjs-2";
@@ -28,6 +29,19 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 ChartJS.register(
   CategoryScale,
@@ -41,6 +55,14 @@ ChartJS.register(
 );
 
 export default function SalonOwnerDashboard() {
+  const router = useRouter();
+  const { signOut } = useClerk();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+  };
+
   const revenueData = {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
@@ -75,6 +97,29 @@ export default function SalonOwnerDashboard() {
           <Button className="w-full sm:w-auto" variant="outline" asChild>
             <Link href="/salon-owner/staff/create">Add Staff Member</Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                className="w-full sm:w-auto" 
+                variant="destructive"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+              
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will sign you out of your account. You will need to sign in again to access your dashboard.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
