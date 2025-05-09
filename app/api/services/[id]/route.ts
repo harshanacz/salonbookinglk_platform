@@ -66,7 +66,7 @@ export async function GET(
       duration: service.duration,
       salon: {
         id: service.userId?._id?.toString() || 'unknown',
-        name: service.userId?.businessName || 'Unknown Salon',
+        name: (service.userId as any)?.businessName || 'Unknown Salon',
         rating: service.averageRating || 4.5,
         reviews: service.reviewCount || 0,
         location: salonContext && !Array.isArray(salonContext) && salonContext.city
@@ -79,16 +79,12 @@ export async function GET(
       staffAssigned: service.staffAssigned || [],
     };
     
-    // Fetch related services (same salon or same type)
+    // Fetch other services from the same salon
     const relatedServicesQuery = {
       $and: [
         { _id: { $ne: id } }, // Not the same service
         { status: ServiceStatus.ACTIVE },
-        { $or: [
-            ...(service.userId?._id ? [{ userId: service.userId._id }] : []), // Same salon if userId exists
-            { type: service.type }          // Same service type
-          ]
-        }
+        ...(service.userId?._id ? [{ userId: service.userId._id }] : []) // Only services from same salon
       ]
     };
 
@@ -101,7 +97,7 @@ export async function GET(
       .limit(4)
       .lean({ virtuals: true });
     
-    console.log(`[Service API] Found ${relatedServices.length} related services`);
+    console.log(`[Service API] Found ${relatedServices.length} other services from the same salon`);
     
     // Transform related services
     const transformedRelatedServices = relatedServices.map(relService => ({
@@ -111,7 +107,7 @@ export async function GET(
         ? relService.images[0] 
         : "/placeholder.svg?height=300&width=400",
       price: relService.price,
-      salon: relService.userId?.businessName || "Unknown Salon",
+      salon: (relService.userId as any)?.businessName || "Unknown Salon",
       rating: relService.averageRating || 4.5,
       reviews: relService.reviewCount || 0,
       location: "Colombo", // Default location
