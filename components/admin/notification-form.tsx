@@ -166,10 +166,20 @@ export default function NotificationForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
 
-      console.log("Form submitted:", values);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error sending notification");
+      }
+
+      const data = await response.json();
 
       toast({
         title: "Notification Sent",
@@ -188,9 +198,10 @@ export default function NotificationForm() {
         recipientType: "salons",
       });
     } catch (error) {
+      console.error("Error:", error);
       toast({
         title: "Error",
-        description: "There was an error sending the notification.",
+        description: error instanceof Error ? error.message : "There was an error sending the notification.",
         variant: "destructive",
       });
     } finally {
