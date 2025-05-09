@@ -19,7 +19,23 @@ import { useRouter } from "next/navigation";
 
 export default function SuperAdminDashboard() {
   const [selectedAdmin, setSelectedAdmin] = useState<string | null>(null);
+  const [selectedAdminName, setSelectedAdminName] = useState<string | null>(
+    null
+  );
+  const [activeTab, setActiveTab] = useState("admins");
   const router = useRouter();
+
+  const handleSelectAdmin = ({
+    adminId,
+    adminName,
+  }: {
+    adminId: string;
+    adminName: string;
+  }) => {
+    setSelectedAdmin(adminId);
+    setSelectedAdminName(adminName);
+    setActiveTab("activities");
+  };
 
   return (
     <div className="container w-full mx-auto py-6 space-y-6">
@@ -45,7 +61,11 @@ export default function SuperAdminDashboard() {
         </div>
       </div>
 
-      <Tabs defaultValue="admins" className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-3">
           <TabsTrigger value="admins" className="flex items-center gap-2">
             <UserCog className="h-4 w-4" />
@@ -70,7 +90,7 @@ export default function SuperAdminDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <AdminList onSelectAdmin={setSelectedAdmin} />
+              <AdminList onSelectAdmin={handleSelectAdmin} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -81,12 +101,15 @@ export default function SuperAdminDashboard() {
               <CardTitle>Activity Logs</CardTitle>
               <CardDescription>
                 {selectedAdmin
-                  ? `Viewing activities for selected admin`
+                  ? `Viewing activities for ${selectedAdminName}`
                   : `View detailed activity logs for all admins`}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ActivityLogs adminId={selectedAdmin} />
+              <ActivityLogs
+                adminId={selectedAdmin}
+                adminName={selectedAdminName}
+              />
             </CardContent>
           </Card>
         </TabsContent>
