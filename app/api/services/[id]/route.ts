@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service, { ServiceStatus } from "@/models/Service";
+import User from "@/models/User";
 import mongoose from "mongoose";
 
 export async function GET(
@@ -11,9 +12,11 @@ export async function GET(
     await dbConnect();
     
     const { id } = params;
+    console.log(`[Service API] Fetching service with ID: ${id}`);
     
     // Validate ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log(`[Service API] Invalid service ID format: ${id}`);
       return NextResponse.json(
         { error: "Invalid service ID format" },
         { status: 400 }
@@ -24,23 +27,31 @@ export async function GET(
     const service = await Service.findById(id).populate({
       path: "userId",
       select: "userName businessName _id",
-      model: "User",
+      model: User,
     }).lean({ virtuals: true });
     
+    console.log(`[Service API] Service query result:`, service ? 'Found' : 'Not found');
+    
     if (!service) {
+      console.log(`[Service API] Service not found with ID: ${id}`);
       return NextResponse.json(
         { error: "Service not found" },
         { status: 404 }
       );
     }
-    
+
     // Get salon context for additional salon information
-    const SalonContext = mongoose.models.SalonContext || 
-      mongoose.model("SalonContext", require("@/models/SalonContext").default.schema);
+    let salonContext = null;
+    if (service.userId && service.userId._id) {
+      const SalonContext = mongoose.models.SalonContext || 
+        mongoose.model("SalonContext", require("@/models/SalonContext").default.schema);
+      
+      salonContext = await SalonContext.findOne({
+        userId: service.userId._id
+      }).lean();
+    }
     
-    const salonContext = await SalonContext.findOne({
-      userId: service.userId._id
-    }).lean();
+    console.log(`[Service API] Salon context found:`, salonContext ? 'Yes' : 'No');
     
     // Transform the service data for the frontend
     const transformedService = {
@@ -54,10 +65,8 @@ export async function GET(
       description: service.description ? service.description.split('\n').filter(Boolean) : [],
       duration: service.duration,
       salon: {
-        id: service.userId._id.toString(),
-        name: typeof service.userId === "object" && "businessName" in service.userId
-          ? service.userId.businessName
-          : "Unknown Salon",
+        id: service.userId?._id?.toString() || 'unknown',
+        name: (service.userId as any)?.businessName || 'Unknown Salon',
         rating: service.averageRating || 4.5,
         reviews: service.reviewCount || 0,
         location: salonContext && !Array.isArray(salonContext) && salonContext.city
@@ -70,25 +79,25 @@ export async function GET(
       staffAssigned: service.staffAssigned || [],
     };
     
-    // Fetch related services (same salon or same type)
-    const relatedServices = await Service.find({
+    // Fetch other services from the same salon
+    const relatedServicesQuery = {
       $and: [
         { _id: { $ne: id } }, // Not the same service
         { status: ServiceStatus.ACTIVE },
-        { $or: [
-            { userId: service.userId._id }, // Same salon
-            { type: service.type }          // Same service type
-          ]
-        }
+        ...(service.userId?._id ? [{ userId: service.userId._id }] : []) // Only services from same salon
       ]
-    })
-    .populate({
-      path: "userId",
-      select: "businessName",
-      model: "User",
-    })
-    .limit(4)
-    .lean({ virtuals: true });
+    };
+
+    const relatedServices = await Service.find(relatedServicesQuery)
+      .populate({
+        path: "userId",
+        select: "businessName",
+        model: User,
+      })
+      .limit(4)
+      .lean({ virtuals: true });
+    
+    console.log(`[Service API] Found ${relatedServices.length} other services from the same salon`);
     
     // Transform related services
     const transformedRelatedServices = relatedServices.map(relService => ({
@@ -98,9 +107,7 @@ export async function GET(
         ? relService.images[0] 
         : "/placeholder.svg?height=300&width=400",
       price: relService.price,
-      salon: typeof relService.userId === "object" && "businessName" in relService.userId
-        ? relService.userId.businessName 
-        : "Unknown Salon",
+      salon: (relService.userId as any)?.businessName || "Unknown Salon",
       rating: relService.averageRating || 4.5,
       reviews: relService.reviewCount || 0,
       location: "Colombo", // Default location
@@ -129,13 +136,15 @@ export async function GET(
       }
     }
     
+    console.log(`[Service API] Successfully returning service data for ID: ${id}`);
+    
     return NextResponse.json({
       service: transformedService,
       relatedServices: transformedRelatedServices,
       staff: staffMembers
     });
   } catch (error) {
-    console.error("Error fetching service:", error);
+    console.error("[Service API] Error fetching service:", error);
     return NextResponse.json(
       { error: "Failed to fetch service details" },
       { status: 500 }
