@@ -24,7 +24,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -37,20 +36,7 @@ import { z } from "zod";
 import { ArrowLeft, Upload } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
-
-// Sample services for assignment
-const availableServices = [
-  { id: "1", name: "Hair Coloring" },
-  { id: "2", name: "Haircut" },
-  { id: "3", name: "Hair Styling" },
-  { id: "4", name: "Manicure" },
-  { id: "5", name: "Pedicure" },
-  { id: "6", name: "Nail Art" },
-  { id: "7", name: "Facial" },
-  { id: "8", name: "Makeup" },
-  { id: "9", name: "Waxing" },
-  { id: "10", name: "Body Massage" },
-];
+import { useRouter } from "next/navigation";
 
 const staffFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -59,9 +45,15 @@ const staffFormSchema = z.object({
     .string()
     .min(10, { message: "Phone number must be at least 10 digits." }),
   bio: z.string().optional(),
-  services: z
+  role: z.string({
+    required_error: "Please select a role",
+  }),
+  availability: z.string({
+    required_error: "Please select availability",
+  }),
+  workingDays: z
     .array(z.string())
-    .min(1, { message: "Please select at least one service." }),
+    .min(1, { message: "Select at least one working day" }),
 });
 
 type StaffFormValues = z.infer<typeof staffFormSchema>;
@@ -69,6 +61,7 @@ type StaffFormValues = z.infer<typeof staffFormSchema>;
 export default function CreateStaffMember() {
   const [image, setImage] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
@@ -77,17 +70,59 @@ export default function CreateStaffMember() {
       email: "",
       phone: "",
       bio: "",
-      services: [],
+      role: "",
+      availability: "",
+      workingDays: [],
     },
   });
 
-  function onSubmit(data: StaffFormValues) {
-    console.log(data);
-    toast({
-      title: "Staff member created",
-      description: `${data.name} has been added to your staff.`,
-    });
-    // In a real app, you would submit this data to your backend
+  async function onSubmit(data: StaffFormValues) {
+    try {
+      console.log("Submitting data:", data); // Debug log
+
+      const formData = {
+        name: data.name,
+        email: data.email,
+        mobileNumber: data.phone,
+        role: data.role,
+        bio: data.bio || "",
+        availability: data.availability,
+        workingDays: data.workingDays,
+        status: "Active", // Add default status
+        profileImage: image || "", // Add image if available
+      };
+
+      const response = await fetch('/api/salon-owner/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create staff member');
+      }
+
+      const result = await response.json();
+      console.log("Success:", result); // Debug log
+      
+      toast({
+        title: "Success",
+        description: `${data.name} has been added to your staff.`,
+      });
+
+      // Use Next.js router for navigation
+      router.push('/salon-owner/staff');
+    } catch (error: any) {
+      console.error("Error:", error); // Debug log
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create staff member. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,6 +134,15 @@ export default function CreateStaffMember() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleAvailabilityChange = (value: string) => {
+    const daysMap = {
+      "full-time": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      "part-time": ["monday", "wednesday", "friday"],
+      "weekends-only": ["saturday", "sunday"]
+    };
+    form.setValue("workingDays", daysMap[value as keyof typeof daysMap] || []);
   };
 
   return (
@@ -196,6 +240,44 @@ export default function CreateStaffMember() {
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Role</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="senior-stylist">
+                              Senior Stylist
+                            </SelectItem>
+                            <SelectItem value="junior-stylist">
+                              Junior Stylist
+                            </SelectItem>
+                            <SelectItem value="nail-technician">
+                              Nail Technician
+                            </SelectItem>
+                            <SelectItem value="beautician">
+                              Beautician
+                            </SelectItem>
+                            <SelectItem value="massage-therapist">
+                              Massage Therapist
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-6">
@@ -212,6 +294,77 @@ export default function CreateStaffMember() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="availability"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Availability</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleAvailabilityChange(value);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select availability" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="full-time">Full-time</SelectItem>
+                            <SelectItem value="part-time">Part-time</SelectItem>
+                            <SelectItem value="weekends-only">
+                              Weekends Only
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="workingDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Working Days</FormLabel>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "monday",
+                            "tuesday",
+                            "wednesday",
+                            "thursday",
+                            "friday",
+                            "saturday",
+                            "sunday",
+                          ].map((day) => (
+                            <div
+                              key={day}
+                              className="flex items-center space-x-2"
+                            >
+                              <Checkbox
+                                checked={field.value?.includes(day)}
+                                onCheckedChange={(checked) => {
+                                  const newValue = checked
+                                    ? [...field.value, day]
+                                    : field.value.filter((d) => d !== day);
+                                  field.onChange(newValue);
+                                }}
+                              />
+                              <Label>
+                                {day.charAt(0).toUpperCase() + day.slice(1)}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
