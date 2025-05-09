@@ -221,7 +221,7 @@ export default function StaffManagement() {
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/salon-owner/staff/edit?id=${staff._id}`}>
+                            <Link href={`/salon-owner/staff/edit/${staff._id}`}>
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </Link>
                           </DropdownMenuItem>

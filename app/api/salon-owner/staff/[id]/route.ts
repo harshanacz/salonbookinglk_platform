@@ -46,11 +46,18 @@ export async function PUT(
 ) {
   try {
     const { userId: clerkUserId } = await auth();
+
     if (!clerkUserId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const staffId = params.id;
+    if (!staffId) {
+      return new NextResponse("Staff ID is required", { status: 400 });
+    }
+
     await dbConnect();
+
     const user = await User.findOne({ clerkUserId });
 
     if (!user) {
@@ -61,23 +68,24 @@ export async function PUT(
       return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
     }
 
-    const staffId = params.id;
     const body = await request.json();
+    console.log("Updating staff with ID:", staffId); // Debug log
+
+    const updateData: any = {
+      name: body.name || "",
+      email: body.email || "",
+      mobileNumber: body.phone || "",
+      role: body.role || "",
+      bio: body.bio || "",
+      availability: body.availability || [],
+      workingDays: body.workingDays || [],
+      profileImage: body.profileImage || "",
+    };
 
     const updated = await Staff.findOneAndUpdate(
       { _id: staffId, userId: user._id },
-      {
-        name: body.name,
-        email: body.email,
-        mobileNumber: body.phone,
-        role: body.role,
-        bio: body.bio || "",
-        availability: body.availability,
-        workingDays: body.workingDays || [],
-        services: body.services || [],
-        profileImage: body.profileImage || "",
-      },
-      { new: true }
+      updateData,
+      { new: true, runValidators: true }
     );
 
     if (!updated) {
@@ -87,8 +95,8 @@ export async function PUT(
     return NextResponse.json({ success: true, data: updated });
 
   } catch (error: any) {
-    console.error("[STAFF_UPDATE_ERROR]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    console.error("[STAFF_PUT_ERROR]", error);
+    return new NextResponse(error.message || "Internal Error", { status: 500 });
   }
 }
 
