@@ -44,7 +44,7 @@ const staffFormSchema = z.object({
   role: z.string().min(1, { message: "Please select a role." }),
   bio: z.string().optional(),
   availability: z.string().min(1, { message: "Please select availability." }),
-  services: z.array(z.string()).min(1, { message: "Please select at least one service." }),
+  // services: z.array(z.string()).min(1, { message: "Please select at least one service." }),
   workingDays: z.array(z.string()).min(1, { message: "Please select at least one working day." }),
 });
 
@@ -65,56 +65,59 @@ export default function EditStaffMember() {
       role: "",
       bio: "",
       availability: "",
-      services: [],
+      // services: [],
       workingDays: [],
     },
   });
 
-  // useEffect(() => {
-  //   const fetchStaffMember = async () => {
-  //     try {
-  //       const response = await fetch(`/api/salon-owner/staff/${params.id}`);
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch staff member');
-  //       }
-  //       const data = await response.json();
+  useEffect(() => {
+    const fetchStaffMember = async () => {
+      console.log("Staff ID from params:", params.id); // Debug log
+      try {
+        const response = await fetch(`/api/salon-owner/staff/${params.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch staff member');
+        }
+        const data = await response.json();
         
-  //       // Reset form with fetched data
-  //       form.reset({
-  //         name: data.name,
-  //         email: data.email,
-  //         phone: data.mobileNumber,
-  //         role: data.role,
-  //         bio: data.bio || "",
-  //         availability: data.availability,
-  //         workingDays: data.workingDays || [],
-  //         services: [], // You might want to add services to your staff model if needed
-  //       });
+        // Reset form with fetched data
+        form.reset({
+          name: data.name,
+          email: data.email,
+          phone: data.mobileNumber,
+          role: data.role,
+          bio: data.bio || "",
+          availability: data.availability,
+          workingDays: data.workingDays || [],
+          // services: [], // You might want to add services to your staff model if needed
+        });
 
-  //       // Set profile image if exists
-  //       if (data.profileImage) {
-  //         setImage(data.profileImage);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching staff member:', error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Could not load staff member details",
-  //         variant: "destructive",
-  //       });
-  //     }
-  //   };
+        // Set profile image if exists
+        if (data.profileImage) {
+          setImage(data.profileImage);
+        }
+      } catch (error) {
+        console.error('Error fetching staff member:', error);
+        toast({
+          title: "Error",
+          description: "Could not load staff member details",
+          variant: "destructive",
+        });
+      }
+    };
 
-  //   if (params.id) {
-  //     fetchStaffMember();
-  //   }
-  // }, [form, params.id, toast]);
+    if (params.id) {
+      fetchStaffMember();
+    } else {
+      console.error("No staff ID provided"); // Debug log
+    }
+  }, [form, params.id, toast]);
 
   async function onSubmit(data: StaffFormValues) {
     try {
       console.log('Submitting data:', data); // Debug log
       console.log('Staff ID:', params.id); // Debug log
-
+  
       const submitData = {
         name: data.name,
         email: data.email,
@@ -123,31 +126,30 @@ export default function EditStaffMember() {
         bio: data.bio || "",
         availability: data.availability,
         workingDays: data.workingDays,
-        
         profileImage: image,
       };
-
+  
       console.log('Request payload:', submitData); // Debug log
-
+  
       const response = await fetch(`/api/salon-owner/staff/${params.id}`, {
-        method: 'PUT',
+        method: 'PUT', 
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(submitData),
       });
-
+  
       console.log('Response status:', response.status); // Debug log
-
+  
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
         console.error('Error response:', errorData); // Debug log
         throw new Error(errorData?.message || 'Failed to update staff member');
       }
-
+  
       const result = await response.json();
       console.log('Success response:', result); // Debug log
-
+  
       toast({
         title: "Success",
         description: `${data.name}'s information has been updated.`,
@@ -162,6 +164,7 @@ export default function EditStaffMember() {
       });
     }
   }
+  
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
