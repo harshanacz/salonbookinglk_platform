@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service, { ServiceStatus } from "@/models/Service";
+import User from "@/models/User";
 
 // Fetch featured services for home page
 export async function GET() { 
@@ -12,8 +13,8 @@ export async function GET() {
       status: ServiceStatus.ACTIVE 
     }).populate({
       path: "userId",
-      select: "userName businessName", // Get salon name info
-      model: "User", // Explicitly specify the model
+      select: "userName businessName",
+      model: User
     }).lean({ virtuals: true });
 
     if (!activeServices.length) {
