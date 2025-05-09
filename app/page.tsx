@@ -7,11 +7,11 @@ import { Search, MapPin } from "lucide-react";
 import Image from "next/image";
 import { ServiceCard } from "@/components/service-card";
 import { CategoryButton } from "@/components/category-button";
-import { PromoBanner } from "@/components/user/home/promo-banner";
-import { StylesGallery } from "@/components/user/home/styles-gallery";
-import { UserTypeCards } from "@/components/user/home/user-type-cards";
+import { PromoBanner } from "@/components/user/Home/promo-banner";
+import { StylesGallery } from "@/components/user/Home/styles-gallery";
+import { UserTypeCards } from "@/components/user/Home/user-type-cards";
 import { useRouter, useSearchParams } from "next/navigation";
-import HeroSection from "@/components/user/home/hero-section";
+import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 // Define service interface
