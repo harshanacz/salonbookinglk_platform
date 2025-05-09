@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,74 +25,96 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Edit, MoreHorizontal, Plus, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useToast } from "@/components/ui/use-toast";
 
-// Sample staff data
-const staffMembers = [
-  {
-    id: 1,
-    name: "Dhanuka Perera",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Senior Stylist",
-    services: ["Hair Coloring", "Haircut", "Hair Styling"],
-    status: "Active",
-    availability: "Full-time",
-    joinedDate: "Jan 15, 2023",
-  },
-  {
-    id: 2,
-    name: "Samantha Silva",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Nail Technician",
-    services: ["Manicure", "Pedicure", "Nail Art"],
-    status: "Active",
-    availability: "Part-time",
-    joinedDate: "Mar 22, 2023",
-  },
-  {
-    id: 3,
-    name: "Priyanka Jayawardena",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Beautician",
-    services: ["Facial", "Makeup", "Waxing"],
-    status: "Active",
-    availability: "Full-time",
-    joinedDate: "Feb 10, 2023",
-  },
-  {
-    id: 4,
-    name: "Nimal Fernando",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Junior Stylist",
-    services: ["Haircut", "Hair Styling"],
-    status: "Inactive",
-    availability: "Part-time",
-    joinedDate: "Apr 5, 2023",
-  },
-  {
-    id: 5,
-    name: "Kumari Perera",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Massage Therapist",
-    services: ["Body Massage", "Foot Massage"],
-    status: "Active",
-    availability: "Full-time",
-    joinedDate: "May 18, 2023",
-  },
- {    id: 6,
-    name: "Pubudu Maduranga",
-    image: "/placeholder.svg?height=40&width=40",
-    role: "Massage Therapist",
-    services: ["Customer Service", "Appointment Scheduling"],
-    status: "Inactive",   
-    availability: "Full-time",
-    joinedDate: "Jun 12, 2023",}
-];
+interface StaffMember {
+  _id: string;
+  name: string;
+  image?: string;
+  role: string;
+  services: string[];
+  status: string;
+  availability: string;
+  createdAt: string;
+}
 
 export default function StaffManagement() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchStaff() {
+      try {
+        const response = await fetch('/api/salon-owner/staff');
+        if (!response.ok) {
+          throw new Error('Failed to fetch staff members');
+        }
+        const data = await response.json();
+        setStaffMembers(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load staff members",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchStaff();
+  }, []);
+
+  const handleDelete = async (staffId: string) => {
+    setStaffToDelete(staffId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!staffToDelete) return;
+
+    try {
+      const response = await fetch(`/api/salon-owner/staff/${staffToDelete}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete staff member');
+      }
+
+      setStaffMembers(staffMembers.filter(staff => staff._id !== staffToDelete));
+      toast({
+        title: "Success",
+        description: "Staff member deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete staff member",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setStaffToDelete(null);
+    }
+  };
 
   const filteredStaff = staffMembers.filter(
     (staff) =>
@@ -137,90 +159,105 @@ export default function StaffManagement() {
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Staff Member</TableHead>
-                <TableHead>Role</TableHead>
-                {/* <TableHead>Services</TableHead> */}
-                <TableHead>Status</TableHead>
-                <TableHead>Availability</TableHead>
-                <TableHead>Joined Date</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((staff) => (
-                <TableRow key={staff.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 rounded-full overflow-hidden">
-                        <Image
-                          src={staff.image || "/placeholder.svg"}
-                          alt={staff.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="font-medium">{staff.name}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{staff.role}</TableCell>
-                  {/* <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {staff.services.map((service, index) => (
-                        <Badge key={index} variant="outline">
-                          {service}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell> */}
-                  <TableCell>
-                    <Badge
-                      variant={
-                        staff.status === "Active" ? "default" : "secondary"
-                      }
-                      className={
-                        staff.status === "Active"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }
-                    >
-                      {staff.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{staff.availability}</TableCell>
-                  <TableCell>{staff.joinedDate}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/update_attendace?id=${staff.id}`}>
-                            Update Attendance
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/salon-owner/staff/edit?id=${staff.id}`}>
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Staff Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Availability</TableHead>
+                  <TableHead>Joined Date</TableHead>
+                  <TableHead className="w-[80px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.map((staff) => (
+                  <TableRow key={staff._id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                          <Image
+                            src={staff.image || "/placeholder.svg"}
+                            alt={staff.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="font-medium">{staff.name}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={staff.status === "Active" ? "default" : "secondary"}
+                        className={staff.status === "Active" 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-gray-100 text-gray-800"
+                        }
+                      >
+                        {staff.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{staff.availability}</TableCell>
+                    <TableCell>
+                      {new Date(staff.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/salon-owner/staff/update-attendance?id=${staff._id}`}>
+                              Update Attendance
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/salon-owner/staff/edit/${staff._id}`}>
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600 cursor-pointer"
+                            onClick={() => handleDelete(staff._id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the staff member.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
