@@ -28,7 +28,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en"> 
         <body className={montserrat.className}>
           {!isAdminPage && !isSalonOwnerPage && <Navbar />}
           <main>{children}</main>
