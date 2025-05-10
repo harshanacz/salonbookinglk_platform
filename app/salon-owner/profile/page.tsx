@@ -44,6 +44,7 @@ export default function SalonOwnerProfile() {
     keyof UserData | keyof SalonData | null
   >(null);
   const [tempValue, setTempValue] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch user and salon context data on mount
   useEffect(() => {
@@ -53,24 +54,31 @@ export default function SalonOwnerProfile() {
         console.log("[USER_RES]", userRes);
         if (!userRes.ok) throw new Error("Failed to fetch user");
         const user = await userRes.json();
-        setUserData({
-          ownerName: user.userName || "",
-          email: user.email || "",
-          phone: user.mobileNumber || "",
-          profileImage: user.profileImage || "/images/salon/profile.jpg",
-        });
+        console.log("[USER_DATA]", user);
+
         const salonRes = await fetch("/api/salon-owner/salon-profile");
+        console.log("[SALON_RES]", salonRes);
         if (!salonRes.ok) throw new Error("Failed to fetch salon context");
         const salon = await salonRes.json();
+        console.log("[SALON_DATA]", salon);
+
+        // Set user data
+        setUserData({
+          ownerName: salon.ownerName || user.userName || "",
+          email: user.email || "",
+          phone: salon.phoneNumber || user.mobileNumber || "",
+          profileImage: salon.profilePictureUrl || user.profileImage || "/images/salon/profile.jpg",
+        });
+
+        // Set salon data
         setSalonData({
           salonName: salon.businessName || "",
-          description: salon.businessCategory || "",
-          address: salon.streetAddress || "",
+          description: salon.description || "",
+          address: salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "",
           website: salon.website || "",
-          openingHours:
-            salon.workingHours && salon.workingHours.length
-              ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
-              : "",
+          openingHours: salon.workingHours && salon.workingHours.length
+            ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
+            : "",
           businessRegistration: salon.businessRegistrationNumber || "",
         });
       } catch (err) {
@@ -164,16 +172,65 @@ export default function SalonOwnerProfile() {
     }
   };
 
+  // Add test save function
+  const handleTestSave = async () => {
+    try {
+      setIsSaving(true);
+      const res = await fetch("/api/salon-owner/test-save", {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error("Failed to save test data");
+      const salon = await res.json();
+      console.log("[TEST_SAVE_RESPONSE]", salon);
+
+      // Update salon data
+      setSalonData({
+        salonName: salon.businessName || "",
+        description: salon.description || "",
+        address: salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "",
+        website: salon.website || "",
+        openingHours: salon.workingHours?.[0] 
+          ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
+          : "",
+        businessRegistration: salon.businessRegistrationNumber || "",
+      });
+
+      // Update user data
+      setUserData(prev => ({
+        ...prev,
+        ownerName: salon.ownerName || prev.ownerName,
+        phone: salon.phoneNumber || prev.phone,
+        profileImage: salon.profilePictureUrl || prev.profileImage,
+      }));
+
+      alert("Test data saved successfully!");
+    } catch (err) {
+      console.error("[TEST_SAVE]", err);
+      alert("Failed to save test data");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Salon Profile</h1>
-        <Button
-          onClick={handleSave}
-          className="bg-purple-600 hover:bg-purple-700"
-        >
-          Save Changes
-        </Button>
+        <div className="space-x-4">
+          <Button
+            onClick={handleTestSave}
+            disabled={isSaving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isSaving ? "Saving..." : "Test const value Save!"}
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            Save Changes
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
