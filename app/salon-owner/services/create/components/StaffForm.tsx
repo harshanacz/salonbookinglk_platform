@@ -20,6 +20,7 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [salonProfilePic, setSalonProfilePic] = useState<string>('/placeholder-user.jpg');
+  const [showValidation, setShowValidation] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +52,7 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
 
   const handleSelect = (id: string) => {
     updateFormData({ staffAssigned: [id] });
+    setShowValidation(false);
   };
 
   if (isLoading) {
@@ -75,7 +77,10 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
 
   return (
     <div className="mt-6 flex flex-col items-center md:items-start">
-      <p className="mb-4 text-sm text-gray-600 text-center md:text-left">Select who can perform this service.</p>
+      <div className="w-full flex flex-col items-center md:items-start mb-4">
+        <p className="text-sm text-gray-600 text-center md:text-left">Select who can perform this service.</p>
+        <p className="text-sm text-red-500 mt-1">* Required - Please select one option to proceed</p>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full justify-items-center">
         {/* "Any" option */}
         <label className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
@@ -125,6 +130,9 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
           </label>
         ))}
       </div>
+      {showValidation && !formData.staffAssigned && (
+        <p className="text-red-500 text-sm mt-2">Please select a staff member to proceed</p>
+      )}
     </div>
   );
 }
