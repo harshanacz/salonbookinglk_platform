@@ -41,7 +41,7 @@ export default function HeroSection() {
         priority
       />
 
-      <div className="absolute inset-0 bg-purple-900 bg-opacity-60" />
+      <div className="absolute inset-0 bg-purple-900 bg-opacity-20" />
 
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-4 text-white">

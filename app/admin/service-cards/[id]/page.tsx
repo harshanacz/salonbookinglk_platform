@@ -42,9 +42,9 @@ interface SalonUser {
 
 interface WorkingHour {
   day: string;
-  isWorking: boolean;
-  start: number;
-  end: number;
+  open: number;
+  close: number;
+  isOpen: boolean;
 }
 
 interface SalonContext {
@@ -60,6 +60,24 @@ interface SalonContext {
   workingHours: WorkingHour[];
   numberOfReviewers?: number;
   reviewScore?: number;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  description: string;
+  phoneNumber: string;
+  ownerName: string;
+  profilePictureUrl: string;
+}
+
+interface StaffMember {
+  _id: string;
+  name: string;
+  role: string;
+  profileImage: string;
+  bio: string;
+  availability: string;
+  workingDays: string[];
 }
 
 interface ServiceDetails {
@@ -75,6 +93,8 @@ interface ServiceDetails {
   status: string;
   createdAt: string;
   updatedAt: string;
+  staffAssigned: string[];
+  staffDetails?: StaffMember[];
 }
 
 export default function ServiceDetail() {
@@ -189,27 +209,6 @@ export default function ServiceDetail() {
     }
   };
 
-  const formatTime = (time: number) => {
-    const hours = Math.floor(time / 100);
-    const minutes = time % 100;
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12;
-    return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  };
-
-  const formatDay = (day: string) => {
-    const days: Record<string, string> = {
-      MON: 'Monday',
-      TUE: 'Tuesday',
-      WED: 'Wednesday',
-      THU: 'Thursday',
-      FRI: 'Friday',
-      SAT: 'Saturday',
-      SUN: 'Sunday',
-    };
-    return days[day] || day;
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center py-10">
@@ -260,7 +259,7 @@ export default function ServiceDetail() {
         <Badge>{service.status}</Badge>
       </div>
 
-      <Tabs defaultValue="service-details">
+      <Tabs defaultValue="service-details" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="service-details">Service Details</TabsTrigger>
           <TabsTrigger value="salon-info">Salon Owner Information</TabsTrigger>
@@ -296,7 +295,7 @@ export default function ServiceDetail() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-medium">Basic Information</h3>
                   <Separator className="my-2" />
@@ -317,38 +316,58 @@ export default function ServiceDetail() {
                       <dt className="font-medium">Date Submitted:</dt>
                       <dd>{new Date(service.createdAt).toLocaleDateString()}</dd>
                     </div>
+                    <div className="flex justify-between">
+                      <dt className="font-medium">Last Updated:</dt>
+                      <dd>{new Date(service.updatedAt).toLocaleDateString()}</dd>
+                    </div>
                   </dl>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-medium">Salon Information</h3>
+                  <h3 className="text-lg font-medium">Description</h3>
                   <Separator className="my-2" />
-                  <dl className="space-y-2">
-                    <div className="flex justify-between">
-                      <dt className="font-medium">Business Name:</dt>
-                      <dd>{service.userId?.businessName || "Unknown"}</dd>
+                  <p className="text-muted-foreground whitespace-pre-line">
+                    {service.description || "No description provided."}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium">Assigned Staff</h3>
+                  <Separator className="my-2" />
+                  {service.staffAssigned && service.staffAssigned.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {service.staffAssigned.map((staffId, index) => {
+                        const staffMember = service.staffDetails?.find(s => s._id === staffId);
+                        return (
+                          <div key={index} className="flex items-center gap-4 p-4 bg-muted rounded-md">
+                            <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                              <Image
+                                src={staffMember?.profileImage || "/placeholder-user.jpg"}
+                                alt={staffMember?.name || "Staff Member"}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-medium">{staffMember?.name || (staffId === 'any' ? 'Any Staff Member' : staffId)}</p>
+                              {staffMember && (
+                                <>
+                                  <p className="text-sm text-muted-foreground">{staffMember.role}</p>
+                                  <p className="text-sm text-muted-foreground">{staffMember.availability}</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="flex justify-between">
-                      <dt className="font-medium">Contact Person:</dt>
-                      <dd>{service.userId?.userName || "Unknown"}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="font-medium">Location:</dt>
-                      <dd>{service.salonContext?.city || "Unknown"}</dd>
-                    </div>
-                  </dl>
+                  ) : (
+                    <p className="text-muted-foreground">No staff members assigned</p>
+                  )}
                 </div>
               </div>
-
-              <div>
-                <h3 className="text-lg font-medium">Description</h3>
-                <Separator className="my-2" />
-                <p className="text-muted-foreground whitespace-pre-line">
-                  {service.description || "No description provided."}
-                </p>
-              </div>
             </CardContent>
-            <CardFooter className="flex justify-end space-x-4">
+            <CardFooter className="flex justify-end gap-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="outline" className="bg-red-50">
@@ -402,7 +421,7 @@ export default function ServiceDetail() {
                   <div className="flex flex-col items-center text-center p-6 bg-muted rounded-lg">
                     <div className="relative h-32 w-32 rounded-full overflow-hidden mb-4">
                       <Image
-                        src={service.userId?.profileImage || "/placeholder-user.jpg"}
+                        src={service.salonContext?.profilePictureUrl || service.userId?.profileImage || "/placeholder-user.jpg"}
                         alt={service.userId?.userName || "Salon Owner"}
                         fill
                         className="object-cover"
@@ -419,7 +438,7 @@ export default function ServiceDetail() {
                     
                     <div className="flex items-center gap-2 my-1">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{service.userId?.mobileNumber || "No phone provided"}</span>
+                      <span className="text-sm">{service.salonContext?.phoneNumber || service.userId?.mobileNumber || "No phone provided"}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 my-1">
@@ -447,7 +466,7 @@ export default function ServiceDetail() {
                   </div>
                 </div>
                 
-                <div className="w-full md:w-2/3 space-y-6">
+                <div className="flex-1 space-y-6">
                   <div>
                     <h3 className="text-lg font-medium flex items-center gap-2">
                       <Building className="h-5 w-5" /> Business Information
@@ -476,10 +495,10 @@ export default function ServiceDetail() {
                           <dd className="col-span-2">
                             {service.salonContext.website ? (
                               <a 
-                                href={service.salonContext.website.startsWith('http') ? service.salonContext.website : `https://${service.salonContext.website}`} 
-                                target="_blank"
+                                href={service.salonContext.website} 
+                                target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline"
+                                className="text-blue-600 hover:underline"
                               >
                                 {service.salonContext.website}
                               </a>
@@ -488,12 +507,17 @@ export default function ServiceDetail() {
                             )}
                           </dd>
                         </div>
+
+                        <div className="grid grid-cols-3 py-1">
+                          <dt className="font-medium">Description:</dt>
+                          <dd className="col-span-2">{service.salonContext.description}</dd>
+                        </div>
                       </dl>
                     ) : (
                       <p className="text-muted-foreground py-2">No business information available</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <h3 className="text-lg font-medium flex items-center gap-2">
                       <MapPin className="h-5 w-5" /> Address Information
@@ -501,47 +525,54 @@ export default function ServiceDetail() {
                     <Separator className="my-2" />
                     
                     {service.salonContext ? (
-                      <div className="bg-muted/50 p-4 rounded-lg">
-                        <p className="font-medium">{service.salonContext.businessName}</p>
-                        <p>{service.salonContext.streetAddress}</p>
-                        <p>{service.salonContext.city}{service.salonContext.postalCode ? `, ${service.salonContext.postalCode}` : ''}</p>
-                        <p>{service.userId?.country}</p>
+                      <div className="space-y-4">
+                        <div className="bg-muted/50 p-4 rounded-lg">
+                          <p className="font-medium">{service.salonContext.businessName}</p>
+                          <p>{service.salonContext.streetAddress}</p>
+                          <p>{service.salonContext.city}{service.salonContext.postalCode ? `, ${service.salonContext.postalCode}` : ''}</p>
+                          <p>{service.userId?.country}</p>
+                        </div>
+
+                        {service.salonContext.location && (
+                          <div className="h-[300px] rounded-lg overflow-hidden">
+                            <iframe
+                              width="100%"
+                              height="100%"
+                              frameBorder="0"
+                              style={{ border: 0 }}
+                              src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${service.salonContext.location.lat},${service.salonContext.location.lng}`}
+                              allowFullScreen
+                            />
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p className="text-muted-foreground py-2">No address information available</p>
                     )}
                   </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium flex items-center gap-2">
-                      <Clock className="h-5 w-5" /> Working Hours
-                    </h3>
-                    <Separator className="my-2" />
-                    
-                    {service.salonContext?.workingHours && service.salonContext.workingHours.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {service.salonContext.workingHours
-                          .sort((a, b) => {
-                            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-                            return days.indexOf(a.day) - days.indexOf(b.day);
-                          })
-                          .map((workingHour, index) => (
-                            <div key={index} className="flex justify-between items-center p-2 rounded bg-muted/30">
-                              <span className="font-medium">{formatDay(workingHour.day)}:</span>
-                              {workingHour.isWorking ? (
-                                <span>
-                                  {formatTime(workingHour.start)} - {formatTime(workingHour.end)}
-                                </span>
+
+                  {service.salonContext?.workingHours && service.salonContext.workingHours.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-medium flex items-center gap-2">
+                        <Clock className="h-5 w-5" /> Working Hours
+                      </h3>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {service.salonContext.workingHours.map((hour, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                            <span className="font-medium">{hour.day}</span>
+                            <span>
+                              {hour.isOpen ? (
+                                `${formatTime(hour.open)} - ${formatTime(hour.close)}`
                               ) : (
-                                <span className="text-muted-foreground">Closed</span>
+                                "Closed"
                               )}
-                            </div>
-                          ))}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <p className="text-muted-foreground py-2">No working hours available</p>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -551,48 +582,18 @@ export default function ServiceDetail() {
                   <Briefcase className="mr-2 h-4 w-4" /> View Complete Salon Profile
                 </Link>
               </Button>
-              
-              <div className="space-x-2">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="bg-red-50">
-                      <X className="mr-2 h-4 w-4" /> Reject
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure you want to reject this service?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action will mark the service as rejected and notify the salon owner.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleReject} className="bg-red-600 hover:bg-red-700">
-                        {rejecting ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <X className="mr-2 h-4 w-4" />
-                        )}
-                        Reject Service
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-
-                <Button onClick={handleApprove} disabled={approving}>
-                  {approving ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="mr-2 h-4 w-4" />
-                  )}
-                  Approve Service
-                </Button>
-              </div>
             </CardFooter>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
+}
+
+function formatTime(time: number) {
+  const hours = Math.floor(time / 100);
+  const minutes = time % 100;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = hours % 12 || 12;
+  return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
