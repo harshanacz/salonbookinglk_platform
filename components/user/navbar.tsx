@@ -80,6 +80,15 @@ export function Navbar() {
             </SignOutButton>
           ) : (
             <>
+            <Link href="/sign-up?role=salon-owner">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-black font-medium"
+                >
+                  For Business
+                </Button>
+              </Link>
               <Link href="/sign-in">
                 <Button
                   variant="ghost"
@@ -94,17 +103,11 @@ export function Navbar() {
                   size="sm"
                   className="bg-white text-white hover:bg-gray-100 border border-gray-300 rounded-[15px] font-medium"
                 >
-                  Join as Customer
+                  Join
                 </Button>
               </Link>
-              <Link href="/sign-up?role=salon-owner">
-                <Button
-                  size="sm"
-                  className="bg-primary text-white hover:bg-primary/90 rounded-[15px] font-medium"
-                >
-                  Join as Salon Owner
-                </Button>
-              </Link>
+              
+             
             </>
           )}
         </div>
