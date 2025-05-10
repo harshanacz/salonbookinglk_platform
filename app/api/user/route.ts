@@ -1,7 +1,7 @@
 import { auth, clerkClient, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import User, { UserType } from "@/models/User";
+import User from "@/models/User";
 
 export async function POST(req: Request) {
   console.log("[USER_POST] called");
