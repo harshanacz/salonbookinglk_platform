@@ -22,11 +22,34 @@ const workingHourSchema = new mongoose.Schema(
       required: true,
     },
     start: {
-      type: Number,
+      type: String,
       required: true,
     },
     end: {
-      type: Number,
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const businessHourSchema = new mongoose.Schema(
+  {
+    day: {
+      type: String,
+      enum: Object.values(Day),
+      required: true,
+    },
+    isOpen: {
+      type: Boolean,
+      required: true,
+    },
+    open: {
+      type: String,
+      required: true,
+    },
+    close: {
+      type: String,
       required: true,
     },
   },
@@ -53,31 +76,55 @@ const salonContextSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    description: {
+      type: String,
+      required: true,
+    },
     website: String,
     businessRegistrationNumber: String,
-    businessCategory: {
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    location: {
+      lat: {
+        type: Number,
+        required: true,
+      },
+      lng: {
+        type: Number,
+        required: true,
+      },
+    },
+    phoneNumber: {
       type: String,
       required: true,
     },
-    streetAddress: {
+    ownerName: {
       type: String,
       required: true,
     },
-    city: {
-      type: String,
-      required: true,
-    },
-    postalCode: String,
     workingHours: {
       type: [workingHourSchema],
       required: true,
       validate: {
         validator: function (hours: any[]) {
-          return hours.length === 7; // One entry for each day of the week
+          return hours.length === 7;
         },
         message: "Working hours must be specified for all 7 days of the week",
       },
     },
+    businessHours: {
+      type: [businessHourSchema],
+      required: true,
+      validate: {
+        validator: function (hours: any[]) {
+          return hours.length === 7;
+        },
+        message: "Business hours must be specified for all 7 days of the week",
+      },
+    },
+    profilePictureUrl: String,
   },
   {
     timestamps: true,
