@@ -50,10 +50,30 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
     fetchData();
   }, []);
 
-  const handleSelect = (id: string) => {
-    updateFormData({ staffAssigned: [id] });
+  const handleAnyStaffSelect = () => {
+    // If "Any" is selected, clear all other selections
+    updateFormData({ staffAssigned: ['any'] });
     setShowValidation(false);
   };
+
+  const handleStaffSelect = (id: string) => {
+    const currentSelection = formData.staffAssigned || [];
+    let newSelection: string[];
+
+    if (currentSelection.includes(id)) {
+      // Remove the staff member if already selected
+      newSelection = currentSelection.filter((staffId: string) => staffId !== id);
+    } else {
+      // Add the staff member to selection
+      newSelection = [...currentSelection, id];
+    }
+
+    updateFormData({ staffAssigned: newSelection });
+    setShowValidation(false);
+  };
+
+  const isAnySelected = formData.staffAssigned?.includes('any');
+  const hasStaffSelected = formData.staffAssigned?.some((id: string) => id !== 'any' && id !== '');
 
   if (isLoading) {
     return (
@@ -79,13 +99,13 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
     <div className="mt-6 flex flex-col items-center md:items-start">
       <div className="w-full flex flex-col items-center md:items-start mb-4">
         <p className="text-sm text-gray-600 text-center md:text-left">Select who can perform this service.</p>
-        <p className="text-sm text-red-500 mt-1">* Required - Please select one option to proceed</p>
+        <p className="text-sm text-red-500 mt-1">* Required - Please select at least one option to proceed</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full justify-items-center">
         {/* "Any" option */}
         <label className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
-          (!formData.staffAssigned || formData.staffAssigned.length === 0) ? 'border-purple-600' : 'border-gray-200'
-        }`}>
+          isAnySelected ? 'border-purple-600' : 'border-gray-200'
+        } ${hasStaffSelected ? 'opacity-50 cursor-not-allowed' : ''}`}>
           <img 
             src={salonProfilePic} 
             alt="Any Staff Member" 
@@ -96,10 +116,10 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
             <p className="text-sm text-gray-500">Any staff member</p>
           </div>
           <input
-            type="radio"
-            name="staffSelection"
-            checked={!formData.staffAssigned || formData.staffAssigned.length === 0}
-            onChange={() => handleSelect('')}
+            type="checkbox"
+            checked={isAnySelected}
+            onChange={handleAnyStaffSelect}
+            disabled={hasStaffSelected}
             className="mt-2"
           />
           <span className="text-xs">Select</span>
@@ -109,7 +129,7 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
         {staff.map((person) => (
           <label key={person._id} className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
             formData.staffAssigned?.includes(person._id) ? 'border-purple-600' : 'border-gray-200'
-          }`}>
+          } ${isAnySelected ? 'opacity-50 cursor-not-allowed' : ''}`}>
             <img 
               src={person.profileImage || '/placeholder-user.jpg'} 
               alt={person.name} 
@@ -120,18 +140,18 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
               <p className="text-sm text-gray-500">{person.role}</p>
             </div>
             <input
-              type="radio"
-              name="staffSelection"
+              type="checkbox"
               checked={formData.staffAssigned?.includes(person._id)}
-              onChange={() => handleSelect(person._id)}
+              onChange={() => handleStaffSelect(person._id)}
+              disabled={isAnySelected}
               className="mt-2"
             />
             <span className="text-xs">Select</span>
           </label>
         ))}
       </div>
-      {showValidation && !formData.staffAssigned && (
-        <p className="text-red-500 text-sm mt-2">Please select a staff member to proceed</p>
+      {showValidation && (!formData.staffAssigned || formData.staffAssigned.length === 0) && (
+        <p className="text-red-500 text-sm mt-2">Please select at least one option to proceed</p>
       )}
     </div>
   );
