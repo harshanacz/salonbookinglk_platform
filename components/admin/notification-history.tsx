@@ -46,6 +46,10 @@ interface Notification {
   };
   createdAt: string;
   updatedAt: string;
+  emailSent: boolean;
+  emailSentAt?: string;
+  emailError?: string;
+  emailRecipientsCount: number;
   __v: number;
 }
 
@@ -188,112 +192,155 @@ export default function NotificationHistory() {
         </div>
       ) : (
         <>
-          <div className="rounded-md border">
-            <Table>
+          <div className="rounded-md border overflow-x-auto">
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[200px]">Title</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Recipient Type</TableHead>
-                  <TableHead>Recipients</TableHead>
-                  <TableHead>Sent At</TableHead>
-                  <TableHead>Sent By</TableHead>
+                  <TableHead className="w-[200px] min-w-[200px]">Title</TableHead>
+                  <TableHead className="min-w-[250px]">Description</TableHead>
+                  <TableHead className="w-[150px] min-w-[150px]">Recipient Type</TableHead>
+                  <TableHead className="w-[200px] min-w-[200px]">Recipients</TableHead>
+                  <TableHead className="w-[180px] min-w-[180px]">Email Status</TableHead>
+                  <TableHead className="w-[180px] min-w-[180px]">Sent At</TableHead>
+                  <TableHead className="w-[180px] min-w-[180px]">Sent By</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredNotifications.map((notification) => (
                   <TableRow key={notification._id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium max-w-[200px] truncate">
                       {notification.title}
                     </TableCell>
-                    <TableCell className="max-w-[300px] truncate">
-                      {notification.description}
+                    <TableCell className="max-w-[250px]">
+                      <div className="line-clamp-2">
+                        {notification.description}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
                         {notification.recipientType}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[200px]">
                       {notification.recipientType === "salons" && (
-                        <>
-                          {notification.allSalons
-                            ? "All Salons"
-                            : notification.onlyVerifiedSalons
-                            ? "Verified Salons"
-                            : (
-                              <div className="flex items-center gap-2">
-                                <span>Selected Salons ({Array.isArray(notification.selectedSalons) ? notification.selectedSalons.length : 0})</span>
-                                {Array.isArray(notification.selectedSalons) && notification.selectedSalons.length > 0 && (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button variant="outline" size="sm">View List</Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80 max-h-80 overflow-auto">
+                        <div className="space-y-1">
+                          {notification.allSalons ? (
+                            <div>All Salons</div>
+                          ) : notification.onlyVerifiedSalons ? (
+                            <div>Verified Salons</div>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span>Selected Salons ({notification.selectedSalons?.length || 0})</span>
+                              {notification.selectedSalons?.length > 0 && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="link" size="sm" className="h-auto p-0 text-left">
+                                      View Details
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80 max-h-80 overflow-auto">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium">Selected Salons</h4>
                                       <div className="space-y-2">
-                                        <h4 className="font-medium">Selected Salons</h4>
-                                        <div className="space-y-2">
-                                          {notification.selectedSalons.map((salon) => (
-                                            <div key={salon._id} className="border-b pb-2">
-                                              <div className="font-medium">{salon.userName || salon.name || "No name"}</div>
-                                              <div className="text-sm text-muted-foreground">{salon.email || "No email"}</div>
-                                            </div>
-                                          ))}
-                                        </div>
+                                        {notification.selectedSalons.map((salon) => (
+                                          <div key={salon._id} className="border-b pb-2">
+                                            <div className="font-medium">{salon.userName || salon.name || "No name"}</div>
+                                            <div className="text-sm text-muted-foreground">{salon.email || "No email"}</div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                )}
-                              </div>
-                            )}
-                        </>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                       {notification.recipientType === "clients" && (
-                        <>
-                          {notification.allClients
-                            ? "All Clients"
-                            : (
-                              <div className="flex items-center gap-2">
-                                 <span>Selected Clients ({Array.isArray(notification.selectedClients) ? notification.selectedClients.length : 0})</span>
-                                 {Array.isArray(notification.selectedClients) && notification.selectedClients.length > 0 && (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button variant="outline" size="sm">View List</Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-80 max-h-80 overflow-auto">
+                        <div className="space-y-1">
+                          {notification.allClients ? (
+                            <div>All Clients</div>
+                          ) : (
+                            <div className="flex flex-col gap-1">
+                              <span>Selected Clients ({notification.selectedClients?.length || 0})</span>
+                              {notification.selectedClients?.length > 0 && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="link" size="sm" className="h-auto p-0 text-left">
+                                      View Details
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80 max-h-80 overflow-auto">
+                                    <div className="space-y-2">
+                                      <h4 className="font-medium">Selected Clients</h4>
                                       <div className="space-y-2">
-                                        <h4 className="font-medium">Selected Clients</h4>
-                                        <div className="space-y-2">
-                                          {notification.selectedClients.map((client) => (
-                                            <div key={client._id} className="border-b pb-2">
-                                              <div className="font-medium">{client.userName || client.name || "No name"}</div>
-                                              <div className="text-sm text-muted-foreground">{client.email || "No email"}</div>
-                                            </div>
-                                          ))}
-                                        </div>
+                                        {notification.selectedClients.map((client) => (
+                                          <div key={client._id} className="border-b pb-2">
+                                            <div className="font-medium">{client.userName || client.name || "No name"}</div>
+                                            <div className="text-sm text-muted-foreground">{client.email || "No email"}</div>
+                                          </div>
+                                        ))}
                                       </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                )}
-                              </div>
-                            )}
-                        </>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
-                      {notification.recipientType === "all" &&
-                        "All Salons and Clients"}
+                      {notification.recipientType === "all" && "All Salons and Clients"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {notification.emailSent ? (
+                          <>
+                            <Badge variant="secondary">Sent</Badge>
+                            {notification.emailSentAt && (
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(notification.emailSentAt), 'PPpp')}
+                              </span>
+                            )}
+                            {notification.emailRecipientsCount > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                ({notification.emailRecipientsCount} recipients)
+                              </span>
+                            )}
+                          </>
+                        ) : notification.emailError ? (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <div className="flex items-center gap-1">
+                                <Badge variant="destructive">Failed</Badge>
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
+                              <div className="space-y-2">
+                                <h4 className="font-medium">Email Failed</h4>
+                                <p className="text-sm text-muted-foreground break-words">
+                                  {notification.emailError}
+                                </p>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        ) : (
+                          <Badge variant="secondary">Not Sent</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {format(new Date(notification.createdAt), "PPp")}
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <div className="font-medium">
+                      <div className="flex flex-col">
+                        <span className="font-medium truncate">
                           {notification.sentBy?.userName || notification.sentBy?.email || "System"}
-                        </div>
+                        </span>
                         {notification.sentBy?.email && (
-                          <div className="text-sm text-muted-foreground">
+                          <span className="text-xs text-muted-foreground truncate">
                             {notification.sentBy.email}
-                          </div>
+                          </span>
                         )}
                       </div>
                     </TableCell>
