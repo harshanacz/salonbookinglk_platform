@@ -8,18 +8,18 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { useUser } from "@clerk/nextjs"
 
 export function ChangePasswordForm() {
   const { toast } = useToast()
+  const { user } = useUser()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
   const [errors, setErrors] = useState({
-    email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -38,14 +38,6 @@ export function ChangePasswordForm() {
   const validateForm = () => {
     let valid = true
     const newErrors = { ...errors }
-
-    if (!formData.email) {
-      newErrors.email = "Email is required"
-      valid = false
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid"
-      valid = false
-    }
 
     if (!formData.currentPassword) {
       newErrors.currentPassword = "Current password is required"
@@ -80,20 +72,20 @@ export function ChangePasswordForm() {
     setIsLoading(true)
 
     try {
-      // This is where you would make an API call to change the password
-      // For example:
-      // const response = await fetch('/api/change-password', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     email: formData.email,
-      //     currentPassword: formData.currentPassword,
-      //     newPassword: formData.newPassword,
-      //   }),
-      // })
+      const response = await fetch('/api/salon-owner/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+        }),
+      })
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to change password")
+      }
 
       toast({
         title: "Password changed",
@@ -102,15 +94,14 @@ export function ChangePasswordForm() {
 
       // Reset form
       setFormData({
-        email: "",
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       })
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to change password. Please try again.",
+        description: error.message || "Failed to change password. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -125,20 +116,6 @@ export function ChangePasswordForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="your.email@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={isLoading}
-            />
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
             <Input
