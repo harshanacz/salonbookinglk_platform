@@ -33,6 +33,7 @@ const ROUTE_CONFIG = {
 // Routes excluded from profile check
 const PROFILE_CHECK_EXCLUDED_ROUTES = [
   "/salon-owner/create-profile",
+  "/user/complete-profile",
   "/api/",
   "/sign-in",
   "/sign-up"
@@ -48,6 +49,7 @@ const getHomeRouteForUserType = (type: string): string => {
     case "ADMIN":
       return "/admin";
     case "CUSTOMER":
+      return "/user/profile";
     case undefined:
     case null:
       return "/";
@@ -75,6 +77,29 @@ const checkSalonOwnerProfile = async (req: Request): Promise<boolean> => {
     return data.isComplete;
   } catch (error) {
     console.error("[MIDDLEWARE_PROFILE_CHECK]", error);
+    return false;
+  }
+};
+
+// Check if a customer has completed their profile
+const checkCustomerProfile = async (req: Request): Promise<boolean> => {
+  try {
+    // Call our API endpoint to check profile status
+    const baseUrl = new URL(req.url).origin;
+    const response = await fetch(`${baseUrl}/api/user/profile-check`, {
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+      },
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    return data.isComplete;
+  } catch (error) {
+    console.error("[MIDDLEWARE_CUSTOMER_PROFILE_CHECK]", error);
     return false;
   }
 };
@@ -126,6 +151,20 @@ export default clerkMiddleware(async (auth, req) => {
       if (!isProfileComplete && !req.nextUrl.pathname.startsWith("/salon-owner/create-profile")) {
         return NextResponse.redirect(
           new URL("/salon-owner/create-profile", req.url)
+        );
+      }
+    }
+    
+    // Check if customer has completed profile
+    if (userType === "CUSTOMER" && 
+        req.nextUrl.pathname.startsWith("/user/profile") && 
+        !PROFILE_CHECK_EXCLUDED_ROUTES.some(path => req.nextUrl.pathname.startsWith(path))) {
+      
+      const isProfileComplete = await checkCustomerProfile(req);
+      
+      if (!isProfileComplete) {
+        return NextResponse.redirect(
+          new URL("/user/complete-profile", req.url)
         );
       }
     }
