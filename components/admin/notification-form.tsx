@@ -197,11 +197,16 @@ export default function NotificationForm() {
         selectedClients: [],
         recipientType: "salons",
       });
+      setOpen(false);
+      setOpenClients(false);
     } catch (error) {
       console.error("Error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "There was an error sending the notification.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "There was an error sending the notification.",
         variant: "destructive",
       });
     } finally {

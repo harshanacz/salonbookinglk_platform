@@ -208,7 +208,7 @@ export default function NotificationHistory() {
               <TableBody>
                 {filteredNotifications.map((notification) => (
                   <TableRow key={notification._id}>
-                    <TableCell className="font-medium max-w-[200px] truncate">
+                    <TableCell className="font-medium max-w-[200px] line-clamp-2">
                       {notification.title}
                     </TableCell>
                     <TableCell className="max-w-[250px]">
@@ -234,7 +234,7 @@ export default function NotificationHistory() {
                               {notification.selectedSalons?.length > 0 && (
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="link" size="sm" className="h-auto p-0 text-left">
+                                    <Button variant="outline" size="sm" className="h-auto p-0 text-left">
                                       View Details
                                     </Button>
                                   </PopoverTrigger>
@@ -267,7 +267,7 @@ export default function NotificationHistory() {
                               {notification.selectedClients?.length > 0 && (
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="link" size="sm" className="h-auto p-0 text-left">
+                                    <Button variant="outline" size="sm" className="h-auto p-0 text-left">
                                       View Details
                                     </Button>
                                   </PopoverTrigger>
