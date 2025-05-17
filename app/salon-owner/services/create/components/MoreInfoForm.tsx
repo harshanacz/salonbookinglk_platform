@@ -58,17 +58,7 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
         {/* Only show image preview, not upload */}
         {formData.images && formData.images.length > 0 && (
           <div className="w-full"> {/* Ensure full width on mobile */}
-            <label className="block font-bold mb-2 text-center md:text-left">Service Images Preview</label> {/* Added font-bold and centering */}
-            <div className="flex gap-2 flex-wrap justify-center md:justify-start"> {/* Center images on mobile */}
-              {formData.images.map((url: string, idx: number) => (
-                <div key={idx} className="relative w-24 h-24 border rounded overflow-hidden flex flex-col items-center">
-                  <img src={url} alt={`Service Image ${idx + 1}`} className="object-cover w-full h-full" />
-                  <span className="absolute top-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                    {idx === 0 ? "Header" : `Image ${idx + 1}`}
-                  </span>
-                </div>
-              ))}
-            </div>
+            
             <p className="text-xs text-gray-500 mt-1 text-center md:text-left">First image is used as the header image.</p> {/* Center text on mobile */}
           </div>
         )}
