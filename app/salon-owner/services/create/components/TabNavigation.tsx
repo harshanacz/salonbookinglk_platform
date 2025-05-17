@@ -24,18 +24,17 @@ export default function TabNavigation({
               isActive ? "flex" : "hidden md:flex"
             )}
           >
-            <button
-              onClick={() => setCurrentStep(index + 1)}
+            <div
               className={cn(
-                "transition-all px-4 py-2 rounded-full border border-transparent focus:outline-none focus:ring-2 focus:ring-purple-300 w-full md:w-auto",
+                "transition-all px-4 py-2 rounded-full border border-transparent w-full md:w-auto",
                 isActive
                   ? "bg-gradient-to-r from-purple-500 to-fuchsia-400 text-white shadow-md scale-105"
-                  : "bg-[#F3E5F5] text-purple-700 hover:bg-purple-100 hover:text-purple-900"
+                  : "bg-[#F3E5F5] text-purple-700"
               )}
               style={{ minWidth: 120 }}
             >
               {label}
-            </button>
+            </div>
             {index < steps.length - 1 && (
               <span className="hidden md:inline text-purple-200 text-lg font-bold">⟶</span>
             )}
