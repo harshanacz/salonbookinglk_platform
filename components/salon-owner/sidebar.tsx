@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@clerk/nextjs";
 
@@ -80,6 +80,26 @@ const sidebarItems = [
 export function SalonOwnerSidebar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [businessName, setBusinessName] = useState("Loading...");
+
+  useEffect(() => {
+    const fetchSalonContext = async () => {
+      try {
+        const response = await fetch("/api/salon-context");
+        if (response.ok) {
+          const data = await response.json();
+          setBusinessName(data.businessName || "My Salon");
+        } else {
+          setBusinessName("My Salon");
+        }
+      } catch (error) {
+        console.error("Failed to fetch salon context:", error);
+        setBusinessName("My Salon");
+      }
+    };
+
+    fetchSalonContext();
+  }, []);
 
   // Hide sidebar on auth pages
   if (
@@ -123,7 +143,9 @@ export function SalonOwnerSidebar() {
           <div className="flex items-center gap-2">
             <CircleUserRound className="h-10 w-10 text-purple-700" />
             <div>
-              <div className="font-medium text-sm">John Doe</div>
+              <div className="font-medium text-sm">
+                {businessName || "Loading..."}
+              </div>
               <div className="text-xs text-gray-500">Salon Owner</div>
             </div>
           </div>
