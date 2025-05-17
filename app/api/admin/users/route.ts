@@ -18,6 +18,8 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const type = url.searchParams.get("type");
     const id = url.searchParams.get("id");
+    const limit = url.searchParams.get("limit") ? parseInt(url.searchParams.get("limit")!) : undefined;
+    const sort = url.searchParams.get("sort") || "-createdAt"; // Default sort by newest
     
     // Connect to database
     await dbConnect();
@@ -37,8 +39,14 @@ export async function GET(req: Request) {
       query.type = type;
     }
     
-    // Fetch users based on query
-    const users = await User.find(query);
+    // Fetch users based on query with sorting and optional limit
+    let usersQuery = User.find(query).sort(sort);
+    
+    if (limit) {
+      usersQuery = usersQuery.limit(limit);
+    }
+    
+    const users = await usersQuery;
     
     return NextResponse.json(users);
   } catch (error) {

@@ -9,30 +9,31 @@ import {
 import { Store, Users, Scissors, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
-// Sample data for the dashboard
+// Sample data for the dashboard with placeholders for dynamic values
 const dashboardData = {
   stats: [
     {
       id: 1,
       title: "Total Salons",
       icon: Store,
-      value: 48,
-      description: "+3 new this month",
+      value: 0,
+      description: "",
     },
     {
       id: 2,
       title: "Pending Services",
       icon: Scissors,
-      value: 24,
-      description: "12 new today",
+      value: 0, // Changed from hardcoded 24 to 0
+      description: "",
     },
     {
       id: 3,
       title: "Total Users",
       icon: Users,
-      value: 1284,
-      description: "+18% from last month",
+      value: 0, // Will be updated dynamically
+      description: "",
     },
     {
       id: 4,
@@ -42,82 +43,172 @@ const dashboardData = {
       description: "3 resolved today",
     },
   ],
-  pendingServices: [
-    {
-      id: 101,
-      name: "Custom Hair Coloring",
-      salon: "Salon Amaya",
-      status: "pending",
-    },
-    {
-      id: 102,
-      name: "Premium Beard Trim",
-      salon: "Gentleman's Grooming",
-      status: "pending",
-    },
-    {
-      id: 103,
-      name: "Keratin Treatment",
-      salon: "Hair Studio",
-      status: "pending",
-    },
-    {
-      id: 104,
-      name: "Kids Haircut",
-      salon: "Tiny Cuts",
-      status: "pending",
-    },
-    {
-      id: 105,
-      name: "Bridal Makeup",
-      salon: "Glamour Studio",
-      status: "pending",
-    },
-  ],
-  newSalons: [
-    {
-      id: 201,
-      name: "Salon Elegance",
-      location: "Colombo 7",
-      date: "2 days ago",
-    },
-    {
-      id: 202,
-      name: "Beauty Hub",
-      location: "Nugegoda",
-      date: "3 days ago",
-    },
-    {
-      id: 203,
-      name: "Glamour Studio",
-      location: "Mount Lavinia",
-      date: "5 days ago",
-    },
-    {
-      id: 204,
-      name: "Style Masters",
-      location: "Dehiwala",
-      date: "1 week ago",
-    },
-    {
-      id: 205,
-      name: "Trendy Cuts",
-      location: "Rajagiriya",
-      date: "1 week ago",
-    },
-  ],
 };
 
 const Page = () => {
+  const [recentSalons, setRecentSalons] = useState<any[]>([]);
+  const [pendingServices, setPendingServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(true);
+  const [stats, setStats] = useState(dashboardData.stats);
+  const [lastMonthSalons, setLastMonthSalons] = useState(0);
+  const [pendingServicesCount, setPendingServicesCount] = useState(0);
+  const [newServicesToday, setNewServicesToday] = useState(0);
+
+  useEffect(() => {
+    const fetchRecentSalons = async () => {
+      try {
+        const response = await fetch(
+          "/api/admin/users?type=SALON_OWNER&limit=5&sort=-createdAt"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setRecentSalons(data);
+        } else {
+          console.error("Failed to fetch recent salons");
+        }
+      } catch (error) {
+        console.error("Error fetching salon data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchSalonsCount = async () => {
+      try {
+        const response = await fetch("/api/admin/users?type=SALON_OWNER");
+        if (response.ok) {
+          const data = await response.json();
+          const totalSalons = data.length;
+
+          // Calculate salons created in the last month
+          const oneMonthAgo = new Date();
+          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          const newSalons = data.filter(
+            (salon: any) => new Date(salon.createdAt) > oneMonthAgo
+          ).length;
+
+          setLastMonthSalons(newSalons);
+
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 1
+                ? {
+                    ...stat,
+                    value: totalSalons,
+                    description: `+${newSalons} new this month`,
+                  }
+                : stat
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching salon count:", error);
+      }
+    };
+
+    const fetchUsersCount = async () => {
+      try {
+        const response = await fetch("/api/admin/users");
+        if (response.ok) {
+          const data = await response.json();
+          const totalUsers = data.length;
+
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 3
+                ? {
+                    ...stat,
+                    value: totalUsers,
+                    description: "All registered users",
+                  }
+                : stat
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching users count:", error);
+      }
+    };
+
+    const fetchPendingServices = async () => {
+      try {
+        const response = await fetch("/api/admin/service-cards");
+        if (response.ok) {
+          const data = await response.json();
+          // Limit to the 5 most recent services for display
+          setPendingServices(data.slice(0, 5));
+
+          // Update total pending services count
+          const totalPending = data.length;
+          setPendingServicesCount(totalPending);
+
+          // Calculate services created today
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const newToday = data.filter((service: any) => {
+            const serviceDate = new Date(service.startedDate);
+            return serviceDate >= today;
+          }).length;
+
+          setNewServicesToday(newToday);
+
+          // Update the stats
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 2
+                ? {
+                    ...stat,
+                    value: totalPending,
+                    description:
+                      newToday > 0
+                        ? `${newToday} new today`
+                        : "No new services today",
+                  }
+                : stat
+            )
+          );
+        } else {
+          console.error("Failed to fetch pending services");
+        }
+      } catch (error) {
+        console.error("Error fetching service data:", error);
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    fetchRecentSalons();
+    fetchPendingServices();
+    fetchSalonsCount();
+    fetchUsersCount();
+  }, []);
+
+  // Function to format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return `${Math.floor(diffDays / 7)} week${
+      Math.floor(diffDays / 7) > 1 ? "s" : ""
+    } ago`;
+  };
+
   return (
     <div className="min-h-screen w-full space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       </div>
-      
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {dashboardData.stats.map((stat) => {
+        {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.id}>
@@ -143,33 +234,41 @@ const Page = () => {
         {/* Pending Services */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Service Approvals</CardTitle>
+            <CardTitle>Service Approvals</CardTitle>
             <CardDescription>Services pending approval</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {dashboardData.pendingServices.map((service) => (
-                <div
-                  key={service.id}
-                  className="flex items-center justify-between border-b pb-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-md bg-[var(--superAccent)] flex items-center justify-center">
-                      <Scissors className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{service.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {service.salon}
+            {servicesLoading ? (
+              <div className="py-6 text-center">Loading services...</div>
+            ) : pendingServices.length > 0 ? (
+              <div className="space-y-4">
+                {pendingServices.map((service) => (
+                  <div
+                    key={service.id}
+                    className="flex items-center justify-between border-b pb-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-md bg-[var(--superAccent)] flex items-center justify-center">
+                        <Scissors className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{service.title}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {service.salon}
+                        </div>
                       </div>
                     </div>
+                    <Button size="sm" asChild>
+                      <Link href={`/admin/service-cards/${service.id}`}>
+                        Review
+                      </Link>
+                    </Button>
                   </div>
-                  <Button size="sm" asChild>
-                    <Link href={`/admin/service-cards/${service.id}`}>Review</Link>
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center">No pending services found</div>
+            )}
           </CardContent>
         </Card>
 
@@ -180,29 +279,37 @@ const Page = () => {
             <CardDescription>Recently registered salons</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {dashboardData.newSalons.map((salon) => (
-                <div
-                  key={salon.id}
-                  className="flex items-center justify-between border-b pb-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--superAccent)] flex items-center justify-center">
-                      <Store className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{salon.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {salon.location}
+            {loading ? (
+              <div className="py-6 text-center">Loading salons...</div>
+            ) : recentSalons.length > 0 ? (
+              <div className="space-y-4">
+                {recentSalons.map((salon) => (
+                  <div
+                    key={salon._id}
+                    className="flex items-center justify-between border-b pb-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[var(--superAccent)] flex items-center justify-center">
+                        <Store className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="font-medium">
+                          {salon.name || "No name"}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {salon.address || "No address provided"}
+                        </div>
                       </div>
                     </div>
+                    <div className="text-sm text-muted-foreground">
+                      {formatDate(salon.createdAt)}
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
-                    {salon.date}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center">No salons found</div>
+            )}
           </CardContent>
         </Card>
       </div>
