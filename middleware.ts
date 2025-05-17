@@ -155,9 +155,8 @@ export default clerkMiddleware(async (auth, req) => {
       }
     }
     
-    // Check if customer has completed profile
+    // Check if customer has completed profile - for ALL customer routes
     if (userType === "CUSTOMER" && 
-        req.nextUrl.pathname.startsWith("/user/profile") && 
         !PROFILE_CHECK_EXCLUDED_ROUTES.some(path => req.nextUrl.pathname.startsWith(path))) {
       
       const isProfileComplete = await checkCustomerProfile(req);
