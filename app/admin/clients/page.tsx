@@ -22,9 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, User, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { UserType } from "@/models/User";
 
-// Extended client interface to match our data model
 interface Client {
   _id: string;
   name?: string;
@@ -81,7 +79,7 @@ export default function AdminClientsPage() {
 
   useEffect(() => {
     fetchClients();
-  }, []);
+  }, [pagination.limit]);
 
   const handlePageChange = (newPage: number) => {
     fetchClients(newPage);
@@ -89,28 +87,25 @@ export default function AdminClientsPage() {
 
   const filteredClients = clients.filter(
     (client) =>
-      client.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      "" ||
-      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      "" ||
-      client.mobileNumber?.includes(searchQuery) ||
-      ""
+      (client.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (client.mobileNumber?.includes(searchQuery) ?? false)
   );
 
   return (
-    <div className="h-full flex flex-col space-y-6">
+    <div className="h-full flex flex-col gap-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Clients</h1>
       </div>
 
-      <Card className="flex-1 flex flex-col">
-        <CardHeader>
+      <Card className="flex-1 flex flex-col overflow-hidden">
+        <CardHeader className="border-b">
           <CardTitle>Client Management</CardTitle>
           <CardDescription>
             View and manage all clients across salons
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
+        <CardContent className="p-6 flex-1 flex flex-col overflow-hidden">
           <div className="flex items-center space-x-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -130,9 +125,9 @@ export default function AdminClientsPage() {
           ) : error ? (
             <div className="text-center text-red-500 p-4">{error}</div>
           ) : (
-            <div className="overflow-auto flex-1">
+            <div className="flex-1 overflow-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-0 bg-background">
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
@@ -140,7 +135,7 @@ export default function AdminClientsPage() {
                     <TableHead>Total Bookings</TableHead>
                     <TableHead>Total Spent</TableHead>
                     <TableHead>Last Visit</TableHead>
-                    <TableHead></TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -176,7 +171,7 @@ export default function AdminClientsPage() {
                             : "N/A"}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm">
+                          <Button asChild size="sm" variant="outline">
                             <Link href={`/admin/clients/${client._id}`}>
                               <Eye className="mr-2 h-4 w-4" /> View
                             </Link>
@@ -184,42 +179,44 @@ export default function AdminClientsPage() {
                         </TableCell>
                       </TableRow>
                     ))
-                  }
+                  )}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
         {!isLoading && !error && pagination.pages > 1 && (
-          <CardFooter className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              Showing{" "}
-              {((pagination.page - 1) * pagination.limit) + 1}-
-              {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-              {pagination.total} clients
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page - 1)}
-                disabled={pagination.page <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Previous Page</span>
-              </Button>
-              <div className="text-sm font-medium">
-                Page {pagination.page} of {pagination.pages}
+          <CardFooter className="border-t py-3">
+            <div className="w-full flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
+                Showing{" "}
+                {((pagination.page - 1) * pagination.limit) + 1}-
+                {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+                {pagination.total} clients
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page >= pagination.pages}
-              >
-                <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Next Page</span>
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="sr-only">Previous Page</span>
+                </Button>
+                <div className="text-sm font-medium">
+                  Page {pagination.page} of {pagination.pages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.pages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <span className="sr-only">Next Page</span>
+                </Button>
+              </div>
             </div>
           </CardFooter>
         )}
