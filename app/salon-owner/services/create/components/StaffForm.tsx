@@ -86,10 +86,21 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
   if (staff.length === 0) {
     return (
       <div className="mt-6 flex flex-col items-center md:items-start">
-        <p className="mb-4 text-sm text-gray-600 text-center md:text-left">No staff members available. This service will be marked as "Not special".</p>
-        <div className="w-full max-w-[150px] p-4 border border-gray-200 rounded text-center">
-          <p className="font-bold">Not special</p>
-          <p className="text-sm text-gray-500">Any staff member can perform this service</p>
+        <div className="w-full max-w-[300px] p-4 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              id="notSpecial"
+              checked={formData.staffAssigned?.includes('any')}
+              onChange={handleAnyStaffSelect}
+              className="accent-purple-600 scale-125"
+            />
+            <label htmlFor="notSpecial" className="font-bold">Not special</label>
+          </div>
+          <p className="text-sm text-gray-500 mb-2">Any staff member can perform this service</p>
+          <p className="text-sm text-purple-600">
+            You can add staff members in the <a href="/salon-owner/staff" className="underline">Staff</a> page
+          </p>
         </div>
       </div>
     );
