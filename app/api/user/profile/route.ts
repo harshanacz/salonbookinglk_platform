@@ -1,6 +1,6 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/dbConnect";
+import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 
 export async function GET() {
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Error updating user profile:", error);
     return NextResponse.json(
-      { error: "Failed to update profile", details: error.message },
+      { error: "Failed to update profile", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
