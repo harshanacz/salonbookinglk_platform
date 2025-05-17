@@ -35,21 +35,9 @@ interface CardDetails {
   holder: string;
 }
 
-// Fallback salon data
-const defaultSalon: Salon = {
-  id: 1,
-  name: "Salon Dmesh",
-  rating: 4.9,
-  image: "/Dmesh.jpg",
-  closingTime: "8:00 PM",
-  isOpen: true,
-  address: "123 Main St, New York",
-  mapLink: "https://maps.google.com",
-};
-
 const ConfirmPage = () => {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
-  const [selectedSalon, setSelectedSalon] = useState<Salon>(defaultSalon);
+  const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"venue" | "card">("venue");
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
@@ -218,17 +206,10 @@ const ConfirmPage = () => {
 
         {/* SalonCard Component */}
         <SalonCard
-          salonName={selectedSalon.name}
+          salonName={selectedSalon?.name || ""}
           services={formattedServices}
           total={calculateTotal()}
-          selectedSalon={{
-            image: selectedSalon.image,
-            rating: selectedSalon.rating,
-            closingTime: selectedSalon.closingTime,
-            isOpen: selectedSalon.isOpen,
-            address: selectedSalon.address,
-            mapLink: selectedSalon.mapLink,
-          }}
+          selectedSalon={selectedSalon || undefined}
           selectedProfessionalId="1"
           selectedProfessionalName={selectedProfessional}
           selectedDate={selectedDate}
@@ -249,6 +230,5 @@ const ConfirmPage = () => {
     </div>
   );
 };
-
 
 export default ConfirmPage;
