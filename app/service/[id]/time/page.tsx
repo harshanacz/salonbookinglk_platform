@@ -40,26 +40,27 @@ export default function SelectTime() {
   const [selectedExtraServices, setSelectedExtraServices] = useState<Service[]>([]); // Selected extra services array
   const [currentExtraService, setCurrentExtraService] = useState<Service | null>(null); // Service we're currently scheduling
   const [isSelectingTimeForExtra, setIsSelectingTimeForExtra] = useState(false);
+  const [mainServices, setMainServices] = useState<Service[]>([]);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [selectedSalon, setSelectedSalon] = useState<any>(null);
 
-  // Main services - fixed services that are always included
-  const mainServices: Service[] = [
-    {
-      id: "main-1",
-      name: "Layer Hair Cut",
-      price: 7000,
-      duration: "30 min",
-      timeSlot: "9:30-10:00AM",
-      professional: selectedProfessionalName
-    },
-    {
-      id: "main-2",
-      name: "Scalp Anti-Dandruff treatment",
-      price: 1000,
-      duration: "30 min",
-      timeSlot: "10:00-10:30AM",
-      professional: selectedProfessionalName
+  useEffect(() => {
+    const servicesData = sessionStorage.getItem("bookingServices");
+    if (servicesData) {
+      setMainServices(JSON.parse(servicesData));
     }
-  ];
+    const salonData = sessionStorage.getItem("salonInfo");
+    if (salonData) {
+      setSelectedSalon(JSON.parse(salonData));
+    }
+  }, []);
+
+  useEffect(() => {
+    const staffData = sessionStorage.getItem("bookingStaffMembers");
+    if (staffData) {
+      setStaffMembers(JSON.parse(staffData));
+    }
+  }, []);
 
   const today = new Date();
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
@@ -93,24 +94,12 @@ export default function SelectTime() {
       specialty: "No Preference",
       image: "/images/any-professional.jpg",
     },
-    {
-      id: "1",
-      name: "John Doe",
-      specialty: "Hair Specialist",
-      image: "/images/john.jpg",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      specialty: "Nail Specialist",
-      image: "/images/jane.jpg",
-    },
-    {
-      id: "3",
-      name: "Alice Johnson",
-      specialty: "Makeup Artist",
-      image: "/images/alice.jpg",
-    },
+    ...staffMembers.map((staff) => ({
+      id: staff.id,
+      name: staff.name,
+      specialty: staff.specialty || "Staff",
+      image: staff.image || "/images/any-professional.jpg",
+    })),
   ];
 
   useEffect(() => {
@@ -242,16 +231,6 @@ export default function SelectTime() {
     return `LKR ${total.toLocaleString()}`;
   };
 
-  const selectedSalon = {
-    name: "Saloon Dmesh",
-    image: "/salon-dmesh.jpg",
-    rating: 4.5,
-    closingTime: "8:00 PM",
-    isOpen: true,
-    address: "123 Salon Street, Colombo",
-    mapLink: "https://maps.google.com/?q=Saloon+Dmesh",
-  };
-
   const handleContinue = () => {
     if (!selectedDate || !selectedTime) {
       alert("Please select a date and time before continuing");
@@ -270,6 +249,10 @@ export default function SelectTime() {
     sessionStorage.setItem('bookingProfessional', selectedProfessionalName);
     sessionStorage.setItem('bookingDate', selectedDate || '');
     sessionStorage.setItem('bookingTime', selectedTime || '');
+    sessionStorage.setItem(
+      "bookingStaffMembers",
+      JSON.stringify(professionals)
+    );
     
     router.push(`/service/${params.id}/confirm`);
   };
@@ -414,47 +397,49 @@ export default function SelectTime() {
         </div>
 
         {/* Salon Card with Continue Button */}
-        <SalonCard
-          salonName="Saloon Dmesh"
-          services={formatServicesForSalonCard(getAllServices())}
-          total={calculateTotal()}
-          selectedSalon={selectedSalon}
-          selectedProfessionalId={selectedProfessional}
-          selectedProfessionalName={selectedProfessionalName}
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          onContinue={isSelectingTimeForExtra 
-            ? () => {
-                // Handle time selection for the current extra service
-                if (selectedTime && currentExtraService) {
-                  // Add the service with its time slot to our selected services
-                  setSelectedExtraServices(prev => [
-                    ...prev, 
-                    { 
-                      ...currentExtraService, 
-                      timeSlot: selectedTime, 
-                      professional: selectedProfessionalName 
-                    }
-                  ]);
-                  
-                  // Reset for next selection
-                  setCurrentExtraService(null);
-                  setIsSelectingTimeForExtra(false);
-                  setSelectedTime(null);
-                  
-                  // Show popup again to potentially select another service
-                  setShowPopup(true);
-                } else {
-                  alert("Please select a time for this service");
+        {selectedSalon && (
+          <SalonCard
+            salonName={selectedSalon?.name || ""}
+            services={formatServicesForSalonCard(getAllServices())}
+            total={calculateTotal()}
+            selectedSalon={selectedSalon}
+            selectedProfessionalId={selectedProfessional}
+            selectedProfessionalName={selectedProfessionalName}
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            onContinue={isSelectingTimeForExtra 
+              ? () => {
+                  // Handle time selection for the current extra service
+                  if (selectedTime && currentExtraService) {
+                    // Add the service with its time slot to our selected services
+                    setSelectedExtraServices(prev => [
+                      ...prev, 
+                      { 
+                        ...currentExtraService, 
+                        timeSlot: selectedTime, 
+                        professional: selectedProfessionalName 
+                      }
+                    ]);
+                    
+                    // Reset for next selection
+                    setCurrentExtraService(null);
+                    setIsSelectingTimeForExtra(false);
+                    setSelectedTime(null);
+                    
+                    // Show popup again to potentially select another service
+                    setShowPopup(true);
+                  } else {
+                    alert("Please select a time for this service");
+                  }
                 }
-              }
-            : handleContinue
-          }
-          buttonText={isSelectingTimeForExtra 
-            ? `Confirm Time for ${currentExtraService?.name}` 
-            : "Continue"
-          }
-        />
+              : handleContinue
+            }
+            buttonText={isSelectingTimeForExtra 
+              ? `Confirm Time for ${currentExtraService?.name}` 
+              : "Continue"
+            }
+          />
+        )}
 
         {/* Modified Popup for Single Extra Service Selection */}
         {showPopup && (
