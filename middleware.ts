@@ -116,6 +116,14 @@ export default clerkMiddleware(async (auth, req) => {
   const isProtectedRoute = Object.values(ROUTE_CONFIG).some((config) =>
     config.pattern(req)
   );
+  
+  // Also consider all /user/ routes as protected
+  const isUserRoute = req.nextUrl.pathname.startsWith("/user/");
+  
+  // If not authenticated and trying to access protected routes or user routes
+  if (!authObject.userId && (isProtectedRoute || isUserRoute)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
 
   // If authenticated, handle user type specific redirects
   if (authObject.userId) {
