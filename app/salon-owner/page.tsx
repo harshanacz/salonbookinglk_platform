@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useEffect, useState } from "react";
 
 ChartJS.register(
   CategoryScale,
@@ -57,6 +58,34 @@ ChartJS.register(
 export default function SalonOwnerDashboard() {
   const router = useRouter();
   const { signOut } = useClerk();
+  const [dashboardData, setDashboardData] = useState({
+    services: { active: 0, pending: 0 },
+    staff: { total: 0, newThisMonth: 0 },
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/salon-owner/dashboard");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Dashboard data received:", data); // Debug log
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        setError("Failed to load dashboard data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
@@ -99,8 +128,8 @@ export default function SalonOwnerDashboard() {
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                className="w-full sm:w-auto" 
+              <Button
+                className="w-full sm:w-auto"
                 variant="destructive"
               >
                 <LogOut className="mr-2 h-4 w-4" />
@@ -144,8 +173,13 @@ export default function SalonOwnerDashboard() {
             <Scissors className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">3 pending approval</p>
+            <div className="text-2xl font-bold">
+              {isLoading ? "Loading..." : dashboardData.services.active}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Loading..." : `${dashboardData.services.pending} pending approval`}
+            </p>
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </CardContent>
         </Card>
         <Card>
@@ -154,8 +188,13 @@ export default function SalonOwnerDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">2 added this month</p>
+            <div className="text-2xl font-bold">
+              {isLoading ? "Loading..." : dashboardData.staff.total}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Loading..." : `${dashboardData.staff.newThisMonth} added this month`}
+            </p>
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </CardContent>
         </Card>
         <Card>
