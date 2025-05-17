@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, MapPin, Phone, Mail, Globe } from "lucide-react";
 import { UploadButton } from "@/lib/uploadthing";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // Add types for userData and salonData
 interface UserData {
@@ -21,11 +23,11 @@ interface SalonData {
   description: string;
   address: string;
   website: string;
-  openingHours: string;
   businessRegistration: string;
 }
 
 export default function SalonOwnerProfile() {
+  const router = useRouter();
   const [userData, setUserData] = useState<UserData>({
     ownerName: "",
     email: "",
@@ -37,7 +39,6 @@ export default function SalonOwnerProfile() {
     description: "",
     address: "",
     website: "",
-    openingHours: "",
     businessRegistration: "",
   });
   const [editingField, setEditingField] = useState<
@@ -45,11 +46,26 @@ export default function SalonOwnerProfile() {
   >(null);
   const [tempValue, setTempValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch user and salon context data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
+        setError(null);
+
+        // First check if the profile is complete
+        const profileCheckRes = await fetch("/api/salon-owner/profile-check");
+        const profileCheckData = await profileCheckRes.json();
+
+        if (!profileCheckData.isComplete) {
+          // If profile is not complete, redirect to the create-profile page
+          router.push("/salon-owner/create-profile");
+          return;
+        }
+
         const userRes = await fetch("/api/user");
         console.log("[USER_RES]", userRes);
         if (!userRes.ok) throw new Error("Failed to fetch user");
@@ -67,26 +83,31 @@ export default function SalonOwnerProfile() {
           ownerName: salon.ownerName || user.userName || "",
           email: user.email || "",
           phone: salon.phoneNumber || user.mobileNumber || "",
-          profileImage: salon.profilePictureUrl || user.profileImage || "/images/salon/profile.jpg",
+          profileImage:
+            salon.profilePictureUrl ||
+            user.profileImage ||
+            "/images/salon/profile.jpg",
         });
 
         // Set salon data
         setSalonData({
           salonName: salon.businessName || "",
           description: salon.description || "",
-          address: salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "",
-          website: salon.website || "",
-          openingHours: salon.workingHours && salon.workingHours.length
-            ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
+          address: salon.location
+            ? `${salon.location.lat}, ${salon.location.lng}`
             : "",
+          website: salon.website || "",
           businessRegistration: salon.businessRegistrationNumber || "",
         });
       } catch (err) {
         console.error("[PROFILE_FETCH]", err);
+        setError("Failed to load profile data. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [router]);
 
   // Handle edit click
   const handleEditClick = (field: keyof UserData | keyof SalonData) => {
@@ -172,60 +193,36 @@ export default function SalonOwnerProfile() {
     }
   };
 
-  // Add test save function
-  const handleTestSave = async () => {
-    try {
-      setIsSaving(true);
-      const res = await fetch("/api/salon-owner/test-save", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error("Failed to save test data");
-      const salon = await res.json();
-      console.log("[TEST_SAVE_RESPONSE]", salon);
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading profile information...</p>
+        </div>
+      </div>
+    );
+  }
 
-      // Update salon data
-      setSalonData({
-        salonName: salon.businessName || "",
-        description: salon.description || "",
-        address: salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "",
-        website: salon.website || "",
-        openingHours: salon.workingHours?.[0] 
-          ? `${salon.workingHours[0].start} - ${salon.workingHours[0].end}`
-          : "",
-        businessRegistration: salon.businessRegistrationNumber || "",
-      });
-
-      // Update user data
-      setUserData(prev => ({
-        ...prev,
-        ownerName: salon.ownerName || prev.ownerName,
-        phone: salon.phoneNumber || prev.phone,
-        profileImage: salon.profilePictureUrl || prev.profileImage,
-      }));
-
-      alert("Test data saved successfully!");
-    } catch (err) {
-      console.error("[TEST_SAVE]", err);
-      alert("Failed to save test data");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => router.refresh()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Salon Profile</h1>
-        <div className="space-x-4">
-          <Button
-            onClick={handleTestSave}
-            disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {isSaving ? "Saving..." : "Test const value Save!"}
-          </Button>
+        <div>
           <Button
             onClick={handleSave}
+            disabled={!editingField}
             className="bg-purple-600 hover:bg-purple-700"
           >
             Save Changes
@@ -406,28 +403,6 @@ export default function SalonOwnerProfile() {
                     <Pencil className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium mb-4">Business Hours</h3>
-              <div className="flex items-center gap-2">
-                {editingField === "openingHours" ? (
-                  <Input
-                    value={tempValue}
-                    onChange={(e) => setTempValue(e.target.value)}
-                    className="flex-1"
-                  />
-                ) : (
-                  <span>{salonData.openingHours}</span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEditClick("openingHours")}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
               </div>
             </div>
 

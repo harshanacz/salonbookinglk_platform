@@ -29,7 +29,7 @@ const routes = [
   {
     label: "Profile",
     icon: User,
-    href: "/user",
+    href: "/user/profile",
   },
   {
     label: "My Bookings",
