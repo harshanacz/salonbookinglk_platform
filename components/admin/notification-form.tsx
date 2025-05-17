@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -19,8 +17,8 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
+  CommandInput,
   CommandList,
 } from "@/components/ui/command";
 import {
@@ -48,68 +46,100 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 
-// Sample data for salons and clients
-const salons = [
-  { id: "1", name: "Glamour Salon", verified: true },
-  { id: "2", name: "Beauty Hub", verified: false },
-  { id: "3", name: "Style Studio", verified: true },
-  { id: "4", name: "Hair Masters", verified: false },
-  { id: "5", name: "Elegance Salon", verified: true },
-];
+interface User {
+  _id: string;
+  userName: string | null;
+  email: string;
+  verified?: boolean;
+  type: "SALON_OWNER" | "CUSTOMER";
+}
 
-const clients = [
-  { id: "1", name: "John Smith" },
-  { id: "2", name: "Emma Johnson" },
-  { id: "3", name: "Michael Brown" },
-  { id: "4", name: "Sophia Davis" },
-  { id: "5", name: "James Wilson" },
-];
-
-// Form schema
-const formSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  sendNow: z.boolean().default(true),
-  scheduledDateTime: z.date().optional(),
-  allSalons: z.boolean().default(false),
-  allClients: z.boolean().default(false),
-  onlyVerifiedSalons: z.boolean().default(false), // New field for verified salons
-  selectedSalons: z.array(z.string()).optional(),
-  selectedClients: z.array(z.string()).optional(),
-  recipientType: z.enum(["salons", "clients", "all"]).default("salons"), // Updated recipient type
-});
+interface FormValues {
+  title: string;
+  description: string;
+  allSalons: boolean;
+  allClients: boolean;
+  onlyVerifiedSalons: boolean;
+  selectedSalons?: string[];
+  selectedClients?: string[];
+  recipientType: "salons" | "clients" | "all";
+}
 
 export default function NotificationForm() {
   const [open, setOpen] = useState(false);
   const [openClients, setOpenClients] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [salons, setSalons] = useState<User[]>([]);
+  const [clients, setClients] = useState<User[]>([]);
+  const [isLoadingSalons, setIsLoadingSalons] = useState(false);
+  const [isLoadingClients, setIsLoadingClients] = useState(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
     defaultValues: {
       title: "",
       description: "",
-      sendNow: true,
       allSalons: false,
       allClients: false,
-      onlyVerifiedSalons: false, // Default value for verified salons
+      onlyVerifiedSalons: false,
       selectedSalons: [],
       selectedClients: [],
       recipientType: "salons",
     },
+    mode: "onChange",
   });
 
-  const watchSendNow = form.watch("sendNow");
+  // Fetch salons and clients from the API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // Fetch salons (SALON_OWNER)
+        setIsLoadingSalons(true);
+        const salonResponse = await fetch("/api/admin/users?type=SALON_OWNER");
+        if (salonResponse.ok) {
+          const salonData = await salonResponse.json();
+          setSalons(salonData);
+        }
+      } catch (error) {
+        console.error("Error fetching salons:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load salons",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingSalons(false);
+      }
+
+      try {
+        // Fetch clients (CUSTOMER)
+        setIsLoadingClients(true);
+        const clientResponse = await fetch("/api/admin/users?type=CUSTOMER");
+        if (clientResponse.ok) {
+          const clientData = await clientResponse.json();
+          setClients(clientData);
+        }
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load clients",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingClients(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
   const watchAllSalons = form.watch("allSalons");
   const watchAllClients = form.watch("allClients");
-  const watchOnlyVerifiedSalons = form.watch("onlyVerifiedSalons"); // Watch verified salons
+  const watchOnlyVerifiedSalons = form.watch("onlyVerifiedSalons");
   const watchRecipientType = form.watch("recipientType");
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Validate that at least one recipient is selected
+  const validateRecipients = (values: FormValues) => {
     const hasSalonRecipients =
       values.recipientType === "salons" &&
       (values.allSalons ||
@@ -120,7 +150,11 @@ export default function NotificationForm() {
         (values.selectedClients && values.selectedClients.length > 0));
     const hasAllRecipients = values.recipientType === "all";
 
-    if (!hasSalonRecipients && !hasClientRecipients && !hasAllRecipients) {
+    return hasSalonRecipients || hasClientRecipients || hasAllRecipients;
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    if (!validateRecipients(values)) {
       toast({
         title: "Validation Error",
         description: "Please select at least one recipient",
@@ -132,10 +166,20 @@ export default function NotificationForm() {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch("/api/admin/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
 
-      console.log("Form submitted:", values);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Error sending notification");
+      }
+
+      const data = await response.json();
 
       toast({
         title: "Notification Sent",
@@ -146,7 +190,6 @@ export default function NotificationForm() {
       form.reset({
         title: "",
         description: "",
-        sendNow: true,
         allSalons: false,
         allClients: false,
         onlyVerifiedSalons: false,
@@ -154,10 +197,16 @@ export default function NotificationForm() {
         selectedClients: [],
         recipientType: "salons",
       });
+      setOpen(false);
+      setOpenClients(false);
     } catch (error) {
+      console.error("Error:", error);
       toast({
         title: "Error",
-        description: "There was an error sending the notification.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "There was an error sending the notification.",
         variant: "destructive",
       });
     } finally {
@@ -185,13 +234,16 @@ export default function NotificationForm() {
               <FormField
                 control={form.control}
                 name="title"
-                render={({ field }) => (
+                rules={{ required: "Title is required" }}
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
-                    <FormMessage />
+                    {fieldState.error && (
+                      <FormMessage>{fieldState.error.message}</FormMessage>
+                    )}
                   </FormItem>
                 )}
               />
@@ -199,121 +251,19 @@ export default function NotificationForm() {
               <FormField
                 control={form.control}
                 name="description"
-                render={({ field }) => (
+                rules={{ required: "Description is required" }}
+                render={({ field, fieldState }) => (
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea className="min-h-[120px]" {...field} />
                     </FormControl>
-                    <FormMessage />
+                    {fieldState.error && (
+                      <FormMessage>{fieldState.error.message}</FormMessage>
+                    )}
                   </FormItem>
                 )}
               />
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Send Date and Time</h3>
-
-                <FormField
-                  control={form.control}
-                  name="sendNow"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Send Just Now</FormLabel>
-                        <FormDescription>
-                          Send the notification immediately
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                {!watchSendNow && (
-                  <FormField
-                    control={form.control}
-                    name="scheduledDateTime"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Schedule Date and Time</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outlineDate"
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP p")
-                                ) : (
-                                  <span>Pick a date and time</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              initialFocus
-                            />
-                            <div className="p-3 border-t border-border">
-                              <Select
-                                onValueChange={(value) => {
-                                  const date = field.value || new Date();
-                                  const [hours, minutes] = value
-                                    .split(":")
-                                    .map(Number);
-                                  date.setHours(hours, minutes);
-                                  field.onChange(date);
-                                }}
-                                defaultValue="12:00"
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {Array.from({ length: 24 }).map((_, hour) => (
-                                    <>
-                                      <SelectItem
-                                        key={`${hour}:00`}
-                                        value={`${hour}:00`}
-                                      >
-                                        {`${hour
-                                          .toString()
-                                          .padStart(2, "0")}:00`}
-                                      </SelectItem>
-                                      <SelectItem
-                                        key={`${hour}:30`}
-                                        value={`${hour}:30`}
-                                      >
-                                        {`${hour
-                                          .toString()
-                                          .padStart(2, "0")}:30`}
-                                      </SelectItem>
-                                    </>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Recipients</h3>
@@ -338,15 +288,13 @@ export default function NotificationForm() {
                           <SelectItem value="clients">Clients</SelectItem>
                           <SelectItem value="all">
                             All Salons and Clients
-                          </SelectItem>{" "}
-                          {/* New option */}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
+                {/* Salon Select */}
                 {watchRecipientType === "salons" && (
                   <>
                     <FormField
@@ -374,7 +322,7 @@ export default function NotificationForm() {
                         </FormItem>
                       )}
                     />
-
+                    {/* All salons select */}
                     {!watchAllSalons && (
                       <>
                         <FormField
@@ -400,12 +348,21 @@ export default function NotificationForm() {
                             </FormItem>
                           )}
                         />
-
-                        {!watchOnlyVerifiedSalons && ( // Hide search bar if "Only Verified Salons" is selected
+                        {/* Only verified salons select */}
+                        {!watchOnlyVerifiedSalons && (
                           <FormField
                             control={form.control}
                             name="selectedSalons"
-                            render={({ field }) => (
+                            rules={{
+                              validate: (value) =>
+                                watchRecipientType === "salons" &&
+                                !watchAllSalons &&
+                                !watchOnlyVerifiedSalons &&
+                                (!value || value.length === 0)
+                                  ? "Please select at least one salon"
+                                  : true,
+                            }}
+                            render={({ field, fieldState }) => (
                               <FormItem>
                                 <FormLabel>Select Specific Salons</FormLabel>
                                 <Popover open={open} onOpenChange={setOpen}>
@@ -416,8 +373,11 @@ export default function NotificationForm() {
                                         role="combobox"
                                         aria-expanded={open}
                                         className="w-full justify-between"
+                                        disabled={isLoadingSalons}
                                       >
-                                        {(field.value?.length ?? 0) > 0
+                                        {isLoadingSalons
+                                          ? "Loading salons..."
+                                          : (field.value?.length ?? 0) > 0
                                           ? `${field.value?.length ?? 0} salon${
                                               (field.value?.length ?? 0) > 1
                                                 ? "s"
@@ -432,28 +392,44 @@ export default function NotificationForm() {
                                     <Command>
                                       <CommandInput placeholder="Search salons..." />
                                       <CommandList>
+                                        {isLoadingSalons && (
+                                          <div className="py-6 text-center text-sm">
+                                            Loading salons...
+                                          </div>
+                                        )}
                                         <CommandEmpty>
                                           No salon found.
                                         </CommandEmpty>
                                         <CommandGroup>
                                           {filteredSalons.map((salon) => (
                                             <CommandItem
-                                              key={salon.id}
-                                              value={salon.id}
-                                              onSelect={() => {
+                                              key={salon._id}
+                                              value={`${salon.userName} ${salon.email}`}
+                                              onSelect={(value) => {
                                                 const selectedValues =
                                                   field.value || [];
+                                                const clickedSalon =
+                                                  salons.find(
+                                                    (s) =>
+                                                      `${s.userName} ${s.email}` ===
+                                                      value
+                                                  );
+                                                if (!clickedSalon) return;
+
                                                 const newValues =
                                                   selectedValues.includes(
-                                                    salon.id
+                                                    clickedSalon._id
                                                   )
                                                     ? selectedValues.filter(
-                                                        (id) => id !== salon.id
+                                                        (id) =>
+                                                          id !==
+                                                          clickedSalon._id
                                                       )
                                                     : [
                                                         ...selectedValues,
-                                                        salon.id,
+                                                        clickedSalon._id,
                                                       ];
+
                                                 form.setValue(
                                                   "selectedSalons",
                                                   newValues
@@ -464,13 +440,20 @@ export default function NotificationForm() {
                                                 className={cn(
                                                   "mr-2 h-4 w-4",
                                                   field.value?.includes(
-                                                    salon.id
+                                                    salon._id
                                                   )
                                                     ? "opacity-100"
                                                     : "opacity-0"
                                                 )}
                                               />
-                                              {salon.name}
+                                              <div className="flex flex-col">
+                                                <span>
+                                                  {salon.userName || "Unknown"}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                  {salon.email}
+                                                </span>
+                                              </div>
                                             </CommandItem>
                                           ))}
                                         </CommandGroup>
@@ -478,7 +461,11 @@ export default function NotificationForm() {
                                     </Command>
                                   </PopoverContent>
                                 </Popover>
-                                <FormMessage />
+                                {fieldState.error && (
+                                  <FormMessage>
+                                    {fieldState.error.message}
+                                  </FormMessage>
+                                )}
                               </FormItem>
                             )}
                           />
@@ -487,7 +474,7 @@ export default function NotificationForm() {
                     )}
                   </>
                 )}
-
+                {/* Clients select */}
                 {watchRecipientType === "clients" && (
                   <>
                     <FormField
@@ -515,12 +502,20 @@ export default function NotificationForm() {
                         </FormItem>
                       )}
                     />
-
+                    {/* All clients select */}
                     {!watchAllClients && (
                       <FormField
                         control={form.control}
                         name="selectedClients"
-                        render={({ field }) => (
+                        rules={{
+                          validate: (value) =>
+                            watchRecipientType === "clients" &&
+                            !watchAllClients &&
+                            (!value || value.length === 0)
+                              ? "Please select at least one client"
+                              : true,
+                        }}
+                        render={({ field, fieldState }) => (
                           <FormItem>
                             <FormLabel>Select Specific Clients</FormLabel>
                             <Popover
@@ -530,12 +525,15 @@ export default function NotificationForm() {
                               <PopoverTrigger asChild>
                                 <FormControl>
                                   <Button
-                                    variant="outline"
+                                    variant="outlineDate"
                                     role="combobox"
                                     aria-expanded={openClients}
                                     className="w-full justify-between"
+                                    disabled={isLoadingClients}
                                   >
-                                    {(field.value?.length ?? 0) > 0
+                                    {isLoadingClients
+                                      ? "Loading clients..."
+                                      : (field.value?.length ?? 0) > 0
                                       ? `${field.value?.length ?? 0} client${
                                           (field.value?.length ?? 0) > 1
                                             ? "s"
@@ -550,26 +548,42 @@ export default function NotificationForm() {
                                 <Command>
                                   <CommandInput placeholder="Search clients..." />
                                   <CommandList>
+                                    {isLoadingClients && (
+                                      <div className="py-6 text-center text-sm">
+                                        Loading clients...
+                                      </div>
+                                    )}
                                     <CommandEmpty>
                                       No client found.
                                     </CommandEmpty>
                                     <CommandGroup>
                                       {clients.map((client) => (
                                         <CommandItem
-                                          key={client.id}
-                                          value={client.id}
-                                          onSelect={() => {
+                                          key={client._id}
+                                          value={`${client.userName} ${client.email}`}
+                                          onSelect={(value) => {
                                             const selectedValues =
                                               field.value || [];
+                                            const clickedClient = clients.find(
+                                              (c) =>
+                                                `${c.userName} ${c.email}` ===
+                                                value
+                                            );
+                                            if (!clickedClient) return;
+
                                             const newValues =
-                                              selectedValues.includes(client.id)
+                                              selectedValues.includes(
+                                                clickedClient._id
+                                              )
                                                 ? selectedValues.filter(
-                                                    (id) => id !== client.id
+                                                    (id) =>
+                                                      id !== clickedClient._id
                                                   )
                                                 : [
                                                     ...selectedValues,
-                                                    client.id,
+                                                    clickedClient._id,
                                                   ];
+
                                             form.setValue(
                                               "selectedClients",
                                               newValues
@@ -579,12 +593,19 @@ export default function NotificationForm() {
                                           <Check
                                             className={cn(
                                               "mr-2 h-4 w-4",
-                                              field.value?.includes(client.id)
+                                              field.value?.includes(client._id)
                                                 ? "opacity-100"
                                                 : "opacity-0"
                                             )}
                                           />
-                                          {client.name}
+                                          <div className="flex flex-col">
+                                            <span>
+                                              {client.userName || "Unknown"}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                              {client.email}
+                                            </span>
+                                          </div>
                                         </CommandItem>
                                       ))}
                                     </CommandGroup>
@@ -592,7 +613,11 @@ export default function NotificationForm() {
                                 </Command>
                               </PopoverContent>
                             </Popover>
-                            <FormMessage />
+                            {fieldState.error && (
+                              <FormMessage>
+                                {fieldState.error.message}
+                              </FormMessage>
+                            )}
                           </FormItem>
                         )}
                       />

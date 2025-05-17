@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     await dbConnect();
@@ -16,43 +16,45 @@ export async function POST(req: Request) {
     // Find the user
     const user = await User.findOne({ clerkUserId: userId });
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     // Verify user is a salon owner
     if (user.type !== UserType.SALON_OWNER) {
-      return new NextResponse("User is not a salon owner", { status: 403 });
+      return NextResponse.json({ message: "User is not a salon owner" }, { status: 403 });
     }
 
     const body = await req.json();
     const { 
       businessName,
+      description,
+      location,
       website,
+      phoneNumber,
+      ownerName,
       businessRegistrationNumber,
-      businessCategory,
-      streetAddress,
-      city,
-      postalCode,
-      workingHours
+      workingHours,
+      businessHours
     } = body;
 
     // Create salon context
     const salonContext = await SalonContext.create({
       userId: user._id,
       businessName,
+      description,
+      location,
       website,
+      phoneNumber,
+      ownerName,
       businessRegistrationNumber,
-      businessCategory,
-      streetAddress,
-      city,
-      postalCode,
-      workingHours
+      workingHours,
+      businessHours
     });
 
     return NextResponse.json(salonContext);
   } catch (error) {
     console.error("[SALON_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ message: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -60,7 +62,7 @@ export async function PATCH(req: Request) {
   try {
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -69,12 +71,12 @@ export async function PATCH(req: Request) {
     // Find the user first
     const user = await User.findOne({ clerkUserId });
     if (!user) {
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     const salonContext = await SalonContext.findOne({ userId: user._id });
     if (!salonContext) {
-      return new NextResponse("Salon not found", { status: 404 });
+      return NextResponse.json({ message: "Salon not found" }, { status: 404 });
     }
 
     // Only update fields provided in the request body
@@ -88,7 +90,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json(salonContext);
   } catch (error) {
     console.error("[SALON_PROFILE_PATCH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ message: "Internal Error" }, { status: 500 });
   }
 }
 
@@ -96,7 +98,7 @@ export async function GET() {
   try {
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     await dbConnect();
@@ -106,7 +108,7 @@ export async function GET() {
     const user = await User.findOne({ clerkUserId });
     if (!user) {
       console.log("[SALON_PROFILE_GET] User not found");
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     console.log("[SALON_PROFILE_GET] Found user:", user._id);
@@ -117,12 +119,12 @@ export async function GET() {
     
     if (!salonContext) {
       console.log("[SALON_PROFILE_GET] Salon not found");
-      return new NextResponse("Salon not found", { status: 404 });
+      return NextResponse.json({ message: "Salon not found" }, { status: 404 });
     }
 
     return NextResponse.json(salonContext);
   } catch (error) {
     console.error("[SALON_PROFILE_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return NextResponse.json({ message: "Internal Error" }, { status: 500 });
   }
-} 
+}
