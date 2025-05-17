@@ -18,6 +18,8 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const type = url.searchParams.get("type");
     const id = url.searchParams.get("id");
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const limit = parseInt(url.searchParams.get("limit") || "10");
     
     // Connect to database
     await dbConnect();
@@ -37,10 +39,27 @@ export async function GET(req: Request) {
       query.type = type;
     }
     
-    // Fetch users based on query
-    const users = await User.find(query);
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
     
-    return NextResponse.json(users);
+    // Count total users for pagination
+    const total = await User.countDocuments(query);
+    
+    // Fetch users based on query with pagination
+    const users = await User.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+    
+    return NextResponse.json({
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error("[USERS_GET]", error);
     return new NextResponse("Internal Error", { status: 500 });
