@@ -34,13 +34,22 @@ export default function CreateServicePage() {
       return formData.staffAssigned && formData.staffAssigned.length > 0;
     }
     if (currentStep === 4) {
-      return true; 
+      return imageUrls.length > 0; // Require at least one image
     }
     return false;
   };
 
   const handleNext = () => {
-    if (!isStepValid()) return;
+    if (!isStepValid()) {
+      if (currentStep === 4 && imageUrls.length === 0) {
+        toast({
+          title: "Image Required",
+          description: "Please upload at least one image for your service.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
