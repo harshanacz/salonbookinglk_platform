@@ -121,12 +121,10 @@ export default function ServicePage(props: ServicePageProps) {
   const handleBookNow = () => {
     if (service) {
       addService({
-        id: service.id,
+        id: parseInt(service.id),
         name: service.title,
         price: service.price,
-        salonId: service.salon.id,
-        salonName: service.salon.name,
-        duration: service.duration || 60,
+        image: service.images[0] || "/placeholder.svg?height=100&width=100",
       });
     }
   };
