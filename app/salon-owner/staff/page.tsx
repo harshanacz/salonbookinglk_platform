@@ -49,6 +49,11 @@ interface StaffMember {
   status: string;
   availability: string;
   createdAt: string;
+  attendance?: {
+    date: string;
+    status: string;
+    timeSlot: string;
+  }[];
 }
 
 export default function StaffManagement() {
