@@ -9,7 +9,46 @@ import {
 import { Store, Users, Scissors, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
+// Custom hook for count up animation
+const useCountUp = (end: number, start = 0, duration = 500) => {
+  const [count, setCount] = useState(start);
+  const countRef = useRef(start);
+  const startTimeRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Reset start time when end value changes
+    startTimeRef.current = null;
+    countRef.current = start;
+
+    const animate = (timestamp: number) => {
+      if (!startTimeRef.current) startTimeRef.current = timestamp;
+      const progress = Math.min(
+        (timestamp - startTimeRef.current) / duration,
+        1
+      );
+      const currentCount = Math.floor(progress * (end - start) + start);
+
+      setCount(currentCount);
+      countRef.current = currentCount;
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        setCount(end);
+      }
+    };
+
+    requestAnimationFrame(animate);
+
+    return () => {
+      startTimeRef.current = null;
+    };
+  }, [end, start, duration]);
+
+  return count;
+};
 
 // Sample data for the dashboard with placeholders for dynamic values
 const dashboardData = {
@@ -25,14 +64,14 @@ const dashboardData = {
       id: 2,
       title: "Pending Services",
       icon: Scissors,
-      value: 0, // Changed from hardcoded 24 to 0
+      value: 0, 
       description: "",
     },
     {
       id: 3,
       title: "Total Users",
       icon: Users,
-      value: 0, // Will be updated dynamically
+      value: 0, 
       description: "",
     },
     {
@@ -63,7 +102,26 @@ const Page = () => {
         );
         if (response.ok) {
           const data = await response.json();
-          setRecentSalons(data);
+          // Extract users array from response
+          const salons = data.users || [];
+
+          // Process salon data to ensure consistent structure
+          const processedSalons = salons.map((salon: any) => ({
+            ...salon,
+            name:
+              salon.salonName ||
+              salon.businessName ||
+              salon.name ||
+              salon.email?.split("@")[0] ||
+              "Unnamed Salon",
+            address:
+              salon.salonAddress ||
+              salon.businessAddress ||
+              salon.address ||
+              "No address provided",
+          }));
+
+          setRecentSalons(processedSalons);
         } else {
           console.error("Failed to fetch recent salons");
         }
@@ -79,12 +137,13 @@ const Page = () => {
         const response = await fetch("/api/admin/users?type=SALON_OWNER");
         if (response.ok) {
           const data = await response.json();
-          const totalSalons = data.length;
+          const salons = data.users || [];
+          const totalSalons = salons.length;
 
           // Calculate salons created in the last month
           const oneMonthAgo = new Date();
           oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-          const newSalons = data.filter(
+          const newSalons = salons.filter(
             (salon: any) => new Date(salon.createdAt) > oneMonthAgo
           ).length;
 
@@ -112,7 +171,8 @@ const Page = () => {
         const response = await fetch("/api/admin/users");
         if (response.ok) {
           const data = await response.json();
-          const totalUsers = data.length;
+          const users = data.users || [];
+          const totalUsers = users.length;
 
           setStats((prevStats) =>
             prevStats.map((stat) =>
@@ -210,6 +270,9 @@ const Page = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
+          // Use the count up animation hook
+          const animatedValue = useCountUp(stat.value, 0, 1500);
+
           return (
             <Card key={stat.id}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -219,7 +282,7 @@ const Page = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-2xl font-bold">{animatedValue}</div>
                 <p className="text-xs text-muted-foreground">
                   {stat.description}
                 </p>
@@ -293,11 +356,12 @@ const Page = () => {
                         <Store className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <div>
-                        <div className="font-medium">
-                          {salon.name || "No name"}
-                        </div>
+                        <div className="font-medium">{salon.name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {salon.address || "No address provided"}
+                          {salon.email || "No email"}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {salon.address}
                         </div>
                       </div>
                     </div>
