@@ -34,12 +34,25 @@ const attendanceSchema = z.object({
 
 type AttendanceFormValues = z.infer<typeof attendanceSchema>;
 
+interface StaffMember {
+  _id: string;
+  name: string;
+  status: string;
+  attendance?: {
+    date: string;
+    status: string;
+    timeSlot: string;
+  }[];
+}
+
 export default function UpdateAttendanceForm() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const staffId = searchParams.get("id");
   const [staffName, setStaffName] = useState("");
+  const [currentStatus, setCurrentStatus] = useState("Active");
+  const [staff, setStaff] = useState<StaffMember | null>(null);
 
   const form = useForm<AttendanceFormValues>({
     resolver: zodResolver(attendanceSchema),
@@ -57,6 +70,19 @@ export default function UpdateAttendanceForm() {
         const response = await fetch(`/api/salon-owner/staff/${staffId}`);
         const data = await response.json();
         setStaffName(data.name);
+        setStaff(data);
+        setCurrentStatus(data.status);
+
+        // Pre-fill the status based on existing attendance for selected date
+        const today = new Date().toISOString().split("T")[0];
+        const todayAttendance = data.attendance?.find(
+          (a: any) => a.date === today
+        );
+        if (todayAttendance) {
+          form.setValue("status", todayAttendance.status);
+        } else {
+          form.setValue("status", data.status);
+        }
       } catch (error) {
         toast({
           title: "Error",
@@ -69,6 +95,17 @@ export default function UpdateAttendanceForm() {
     fetchStaffMember();
   }, [staffId]);
 
+  // Add date change handler
+  const handleDateChange = (date: string) => {
+    if (!staff) return;
+
+    // Find attendance record for selected date
+    const attendanceForDate = staff.attendance?.find((a) => a.date === date);
+
+    // Set status based on attendance record or current status
+    form.setValue("status", attendanceForDate?.status || staff.status);
+  };
+
   const onSubmit = async (data: AttendanceFormValues) => {
     if (!staffId) return;
 
@@ -80,7 +117,11 @@ export default function UpdateAttendanceForm() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            ...data,
+            // Only update status for this specific date
+            previousStatus: currentStatus,
+          }),
         }
       );
 
@@ -90,7 +131,7 @@ export default function UpdateAttendanceForm() {
 
       toast({
         title: "Success",
-        description: "Attendance status updated successfully",
+        description: `Attendance status updated for ${data.date}`,
       });
 
       router.push("/salon-owner/staff");
@@ -129,7 +170,14 @@ export default function UpdateAttendanceForm() {
                 <FormItem>
                   <FormLabel>Date</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input
+                      type="date"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleDateChange(e.target.value);
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

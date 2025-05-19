@@ -30,7 +30,7 @@ export async function PUT(
 
     // Get request data
     const { id } = params;
-    const { date, timeSlot, status } = await request.json();
+    const { date, timeSlot, status, previousStatus } = await request.json();
 
     // Validate required fields
     if (!date || !timeSlot || !status) {
@@ -43,11 +43,10 @@ export async function PUT(
       );
     }
 
-    // Update staff member
+    // Update staff member with date-specific attendance
     const updatedStaff = await Staff.findOneAndUpdate(
       { _id: id, userId: user._id },
       {
-        $set: { status },
         $push: {
           attendance: {
             date,
@@ -55,7 +54,11 @@ export async function PUT(
             status,
             updatedAt: new Date()
           }
-        }
+        },
+        // Only update main status if it's today's date
+        ...(new Date(date).toDateString() === new Date().toDateString() && {
+          $set: { status }
+        })
       },
       { new: true }
     );
