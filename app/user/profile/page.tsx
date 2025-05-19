@@ -1,52 +1,113 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 
 export default function UserProfile() {
+  const { user } = useUser();
   const [userData, setUserData] = useState({
-    fullName: "Naduni Siriwardhane",
-    email: "Naduni123@gmail.com", // This is the primary email
-    mobileNumber: "0712345678",
-    gender: "Female",
-    country: "Sri Lanka",
-    emailUpdated: "1 month ago", // Last updated timestamp
-    address: "No. 123,\nPeradeniya road,\nPiliyandala.",
+    fullName: "",
+    email: "",
+    mobileNumber: "",
+    gender: "",
+    country: "",
+    emailUpdated: "1 month ago", // Static value as we don't track this
   });
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
   const [profileImage, setProfileImage] = useState("/placeholder-user.jpg");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("/api/user/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setUserData({
+            fullName: data.fullName || user?.fullName || "",
+            email: data.email || user?.primaryEmailAddress?.emailAddress || "",
+            mobileNumber: data.mobileNumber || "",
+            gender: data.gender || "",
+            country: data.country || "Sri Lanka",
+            emailUpdated: "1 month ago", // Static value
+          });
+
+          if (data.profileImage) {
+            setProfileImage(data.profileImage);
+          } else if (user?.imageUrl) {
+            setProfileImage(user.imageUrl);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const handleEditClick = (field: keyof typeof userData) => {
     setEditingField(field);
     setTempValue(userData[field]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (editingField) {
+      // Update UI immediately
       setUserData((prevData) => ({
         ...prevData,
         [editingField]: tempValue,
       }));
+
+      // Then save to API
+      try {
+        const response = await fetch("/api/user/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            [editingField]: tempValue,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error("Failed to save profile update");
+        }
+      } catch (error) {
+        console.error("Error saving profile:", error);
+      }
+
       setEditingField(null);
     }
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
           setProfileImage(reader.result as string);
+
+          // Here you would typically upload the image to your server
+          // and update the profile image URL
         }
       };
       reader.readAsDataURL(file);
     }
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-pink-50 p-6 flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-pink-50 p-6">
@@ -56,7 +117,7 @@ export default function UserProfile() {
           <div className="flex items-center gap-4">
             <Avatar className="w-16 h-16 border-2 border-white">
               <AvatarImage src={profileImage} alt="Profile picture" />
-              <AvatarFallback>NS</AvatarFallback>
+              <AvatarFallback>{userData.fullName.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-lg font-medium">{userData.fullName}</h2>
@@ -166,7 +227,7 @@ export default function UserProfile() {
                   <option value="USA">USA</option>
                   <option value="UK">UK</option>
                   <option value="Canada">Canada</option>
-                  <option value="Canada">India</option>
+                  <option value="India">India</option>
                 </select>
               ) : (
                 <span>{userData.country}</span>
@@ -191,35 +252,11 @@ export default function UserProfile() {
                 @
               </div>
               <div>
-                <div>{userData.email}</div>{" "}
-                {/* Now using the same email as the top */}
+                <div>{userData.email}</div>
                 <div className="text-xs text-gray-400">
                   {userData.emailUpdated}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className="block text-sm text-gray-600 mb-2">Address</label>
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
-              {editingField === "address" ? (
-                <textarea
-                  value={tempValue}
-                  onChange={(e) => setTempValue(e.target.value)}
-                  className="w-full"
-                />
-              ) : (
-                <span className="whitespace-pre-line">{userData.address}</span>
-              )}
-              <button
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="Edit Address"
-                onClick={() => handleEditClick("address")}
-              >
-                <Pencil size={18} />
-              </button>
             </div>
           </div>
 
