@@ -1,7 +1,7 @@
 "use client";
 
 // Import React hooks and components
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -27,19 +27,71 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+// Interface for salon data
+interface SalonData {
+  businessName: string;
+  description: string;
+  website: string;
+  phoneNumber: string;
+  ownerName: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  businessHours: Array<{
+    day: string;
+    isOpen: boolean;
+    open: string;
+    close: string;
+  }>;
+}
+
+// Interface for user data
+interface UserData {
+  email: string;
+  userName: string;
+}
+
+// Day enum matching the backend Day enum
+enum Day {
+  MON = "MON",
+  TUE = "TUE",
+  WED = "WED",
+  THU = "THU",
+  FRI = "FRI",
+  SAT = "SAT",
+  SUN = "SUN",
+}
+
+// Business Hour interface
+interface BusinessHour {
+  day: Day;
+  isOpen: boolean;
+  open: string;
+  close: string;
+}
 
 // Main component for salon settings page
 export default function SalonSettings() {
   // Initialize toast notification system
   const { toast } = useToast();
-  
+
   // State for storing selected holiday dates
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
 
-  // State for business hours configuration
-  // Default hours for each day of the week
+  // State for salon data and user data
+  const [salonData, setSalonData] = useState<SalonData | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Generate all available time options for the time selectors (30 min intervals)
+  const timeOptions = generateTimeOptions();
+
+  // State for business hours configuration with default values
   const [businessHours, setBusinessHours] = useState({
     monday: { open: "09:00", close: "18:00", isOpen: true },
     tuesday: { open: "09:00", close: "18:00", isOpen: true },
@@ -50,10 +102,135 @@ export default function SalonSettings() {
     sunday: { open: "10:00", close: "14:00", isOpen: false },
   });
 
+  const [activeTab, setActiveTab] = useState("general");
+
+  // Function to generate time options for select dropdown
+  function generateTimeOptions() {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const formattedHour = hour.toString().padStart(2, "0");
+        const formattedMinute = minute.toString().padStart(2, "0");
+        options.push(`${formattedHour}:${formattedMinute}`);
+      }
+    }
+    return options;
+  }
+
+  // Helper function to convert backend day format to UI format
+  const dayToUiFormat = (day: string): keyof typeof businessHours => {
+    const dayMap: Record<string, keyof typeof businessHours> = {
+      MON: "monday",
+      TUE: "tuesday",
+      WED: "wednesday",
+      THU: "thursday",
+      FRI: "friday",
+      SAT: "saturday",
+      SUN: "sunday",
+    };
+    return dayMap[day] || "monday";
+  };
+
+  // Helper function to convert UI day format to backend format
+  const dayToApiFormat = (day: string): Day => {
+    const dayMap: Record<string, Day> = {
+      monday: Day.MON,
+      tuesday: Day.TUE,
+      wednesday: Day.WED,
+      thursday: Day.THU,
+      friday: Day.FRI,
+      saturday: Day.SAT,
+      sunday: Day.SUN,
+    };
+    return dayMap[day] || Day.MON;
+  };
+
+  // Format time for display
+  const formatTimeForDisplay = (time: string): string => {
+    const [hours, minutes] = time.split(":").map(Number);
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+  };
+
+  // Fetch salon data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch salon profile data
+        const salonResponse = await fetch("/api/salon-owner/salon-profile");
+        if (!salonResponse.ok) {
+          throw new Error("Failed to fetch salon data");
+        }
+        const salonDataResponse = await salonResponse.json();
+        setSalonData(salonDataResponse);
+
+        // Fetch user data to get email
+        const userResponse = await fetch("/api/user");
+        if (!userResponse.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+        const userDataResponse = await userResponse.json();
+        setUserData(userDataResponse);
+
+        // Update business hours from fetched data if available
+        if (
+          salonDataResponse.businessHours &&
+          Array.isArray(salonDataResponse.businessHours)
+        ) {
+          const initialBusinessHours = { ...businessHours };
+
+          // Map business hours from API to our state format
+          salonDataResponse.businessHours.forEach((hour: BusinessHour) => {
+            const dayKey = dayToUiFormat(hour.day);
+            initialBusinessHours[dayKey] = {
+              open: hour.open,
+              close: hour.close,
+              isOpen: hour.isOpen,
+            };
+          });
+
+          setBusinessHours(initialBusinessHours);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({
+          title: "Error loading data",
+          description: "There was a problem fetching your salon data.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Function to handle query parameters
+  useEffect(() => {
+    // Check for tab query parameter
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab) {
+      // If valid tab name, set it as default
+      const validTabs = [
+        "general",
+        "business-hours",
+        "closed-days",
+        "notifications",
+        "security-and-privacy",
+        "verify",
+      ];
+      if (validTabs.includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
+
   // Handler for updating business hours
-  // day: day of the week to update
-  // field: either 'open' or 'close' time
-  // value: new time value
   const handleBusinessHoursChange = (
     day: keyof typeof businessHours,
     field: "open" | "close",
@@ -69,7 +246,6 @@ export default function SalonSettings() {
   };
 
   // Toggles a day between open/closed status
-  // day: day of the week to toggle
   const handleDayToggle = (day: keyof typeof businessHours) => {
     setBusinessHours({
       ...businessHours,
@@ -81,7 +257,6 @@ export default function SalonSettings() {
   };
 
   // Handles date selection for holidays/special days
-  // date: Date object to add/remove from selection
   const handleDateSelect = (date: Date) => {
     setSelectedDates((prev) => {
       // Check if date already exists in selection
@@ -109,118 +284,228 @@ export default function SalonSettings() {
   };
 
   // Function to handle saving settings and show success toast notification
-const saveSettings = () => {
-  toast({
-    title: "Settings saved",
-    description: "Your salon settings have been updated successfully.",
-  });
-};
+  const saveSettings = async () => {
+    try {
+      setIsSaving(true);
 
-// Main component render
-return (
-  <div className="space-y-6">
-    {/* Header section with title and save button */}
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <h1 className="text-3xl font-bold">Salon Settings</h1>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-        {/* Save changes button with icon */}
-        <Button className="w-full sm:w-auto" onClick={saveSettings}>
-          <Save className="mr-2 h-4 w-4" /> Save Changes
-        </Button>
+      // Prepare businessHours data for API in the format the backend expects
+      const businessHoursData = Object.entries(businessHours).map(
+        ([day, hours]) => ({
+          day: dayToApiFormat(day),
+          isOpen: hours.isOpen,
+          open: hours.open,
+          close: hours.close,
+        })
+      );
+
+      // Update salon settings
+      const response = await fetch("/api/salon-owner/salon-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: document.getElementById("salon-name")?.value,
+          website: document.getElementById("salon-website")?.value,
+          phoneNumber: document.getElementById("salon-phone")?.value,
+          businessHours: businessHoursData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save settings");
+      }
+
+      const updatedSalon = await response.json();
+
+      // Update local state with the returned data
+      setSalonData(updatedSalon);
+
+      toast({
+        title: "Settings saved",
+        description: "Your salon settings have been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast({
+        title: "Error saving settings",
+        description:
+          "There was a problem saving your settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save business hours separately
+  const saveBusinessHours = async () => {
+    try {
+      setIsSaving(true);
+
+      // Prepare businessHours data for API
+      const businessHoursData = Object.entries(businessHours).map(
+        ([day, hours]) => ({
+          day: dayToApiFormat(day),
+          isOpen: hours.isOpen,
+          open: hours.open,
+          close: hours.close,
+        })
+      );
+
+      // Update only business hours
+      const response = await fetch("/api/salon-owner/salon-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessHours: businessHoursData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save business hours");
+      }
+
+      toast({
+        title: "Business hours updated",
+        description: "Your salon's business hours have been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error saving business hours:", error);
+      toast({
+        title: "Error saving business hours",
+        description:
+          "There was a problem updating your business hours. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
       </div>
-    </div>
+    );
+  }
 
-    {/* Settings tabs navigation */}
-    <Tabs defaultValue="general">
-      {/* Tab list for different settings sections */}
-      <TabsList className="mb-6">
-        <TabsTrigger value="general">General</TabsTrigger>
-        <TabsTrigger value="business-hours">Business Hours</TabsTrigger>
-        <TabsTrigger value="closed-days">Closed Days</TabsTrigger>
-        <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        <TabsTrigger value="security-and-privacy">Security & Privacy</TabsTrigger>
-        <TabsTrigger value="verify">Verify Saloon</TabsTrigger>
-      </TabsList>
+  // Main component render
+  return (
+    <div className="space-y-6">
+      {/* Header section with title and save button */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold">Salon Settings</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Save changes button with icon */}
+          <Button
+            className="w-full sm:w-auto"
+            onClick={saveSettings}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-2 h-4 w-4" />
+            )}
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </div>
 
-      {/* General settings tab content */}
-      <TabsContent value="general" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Salon Information</CardTitle>
-            <CardDescription>
-              Update your salon's basic information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Salon information form grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="salon-name">Salon Name</Label>
-                <Input id="salon-name" defaultValue="Salon Amaya" />
+      {/* Settings tabs navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        {/* Tab list for different settings sections */}
+        <TabsList className="mb-6">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="business-hours">Business Hours</TabsTrigger>
+          <TabsTrigger value="closed-days">Closed Days</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="security-and-privacy">
+            Security & Privacy
+          </TabsTrigger>
+          <TabsTrigger value="verify">Verify Saloon</TabsTrigger>
+        </TabsList>
+
+        {/* General settings tab content */}
+        <TabsContent value="general" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Salon Information</CardTitle>
+              <CardDescription>
+                Update your salon's basic information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Salon information form grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="salon-name">Salon Name</Label>
+                  <Input
+                    id="salon-name"
+                    defaultValue={salonData?.businessName || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salon-email">Email Address</Label>
+                  <Input
+                    id="salon-email"
+                    type="email"
+                    defaultValue={userData?.email || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salon-phone">Phone Number</Label>
+                  <Input
+                    id="salon-phone"
+                    defaultValue={salonData?.phoneNumber || ""}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salon-website">Website</Label>
+                  <Input
+                    id="salon-website"
+                    defaultValue={salonData?.website || ""}
+                  />
+                </div>
               </div>
+
+              <Separator />
+
+              {/* Address information section */}
               <div className="space-y-2">
-                <Label htmlFor="salon-email">Email Address</Label>
+                <Label htmlFor="salon-address">Address</Label>
                 <Input
-                  id="salon-email"
-                  type="email"
-                  defaultValue="contact@salonamaya.lk"
+                  id="salon-address"
+                  defaultValue={
+                    salonData?.location
+                      ? `Lat: ${salonData.location.lat}, Lng: ${salonData.location.lng}`
+                      : ""
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="salon-phone">Phone Number</Label>
-                <Input id="salon-phone" defaultValue="+94 77 123 4567" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salon-website">Website</Label>
-                <Input
-                  id="salon-website"
-                  defaultValue="https://salonamaya.lk"
-                />
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <Separator />
-
-            {/* Address information section */}
-            <div className="space-y-2">
-              <Label htmlFor="salon-address">Address</Label>
-              <Input id="salon-address" defaultValue="123 Galle Road" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="salon-city">City</Label>
-                <Input id="salon-city" defaultValue="Moratuwa" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salon-province">Province</Label>
-                <Input id="salon-province" defaultValue="Western" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="salon-postal-code">Postal Code</Label>
-                <Input id="salon-postal-code" defaultValue="10400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Business hours settings tab content */}
-      <TabsContent value="business-hours" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Business Hours</CardTitle>
-            <CardDescription>
-              Set your salon's regular operating hours
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Loop through each day's business hours */}
-              {Object.entries(businessHours).map(([day, hours]) => (
-                <div
-                  key={day}
-                  className="flex items-center justify-between border-b pb-4"
-                >
+        {/* Business hours settings tab content */}
+        <TabsContent value="business-hours" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Hours</CardTitle>
+              <CardDescription>
+                Set your salon's regular operating hours. These hours will be
+                displayed to customers when they book.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Loop through each day's business hours */}
+                {Object.entries(businessHours).map(([day, hours]) => (
+                  <div
+                    key={day}
+                    className="flex items-center justify-between border-b pb-4"
+                  >
                     <div className="flex items-center gap-4">
                       <Switch
                         checked={hours.isOpen}
@@ -246,22 +531,11 @@ return (
                             <SelectValue placeholder="Opening time" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from({ length: 13 }, (_, i) => i + 8).map(
-                              (hour) => (
-                                <SelectItem
-                                  key={hour}
-                                  value={`${hour
-                                    .toString()
-                                    .padStart(2, "0")}:00`}
-                                >
-                                  {hour === 12
-                                    ? "12:00 PM"
-                                    : hour < 12
-                                    ? `${hour}:00 AM`
-                                    : `${hour - 12}:00 PM`}
-                                </SelectItem>
-                              )
-                            )}
+                            {timeOptions.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {formatTimeForDisplay(time)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <span>to</span>
@@ -279,22 +553,11 @@ return (
                             <SelectValue placeholder="Closing time" />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from({ length: 13 }, (_, i) => i + 8).map(
-                              (hour) => (
-                                <SelectItem
-                                  key={hour}
-                                  value={`${hour
-                                    .toString()
-                                    .padStart(2, "0")}:00`}
-                                >
-                                  {hour === 12
-                                    ? "12:00 PM"
-                                    : hour < 12
-                                    ? `${hour}:00 AM`
-                                    : `${hour - 12}:00 PM`}
-                                </SelectItem>
-                              )
-                            )}
+                            {timeOptions.map((time) => (
+                              <SelectItem key={time} value={time}>
+                                {formatTimeForDisplay(time)}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -307,6 +570,23 @@ return (
                 ))}
               </div>
             </CardContent>
+            <CardFooter className="flex justify-end border-t pt-4">
+              <Button
+                onClick={saveBusinessHours}
+                disabled={isSaving}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" /> Save Business Hours
+                  </>
+                )}
+              </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -431,89 +711,104 @@ return (
         </TabsContent>
 
         <TabsContent value="security-and-privacy" className="space-y-6">
-  <Card>
-    <CardHeader>
-      <CardTitle>Privacy & Security</CardTitle>
-      <CardDescription>Manage your account security settings</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="text-lg font-medium mb-4">Change Password</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Update your password to keep your account secure.
-          </p>
-          <Link href ="/salon-owner/settings/change-password">
-          <Button variant="default" size="lg" >Change Password</Button>
-          </Link>
-        </div>
-        <div>
-          <h3 className="text-lg font-medium mb-4 text-red-600">Deactivate Account</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Deactivating your account will disable your profile and remove access.
-          </p>
-          <Link href="/salon-owner/settings/deactivate-account">
-          <Button variant="destructive" size="lg">Deactivate My Account</Button>
-          </Link>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-</TabsContent>
-<TabsContent value="verify" className="space-y-6">
-  <Card>
-    <CardHeader>
-      <CardTitle>Verify Salon</CardTitle>
-      <CardDescription>
-        Complete the information to verify your salon.
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="salon-name">Salon Name</Label>
-          <Input id="salon-name" placeholder="Enter your salon name" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="salon-email">Email Address</Label>
-          <Input id="salon-email" type="email" placeholder="Enter your email" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="salon-phone">Contact Number</Label>
-          <Input id="salon-phone" placeholder="Enter your contact number" />
-        </div>
-      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Privacy & Security</CardTitle>
+              <CardDescription>
+                Manage your account security settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Change Password</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Update your password to keep your account secure.
+                  </p>
+                  <Link href="/salon-owner/settings/change-password">
+                    <Button variant="default" size="lg">
+                      Change Password
+                    </Button>
+                  </Link>
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-4 text-red-600">
+                    Deactivate Account
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Deactivating your account will disable your profile and
+                    remove access.
+                  </p>
+                  <Link href="/salon-owner/settings/deactivate-account">
+                    <Button variant="destructive" size="lg">
+                      Deactivate My Account
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="verify" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Verify Salon</CardTitle>
+              <CardDescription>
+                Complete the information to verify your salon.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="salon-name">Salon Name</Label>
+                  <Input id="salon-name" placeholder="Enter your salon name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salon-email">Email Address</Label>
+                  <Input
+                    id="salon-email"
+                    type="email"
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="salon-phone">Contact Number</Label>
+                  <Input
+                    id="salon-phone"
+                    placeholder="Enter your contact number"
+                  />
+                </div>
+              </div>
 
-      <Separator />
+              <Separator />
 
-      <div className="space-y-2">
-        <Label htmlFor="salon-documents">Upload Documents</Label>
-        <p className="text-sm text-gray-500 mb-4">
-          Upload relevant documents for verification (e.g., Business Registration).
-        </p>
-        <Input
-          id="salon-documents"
-          type="file"
-          accept=".pdf,.doc,.docx,.jpg,.png"
-          className="border-2 border-gray-300 rounded-md p-2"
-        />
-      </div>
-    </CardContent>
-    <CardFooter>
-      <Button
-        variant="default"
-        onClick={() => {
-          // Logic for submitting the form data to admin
-          alert("Salon verification data submitted to admin!");
-        }}
-      >
-        Submit Verification
-      </Button>
-    </CardFooter>
-  </Card>
-</TabsContent>
-
-
+              <div className="space-y-2">
+                <Label htmlFor="salon-documents">Upload Documents</Label>
+                <p className="text-sm text-gray-500 mb-4">
+                  Upload relevant documents for verification (e.g., Business
+                  Registration).
+                </p>
+                <Input
+                  id="salon-documents"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                  className="border-2 border-gray-300 rounded-md p-2"
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button
+                variant="default"
+                onClick={() => {
+                  // Logic for submitting the form data to admin
+                  alert("Salon verification data submitted to admin!");
+                }}
+              >
+                Submit Verification
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

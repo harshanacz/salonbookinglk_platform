@@ -9,7 +9,8 @@ import MoreInfoForm from "./components/MoreInfoForm";
 import { Button } from "@/components/ui/button";
 import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react"; 
+import { Loader2 } from "lucide-react";
+import ServiceImages from "./components/ServiceImages";
 
 export default function CreateServicePage() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -33,13 +34,22 @@ export default function CreateServicePage() {
       return formData.staffAssigned && formData.staffAssigned.length > 0;
     }
     if (currentStep === 4) {
-      return true; 
+      return imageUrls.length > 0; // Require at least one image
     }
     return false;
   };
 
   const handleNext = () => {
-    if (!isStepValid()) return;
+    if (!isStepValid()) {
+      if (currentStep === 4 && imageUrls.length === 0) {
+        toast({
+          title: "Image Required",
+          description: "Please upload at least one image for your service.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -116,46 +126,16 @@ export default function CreateServicePage() {
           <MoreInfoForm formData={formData} updateFormData={updateFormData}>
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Service Images (Max 3)</h3>
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => {
-                  if (res) {
-                    const newUrls = res.map((file) => file.url);
-                    setImageUrls(newUrls.slice(0, 3));
-                    updateFormData({ images: newUrls.slice(0, 3) });
-                    toast({ description: "Image(s) uploaded." });
-                  }
-                }}
-                onUploadError={(error: Error) => {
-                  toast({
-                    title: "Image Upload Error",
-                    description: error.message,
-                    variant: "destructive",
-                  });
+              <ServiceImages
+                images={imageUrls}
+                onImagesChange={(newImages) => {
+                  setImageUrls(newImages);
+                  updateFormData({ images: newImages });
                 }}
               />
-              <div className="mt-4 flex gap-2 flex-wrap">
-                {imageUrls.map((url, index) => (
-                  <div key={index} className="relative w-20 h-20 border rounded overflow-hidden">
-                    <img src={url} alt={`Service Image ${index + 1}`} className="object-cover w-full h-full" />
-                    <span className="absolute top-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                      {index === 0 ? "Header" : `Image ${index + 1}`}
-                    </span>
-                    <button
-                      onClick={() => {
-                        const newUrls = imageUrls.filter((_, i) => i !== index);
-                        setImageUrls(newUrls);
-                        updateFormData({ images: newUrls });
-                      }}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 text-xs"
-                      aria-label="Remove image"
-                    >
-                      X
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">First image will be used as the header image.</p>
+              <p className="text-xs text-gray-500 mt-2">
+                First image is used as the main image. Images up to 4MB, max 3.
+              </p>
             </div>
           </MoreInfoForm>
         );

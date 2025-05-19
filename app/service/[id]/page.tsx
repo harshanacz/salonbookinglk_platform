@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
 import { useCheckoutStore } from "@/store/checkoutStore";
+import { useRouter } from "next/navigation";
 
 interface ServicePageProps {
   params: {
@@ -56,6 +57,7 @@ interface RelatedService {
 
 export default function ServicePage(props: ServicePageProps) {
   const { params } = props;
+  const router = useRouter();
   const addService = useCheckoutStore((state) => state.addService);
 
   // Define state for our data
@@ -65,6 +67,14 @@ export default function ServicePage(props: ServicePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedSalon, setSelectedSalon] = useState<any>(null);
+
+  useEffect(() => {
+    const salonData = sessionStorage.getItem("salonInfo");
+    if (salonData) {
+      setSelectedSalon(JSON.parse(salonData));
+    }
+  }, []);
 
   // Fetch service data
   useEffect(() => {
@@ -116,8 +126,9 @@ export default function ServicePage(props: ServicePageProps) {
       console.error('Failed to track service view:', error);
     }
   };
+  
 
-  // Handle adding to checkout
+  // Handle adding to checkout and navigation
   const handleBookNow = () => {
     if (service) {
       addService({
@@ -128,6 +139,42 @@ export default function ServicePage(props: ServicePageProps) {
         salonName: service.salon.name,
         duration: service.duration || 60,
       });
+
+      // Store main service for the next page
+      sessionStorage.setItem(
+        "bookingServices",
+        JSON.stringify([
+          {
+            id: service.id,
+            name: service.title,
+            price: service.price,
+            duration: `${service.duration} mins`,
+          },
+        ])
+      );
+
+      // Store salon info for the next page
+      sessionStorage.setItem(
+        "salonInfo",
+        JSON.stringify({
+          name: service.salon.name,
+          image:
+            service.images && service.images.length > 0
+              ? service.images[0]
+              : "/placeholder.svg?height=100&width=100",
+          rating: service.salon.rating,
+          reviews: service.salon.reviews,
+          closingTime: service.salon.openUntil,
+          isOpen: service.salon.isOpen,
+          address: service.salon.location,
+          mapLink: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            service.salon.location
+          )}`,
+          bestSeller: service.salon.bestSeller,
+        })
+      );
+
+      router.push(`/service/${params.id}/time`);
     }
   };
 
@@ -334,14 +381,12 @@ export default function ServicePage(props: ServicePageProps) {
                 </div>
               </div>
               <div className="space-y-3">
-                <Link href={`/user/booking?serviceId=${service.id}`}>
-                  <Button 
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    onClick={handleBookNow}
-                  >
-                    Book now
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  onClick={handleBookNow}
+                >
+                  Book now
+                </Button>
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1">
                     <Heart className="h-4 w-4 mr-2" /> Save
@@ -464,14 +509,12 @@ export default function ServicePage(props: ServicePageProps) {
               )}
             </div>
             <div className="space-y-3">
-              <Link href={`/user/booking?serviceId=${service.id}`}>
-                <Button 
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  onClick={handleBookNow}
-                >
-                  Book now
-                </Button>
-              </Link>
+              <Button 
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={handleBookNow}
+              >
+                Book now
+              </Button>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1">
                   <Heart className="h-4 w-4 mr-2" /> Save

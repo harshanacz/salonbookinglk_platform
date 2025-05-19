@@ -10,6 +10,7 @@ export async function GET(req: Request) {
   try {
     // Check if user is authenticated
     const { userId } = await auth();
+    
     if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
@@ -39,8 +40,9 @@ export async function GET(req: Request) {
       query.type = type;
     }
     
-    // Calculate pagination values
+
     const skip = (page - 1) * limit;
+
     
     // Count total users for pagination
     const total = await User.countDocuments(query);

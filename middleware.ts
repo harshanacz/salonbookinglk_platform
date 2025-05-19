@@ -16,7 +16,7 @@ const ROUTE_CONFIG = {
   salonOwner: {
     pattern: createRouteMatcher(["/salon-owner(.*)"]),
     allowedTypes: ["SALON_OWNER"],
-    redirectPath: "/salon-owner/profile",
+    redirectPath: "/salon-owner/create-profile",
   },
   superAdmin: {
     pattern: createRouteMatcher(["/super-admin(.*)"]),
@@ -30,21 +30,77 @@ const ROUTE_CONFIG = {
   },
 };
 
+// Routes excluded from profile check
+const PROFILE_CHECK_EXCLUDED_ROUTES = [
+  "/salon-owner/create-profile",
+  "/user/complete-profile",
+  "/api/",
+  "/sign-in",
+  "/sign-up"
+];
+
 // Get the designated route for a user type
 const getHomeRouteForUserType = (type: string): string => {
   switch (type) {
     case "SUPER_ADMIN":
       return "/super-admin";
     case "SALON_OWNER":
-      return "/salon-owner/profile";
+      return "/salon-owner/profile"; // Change default landing page to /profile
     case "ADMIN":
       return "/admin";
     case "CUSTOMER":
+      return "/user/profile";
     case undefined:
     case null:
       return "/";
     default:
       return "/";
+  }
+};
+
+// Check if a salon owner has completed their profile
+const checkSalonOwnerProfile = async (req: Request): Promise<boolean> => {
+  try {
+    // Call our API endpoint to check profile status
+    const baseUrl = new URL(req.url).origin;
+    const response = await fetch(`${baseUrl}/api/salon-owner/profile-check`, {
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+      },
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    return data.isComplete;
+  } catch (error) {
+    console.error("[MIDDLEWARE_PROFILE_CHECK]", error);
+    return false;
+  }
+};
+
+// Check if a customer has completed their profile
+const checkCustomerProfile = async (req: Request): Promise<boolean> => {
+  try {
+    // Call our API endpoint to check profile status
+    const baseUrl = new URL(req.url).origin;
+    const response = await fetch(`${baseUrl}/api/user/profile-check`, {
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+      },
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    const data = await response.json();
+    return data.isComplete;
+  } catch (error) {
+    console.error("[MIDDLEWARE_CUSTOMER_PROFILE_CHECK]", error);
+    return false;
   }
 };
 
@@ -60,6 +116,14 @@ export default clerkMiddleware(async (auth, req) => {
   const isProtectedRoute = Object.values(ROUTE_CONFIG).some((config) =>
     config.pattern(req)
   );
+  
+  // Also consider all /user/ routes as protected
+  const isUserRoute = req.nextUrl.pathname.startsWith("/user/");
+  
+  // If not authenticated and trying to access protected routes or user routes
+  if (!authObject.userId && (isProtectedRoute || isUserRoute)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
 
   // If authenticated, handle user type specific redirects
   if (authObject.userId) {
@@ -67,6 +131,7 @@ export default clerkMiddleware(async (auth, req) => {
     const userType = sessionClaims?.metadata?.type as string | undefined;
 
     console.log("User type:", userType);
+
     // If user type is not set, treat them as a customer
     // This helps during initial sign up before the type is set
     if (!userType) {
@@ -82,6 +147,33 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(
         new URL(getHomeRouteForUserType(userType), req.url)
       );
+    }
+
+    // Check if salon owner has completed profile
+    if (userType === "SALON_OWNER" && 
+        req.nextUrl.pathname.startsWith("/salon-owner") && 
+        !PROFILE_CHECK_EXCLUDED_ROUTES.some(path => req.nextUrl.pathname.startsWith(path))) {
+      
+      const isProfileComplete = await checkSalonOwnerProfile(req);
+      
+      if (!isProfileComplete && !req.nextUrl.pathname.startsWith("/salon-owner/create-profile")) {
+        return NextResponse.redirect(
+          new URL("/salon-owner/create-profile", req.url)
+        );
+      }
+    }
+    
+    // Check if customer has completed profile - for ALL customer routes
+    if (userType === "CUSTOMER" && 
+        !PROFILE_CHECK_EXCLUDED_ROUTES.some(path => req.nextUrl.pathname.startsWith(path))) {
+      
+      const isProfileComplete = await checkCustomerProfile(req);
+      
+      if (!isProfileComplete) {
+        return NextResponse.redirect(
+          new URL("/user/complete-profile", req.url)
+        );
+      }
     }
 
     // For protected routes, check permissions
