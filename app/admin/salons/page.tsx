@@ -15,10 +15,11 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Eye, User } from "lucide-react";
+import { Search, Filter, Eye, User, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import {
   Select,
@@ -39,47 +40,65 @@ type Salon = {
   status: string;
 };
 
+interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 const Page = () => {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("All");
   const [salons, setSalons] = useState<Salon[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 0
+  });
+
+  const fetchSalons = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/admin/users?type=SALON_OWNER&page=${page}&limit=${pagination.limit}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch salons");
+      }
+
+      const data = await response.json();
+
+      // Map the API data to the Salon type
+      const formattedSalons: Salon[] = data.users.map((salon: any) => ({
+        id: salon._id,
+        name: salon.userName || "Unnamed Salon",
+        image: salon.profileImage || "",
+        email: salon.email || "",
+        contactNumber: salon.phoneNumber || salon.contactNumber || "",
+        location: salon.address || salon.location || "",
+        status: salon.status || "Pending",
+      }));
+
+      setSalons(formattedSalons);
+      setPagination(data.pagination);
+    } catch (error) {
+      console.error("Error fetching salons:", error);
+      setError("Failed to load salons. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSalons = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch("/api/admin/users?type=SALON_OWNER");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch salons");
-        }
-
-        const data = await response.json();
-
-        // Map the API data to the Salon type
-        const formattedSalons: Salon[] = data.map((salon: any) => ({
-          id: salon._id,
-          name: salon.userName || "Unnamed Salon",
-          image: salon.profileImage || "",
-          email: salon.email || "",
-          contactNumber: salon.phoneNumber || salon.contactNumber || "",
-          location: salon.address || salon.location || "",
-          status: salon.status || "Pending",
-        }));
-
-        setSalons(formattedSalons);
-      } catch (error) {
-        console.error("Error fetching salons:", error);
-        setError("Failed to load salons. Please try again later.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchSalons();
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    fetchSalons(newPage);
+  };
 
   const filteredSalons = salons.filter((salon) => {
     const matchesSearch = salon.name
@@ -201,6 +220,36 @@ const Page = () => {
             </Table>
           )}
         </CardContent>
+        {!isLoading && !error && pagination.pages > 1 && (
+          <CardFooter className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} salons
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Previous Page</span>
+              </Button>
+              <div className="text-sm font-medium">
+                Page {pagination.page} of {pagination.pages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Next Page</span>
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
