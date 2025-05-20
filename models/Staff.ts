@@ -89,7 +89,7 @@ const staffSchema = new mongoose.Schema(
     },
     timeSlots: {
       type: [timeSlotSchema],
-      default: [],
+      default: [], 
     },
   },
   {
