@@ -78,15 +78,7 @@ export default function CreateSalonProfile() {
       const location = { lat: 6.9271, lng: 79.8612 }; // Default to Colombo, Sri Lanka
       
       // Create default working hours (one week)
-      const workingHours = [
-        { day: "MON" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "TUE" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "WED" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "THU" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "FRI" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "SAT" as Day, isWorking: true, start: "09:00", end: "17:00" },
-        { day: "SUN" as Day, isWorking: false, start: "00:00", end: "00:00" },
-      ];
+
       
       // Create default business hours (same as working hours for now)
       const businessHours = [
@@ -117,8 +109,8 @@ export default function CreateSalonProfile() {
           phoneNumber: data.phoneNumber,
           ownerName: data.ownerName,
           businessRegistrationNumber: data.businessRegistrationNumber,
-          workingHours,
           businessHours,
+          profilePictureUrl: "https://i.ibb.co/xtt1ck9D/shop.png",
         }),
       });
 
