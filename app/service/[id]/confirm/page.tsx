@@ -43,6 +43,7 @@ const ConfirmPage = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
+  const [bookingNotes, setBookingNotes] = useState<string>("");
 
   const router = useRouter();
   const params = useParams();
@@ -63,10 +64,18 @@ const ConfirmPage = () => {
         setSelectedSalon(JSON.parse(salonData));
       }
 
-      // Retrieve other booking details
-      setSelectedProfessional(
-        sessionStorage.getItem("bookingProfessional") || ""
-      );
+      // Check if a specific staff member was selected
+      const staffMemberData = sessionStorage.getItem("selectedStaffMember");
+      if (staffMemberData) {
+        const staffMember = JSON.parse(staffMemberData);
+        setSelectedProfessional(staffMember.name || "");
+      } else {
+        // If no specific staff member, use the general professional name
+        setSelectedProfessional(
+          sessionStorage.getItem("bookingProfessional") || ""
+        );
+      }
+      
       setSelectedDate(sessionStorage.getItem("bookingDate") || "");
       setSelectedTime(sessionStorage.getItem("bookingTime") || "");
     } catch (error) {
@@ -112,7 +121,7 @@ const ConfirmPage = () => {
     setPaymentMethod(method);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     // Store final booking data for access on appointment/payment pages
     const finalBookingData = {
       services: selectedServices,
@@ -129,11 +138,92 @@ const ConfirmPage = () => {
       "finalBookingData",
       JSON.stringify(finalBookingData)
     );
+    
+    try {
+      // Show loading state to the user
+      const loadingToast = () => {
+        alert("Processing your booking request...");
+      };
+      loadingToast();
+      
+      // Get the time slot data from sessionStorage
+      const timeSlotData = sessionStorage.getItem("selectedTimeSlot");
+      let timeSlot = null;
+      
+      if (timeSlotData) {
+        timeSlot = JSON.parse(timeSlotData);
+      }
+      
+      if (!timeSlot) {
+        console.error("No time slot data found");
+        alert("Error: Missing booking information. Please try again.");
+        return;
+      }
 
-    if (paymentMethod === "venue") {
-      router.push("/user/booking/user-appointments");
-    } else {
-      router.push("/user/booking/payment-success");
+      // Get the first service ID as the main service
+      const serviceId = selectedServices.length > 0 ? selectedServices[0].id : null;
+      
+      // Get the selected staff member data if available
+      const staffMemberData = sessionStorage.getItem("selectedStaffMember");
+      let staffMember = null;
+      
+      if (staffMemberData) {
+        staffMember = JSON.parse(staffMemberData);
+      }
+      
+      // Get the salon ID from selected salon if available
+      const salonUserId = selectedSalon && selectedSalon.id ? selectedSalon.id : params.id;
+      console.log("Using salon ID:", salonUserId);
+      
+      // Use "65f58b022d09d7ff334d8910" as fallback valid MongoDB ID if we don't have valid IDs
+      // This is just a temporary solution for testing - replace with real IDs in production
+      const validMongoId = "65f58b022d09d7ff334d8910";
+      
+      // Prepare the data for the booking API
+      const bookingData = {
+        timeSlot: timeSlot,
+        salonId: salonUserId || validMongoId,
+        userId: salonUserId || validMongoId, // Using salon ID as the user ID
+        clientId: salonUserId || validMongoId, // Using salon ID as the client ID for demo purposes
+        serviceId: serviceId || validMongoId,
+        staffId: staffMember ? staffMember._id : null, // Use staffMember._id if a specific staff was selected
+        paymentMethod: paymentMethod,
+        note: bookingNotes,
+        date: selectedDate,
+        time: selectedTime
+      };
+      
+      // Add a debug log to see what's being sent
+      console.log("Sending booking data:", JSON.stringify(bookingData, null, 2));
+      
+      // Call the API to save the booking
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.error("Error booking appointment:", result);
+        alert(`There was an error booking your appointment: ${result.error || 'Unknown error'}. Please try again.`);
+        return;
+      }
+      
+      console.log("Booking successful:", result);
+      
+      // Navigate based on payment method
+      if (paymentMethod === "venue") {
+        router.push("/user/booking/user-appointments");
+      } else {
+        router.push("/user/booking/payment-success");
+      }
+    } catch (error) {
+      console.error("Error processing booking:", error);
+      alert("There was an error booking your appointment. Please try again.");
     }
   };
 
@@ -201,6 +291,8 @@ const ConfirmPage = () => {
           <textarea
             className="w-full p-3 border rounded-lg mt-2 text-sm"
             placeholder="Include comments on your booking"
+            value={bookingNotes}
+            onChange={(e) => setBookingNotes(e.target.value)}
           />
         </div>
 
