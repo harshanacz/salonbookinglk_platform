@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, MapPin, Share2, Star } from "lucide-react";
+import { Heart, MapPin, Share2, Star, Phone, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
@@ -31,9 +31,24 @@ interface ServiceData {
     rating: number;
     reviews: number;
     location: string;
+    address: string;
+    phoneNumber: string;
     isOpen: boolean;
     openUntil: string;
     bestSeller: boolean;
+    profilePictureUrl: string;
+    workingHours: Array<{
+      day: string;
+      isWorking: boolean;
+      start: string;
+      end: string;
+    }>;
+    businessHours: Array<{
+      day: string;
+      isOpen: boolean;
+      open: string;
+      close: string;
+    }>;
   };
   staffAssigned: string[];
 }
@@ -132,7 +147,7 @@ export default function ServicePage(props: ServicePageProps) {
   const handleBookNow = () => {
     if (service) {
       addService({
-        id: service.id,
+        id: parseInt(service.id),
         name: service.title,
         price: service.price,
         salonId: service.salon.id,
@@ -439,9 +454,9 @@ export default function ServicePage(props: ServicePageProps) {
         <div className="hidden lg:block lg:w-1/3">
           <Card className="sticky top-24 p-6">
             <div className="flex items-center gap-4 mb-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden bg-yellow-100">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden">
                 <Image
-                  src="/placeholder.svg?height=100&width=100"
+                  src={service.salon.profilePictureUrl}
                   alt={service.salon.name}
                   fill
                   className="object-cover"
@@ -449,78 +464,66 @@ export default function ServicePage(props: ServicePageProps) {
               </div>
               <div>
                 <h3 className="font-semibold text-lg">{service.salon.name}</h3>
-                <div className="flex items-center">
-                  <div className="flex items-center text-yellow-500 mr-1">
-                    <Star className="h-4 w-4 fill-current" />
-                    <span className="ml-1 text-black">
-                      {service.salon.rating.toFixed(1)}
-                    </span>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    ({service.salon.reviews})
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  <span className="text-sm">
+                    {Number(service.salon.rating).toFixed(1)} ({service.salon.reviews} reviews)
                   </span>
                 </div>
               </div>
             </div>
-            {service.salon.bestSeller && (
-              <div className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full inline-block mb-4">
-                Best Seller
+            
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-2 text-sm">
+                <MapPin className="w-4 h-4" />
+                <span>{service.salon.address}</span>
               </div>
-            )}
-            <div className="flex items-center text-sm text-gray-700 mb-2">
-              <svg
-                className="h-5 w-5 mr-1 text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <div>
-                <div>Open until {service.salon.openUntil}</div>
-                <div className="text-green-600 font-medium">Now Open</div>
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4" />
+                <span>{service.salon.phoneNumber}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4" />
+                <span>
+                  {service.salon.isOpen ? (
+                    <>Open until {service.salon.openUntil}</>
+                  ) : (
+                    "Closed"
+                  )}
+                </span>
               </div>
             </div>
-            <div className="flex items-center text-sm text-gray-700 mb-6">
-              <MapPin className="h-5 w-5 mr-1 text-gray-500" />
-              <span>{service.salon.location}</span>
-              <Link 
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.salon.location)}`}
-                target="_blank" 
-                className="ml-2 text-purple-600 hover:underline"
-              >
-                Get direction
-              </Link>
-            </div>
+
             <div className="mb-6">
-              <div className="text-gray-700 mb-1">From</div>
-              <div className="text-2xl font-bold mb-4">
-                LKR {service.price.toFixed(2)}
+              <h4 className="font-semibold mb-2">Business Hours</h4>
+              <div className="space-y-2">
+                {service.salon.businessHours.map((hours, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>{hours.day}</span>
+                    <span>
+                      {hours.isOpen ? `${hours.open} - ${hours.close}` : "Closed"}
+                    </span>
+                  </div>
+                ))}
               </div>
-              {service.duration && (
-                <div className="text-sm text-gray-600">
-                  Duration: {service.duration} minutes
-                </div>
-              )}
             </div>
+
             <div className="space-y-3">
-              <Button 
-                className="w-full bg-purple-600 hover:bg-purple-700"
+              <Button
+                className="w-full"
                 onClick={handleBookNow}
+                disabled={!service.salon.isOpen}
               >
-                Book now
+                Book Now
               </Button>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1">
-                  <Heart className="h-4 w-4 mr-2" /> Save
+                  <Heart className="w-4 h-4 mr-2" />
+                  Save
                 </Button>
                 <Button variant="outline" className="flex-1">
-                  <Share2 className="h-4 w-4 mr-2" /> Share
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
                 </Button>
               </div>
             </div>
