@@ -12,12 +12,6 @@ interface BusinessHours {
   close: string;
 }
 
-interface WorkingHours {
-  day: Day;
-  isWorking: boolean;
-  start: string;
-  end: string;
-}
 
 interface SalonContextType {
   businessName: string;
@@ -30,8 +24,8 @@ interface SalonContextType {
   reviewScore: number;
   numberOfReviewers: number;
   profilePictureUrl?: string;
-  workingHours: WorkingHours[];
   businessHours: BusinessHours[];
+
 }
 
 export async function GET(
@@ -89,7 +83,6 @@ export async function GET(
           reviewScore: rawSalonContext.reviewScore || 0,
           numberOfReviewers: rawSalonContext.numberOfReviewers || 0,
           profilePictureUrl: rawSalonContext.profilePictureUrl,
-          workingHours: rawSalonContext.workingHours || [],
           businessHours: rawSalonContext.businessHours || [],
         };
       }
@@ -136,7 +129,6 @@ export async function GET(
         openUntil: openUntil,
         bestSeller: service.popularityScore > 10,
         profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
-        workingHours: salonContext?.workingHours || [],
         businessHours: salonContext?.businessHours || [],
       },
       staffAssigned: service.staffAssigned || [],
