@@ -130,7 +130,7 @@ export default function ServiceCards() {
                     <TableRow key={service.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
+                          <Avatar className="h-8 w-8 mr-2 rounded-md overflow-hidden">
                             <AvatarImage src={service.image} />
                             <AvatarFallback>
                               <User className="h-4 w-4" />
