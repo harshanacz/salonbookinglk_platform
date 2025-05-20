@@ -140,9 +140,6 @@ export default function ServiceCards() {
                             <div className="font-medium line-clamp-1">
                               {service.title}
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {service.salon}
-                            </div>
                           </div>
                         </div>
                       </TableCell>
