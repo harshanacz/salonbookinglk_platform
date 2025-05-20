@@ -2,7 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service, { ServiceStatus } from "@/models/Service";
 import User from "@/models/User";
+import SalonContext, { Day } from "@/models/SalonContext";
 import mongoose from "mongoose";
+
+interface BusinessHours {
+  day: Day;
+  isOpen: boolean;
+  open: string;
+  close: string;
+}
+
+
+interface SalonContextType {
+  businessName: string;
+  description: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  phoneNumber: string;
+  reviewScore: number;
+  numberOfReviewers: number;
+  profilePictureUrl?: string;
+  businessHours: BusinessHours[];
+
+}
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +50,7 @@ export async function GET(
     // Fetch the service with populated user data (salon owner)
     const service = await Service.findById(id).populate({
       path: "userId",
-      select: "userName businessName _id",
+      select: "userName businessName _id type",
       model: User,
     }).lean({ virtuals: true });
     
@@ -41,17 +65,46 @@ export async function GET(
     }
 
     // Get salon context for additional salon information
-    let salonContext = null;
+    let salonContext: SalonContextType | null = null;
     if (service.userId && service.userId._id) {
-      const SalonContext = mongoose.models.SalonContext || 
-        mongoose.model("SalonContext", require("@/models/SalonContext").default.schema);
-      
-      salonContext = await SalonContext.findOne({
+      const rawSalonContext = await SalonContext.findOne({
         userId: service.userId._id
-      }).lean();
+      }).lean() as any;
+      
+      if (rawSalonContext) {
+        salonContext = {
+          businessName: rawSalonContext.businessName || '',
+          description: rawSalonContext.description || '',
+          location: {
+            lat: rawSalonContext.location?.lat || 0,
+            lng: rawSalonContext.location?.lng || 0,
+          },
+          phoneNumber: rawSalonContext.phoneNumber || '',
+          reviewScore: rawSalonContext.reviewScore || 0,
+          numberOfReviewers: rawSalonContext.numberOfReviewers || 0,
+          profilePictureUrl: rawSalonContext.profilePictureUrl,
+          businessHours: rawSalonContext.businessHours || [],
+        };
+      }
     }
     
     console.log(`[Service API] Salon context found:`, salonContext ? 'Yes' : 'No');
+    
+    // Get current time and day
+    const now = new Date();
+    const currentDay = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() as Day;
+    const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    
+    // Check if salon is open based on business hours
+    let isOpen = false;
+    let openUntil = "";
+    if (salonContext && salonContext.businessHours) {
+      const todayHours = salonContext.businessHours.find(h => h.day === currentDay);
+      if (todayHours && todayHours.isOpen) {
+        isOpen = currentTime >= todayHours.open && currentTime <= todayHours.close;
+        openUntil = todayHours.close;
+      }
+    }
     
     // Transform the service data for the frontend
     const transformedService = {
@@ -66,15 +119,17 @@ export async function GET(
       duration: service.duration,
       salon: {
         id: service.userId?._id?.toString() || 'unknown',
-        name: (service.userId as any)?.businessName || 'Unknown Salon',
-        rating: service.averageRating || 4.5,
-        reviews: service.reviewCount || 0,
-        location: salonContext && !Array.isArray(salonContext) && salonContext.city
-          ? `${salonContext.streetAddress}, ${salonContext.city}`
-          : "Location not specified",
-        isOpen: true, // This would need logic based on working hours
-        openUntil: "7:30PM", // This would need calculation based on working hours
-        bestSeller: service.popularityScore > 10, // Example threshold
+        name: salonContext?.businessName || (service.userId as any)?.businessName || 'Unknown Salon',
+        rating: salonContext?.reviewScore || 4.5,
+        reviews: salonContext?.numberOfReviewers || 0,
+        location: salonContext ? `${salonContext.location.lat}, ${salonContext.location.lng}` : "Location not specified",
+        address: salonContext?.description || "Address not specified",
+        phoneNumber: salonContext?.phoneNumber || "Phone number not available",
+        isOpen: isOpen,
+        openUntil: openUntil,
+        bestSeller: service.popularityScore > 10,
+        profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
+        businessHours: salonContext?.businessHours || [],
       },
       staffAssigned: service.staffAssigned || [],
     };

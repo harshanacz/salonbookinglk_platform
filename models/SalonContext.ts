@@ -10,29 +10,6 @@ export enum Day {
   SUN = "SUN",
 }
 
-const workingHourSchema = new mongoose.Schema(
-  {
-    day: {
-      type: String,
-      enum: Object.values(Day),
-      required: true,
-    },
-    isWorking: {
-      type: Boolean,
-      required: true,
-    },
-    start: {
-      type: String,
-      required: true,
-    },
-    end: {
-      type: String,
-      required: true,
-    },
-  },
-  { _id: false }
-);
-
 const businessHourSchema = new mongoose.Schema(
   {
     day: {
@@ -103,16 +80,6 @@ const salonContextSchema = new mongoose.Schema(
     ownerName: {
       type: String,
       required: true,
-    },
-    workingHours: {
-      type: [workingHourSchema],
-      required: true,
-      validate: {
-        validator: function (hours: any[]) {
-          return hours.length === 7;
-        },
-        message: "Working hours must be specified for all 7 days of the week",
-      },
     },
     businessHours: {
       type: [businessHourSchema],

@@ -4,7 +4,10 @@ type Service = {
   id: number;
   name: string;
   price: number;
-  image: string;
+  image?: string;
+  salonId: string;
+  salonName: string;
+  duration: number;
 };
 
 type CheckoutStore = {
