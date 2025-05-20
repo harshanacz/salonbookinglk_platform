@@ -14,7 +14,6 @@ export default function UserProfile() {
     mobileNumber: "",
     gender: "",
     country: "",
-    emailUpdated: "1 month ago", // Static value as we don't track this
   });
 
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -34,7 +33,6 @@ export default function UserProfile() {
             mobileNumber: data.mobileNumber || "",
             gender: data.gender || "",
             country: data.country || "Sri Lanka",
-            emailUpdated: "1 month ago", // Static value
           });
 
           if (data.profileImage) {
@@ -253,9 +251,6 @@ export default function UserProfile() {
               </div>
               <div>
                 <div>{userData.email}</div>
-                <div className="text-xs text-gray-400">
-                  {userData.emailUpdated}
-                </div>
               </div>
             </div>
           </div>
