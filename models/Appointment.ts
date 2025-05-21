@@ -33,7 +33,7 @@ const appointmentSchema = new mongoose.Schema(
     staffId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Staff",
-      required: true,
+      required: false, // Allow staffId to be optional
     },
     date: {
       type: Date,

@@ -163,7 +163,7 @@ export default function ServicePage(props: ServicePageProps) {
             id: service.id,
             name: service.title,
             price: service.price,
-            duration: `${service.duration} mins`,
+            duration: service.duration,
           },
         ])
       );
@@ -172,6 +172,7 @@ export default function ServicePage(props: ServicePageProps) {
       sessionStorage.setItem(
         "salonInfo",
         JSON.stringify({
+          id: service.salon.id,
           name: service.salon.name,
           image:
             service.images && service.images.length > 0
