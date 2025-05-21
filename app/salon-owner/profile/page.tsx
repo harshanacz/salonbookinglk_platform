@@ -180,13 +180,22 @@ export default function SalonOwnerProfile() {
     if (!res || !res[0]?.url) return;
     const imageUrl = res[0].url;
     try {
-      const patch = { profileImage: imageUrl };
-      const resp = await fetch("/api/user", {
+      // Update user profile image
+      const userResp = await fetch("/api/user", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patch),
+        body: JSON.stringify({ profileImage: imageUrl }),
       });
-      if (!resp.ok) throw new Error("Failed to update profile image");
+      if (!userResp.ok) throw new Error("Failed to update user profile image");
+      
+      // Update salon context profile picture URL
+      const salonResp = await fetch("/api/salon-owner/salon-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profilePictureUrl: imageUrl }),
+      });
+      if (!salonResp.ok) throw new Error("Failed to update salon profile picture");
+      
       setUserData((prev) => ({ ...prev, profileImage: imageUrl }));
     } catch (err) {
       console.error("[PROFILE_IMAGE_UPLOAD]", err);
