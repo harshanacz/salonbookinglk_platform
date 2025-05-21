@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
@@ -10,23 +10,69 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Globe } from "lucide-react";
 import { Day } from "@/models/SalonContext";
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 
 interface CreateProfileFormData {
   businessName: string;
   description: string;
-  address: string;
+  address: string; // We'll keep this for display purposes
   website: string;
   phoneNumber: string;
   ownerName: string;
   businessRegistrationNumber: string;
 }
 
+// Google Maps container styles
+const mapContainerStyle = {
+  width: '100%',
+  height: '300px',
+};
+
+// Default center - Colombo, Sri Lanka
+const defaultCenter = {
+  lat: 6.9271,
+  lng: 79.8612
+};
+
 export default function CreateSalonProfile() {
   const router = useRouter();
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<CreateProfileFormData>();
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<CreateProfileFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState(defaultCenter);
+  const [address, setAddress] = useState('');
+
+  // Load Google Maps API
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+  });
+
+  // Geocoder to convert coordinates to address
+  const geocodeLocation = useCallback(async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const formattedAddress = data.results[0].formatted_address;
+        setAddress(formattedAddress);
+        setValue('address', formattedAddress);
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+  }, [setValue]);
+
+  // Handle map click to set marker
+  const handleMapClick = useCallback((e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      setSelectedLocation({ lat, lng });
+      geocodeLocation(lat, lng);
+    }
+  }, [geocodeLocation]);
 
   // Check if salon profile already exists and pre-fill form if it does
   useEffect(() => {
@@ -52,7 +98,18 @@ export default function CreateSalonProfile() {
           if (data) {
             setValue("businessName", data.businessName || "");
             setValue("description", data.description || "");
-            setValue("address", data.location ? `${data.location.lat}, ${data.location.lng}` : "");
+            
+            // Set location if available
+            if (data.location) {
+              setSelectedLocation({
+                lat: data.location.lat,
+                lng: data.location.lng
+              });
+              
+              // Try to geocode the location to get address
+              geocodeLocation(data.location.lat, data.location.lng);
+            }
+            
             setValue("website", data.website || "");
             setValue("phoneNumber", data.phoneNumber || "");
             setValue("ownerName", data.ownerName || "");
@@ -67,20 +124,17 @@ export default function CreateSalonProfile() {
     }
     
     checkExistingProfile();
-  }, [router, setValue]);
+  }, [router, setValue, geocodeLocation]);
 
   const onSubmit = async (data: CreateProfileFormData) => {
     try {
       setIsSubmitting(true);
       setError(null);
       
-      // Create a basic location (in a real app, you would use a map component)
-      const location = { lat: 6.9271, lng: 79.8612 }; // Default to Colombo, Sri Lanka
+      // Use the selected location from the map
+      const location = selectedLocation;
       
-      // Create default working hours (one week)
-
-      
-      // Create default business hours (same as working hours for now)
+      // Create default business hours
       const businessHours = [
         { day: "MON" as Day, isOpen: true, open: "09:00", close: "17:00" },
         { day: "TUE" as Day, isOpen: true, open: "09:00", close: "17:00" },
@@ -104,7 +158,7 @@ export default function CreateSalonProfile() {
         body: JSON.stringify({
           businessName: data.businessName,
           description: data.description,
-          location,
+          location: selectedLocation, // Send the selected map coordinates
           website: data.website,
           phoneNumber: data.phoneNumber,
           ownerName: data.ownerName,
@@ -165,7 +219,7 @@ export default function CreateSalonProfile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Form fields remain unchanged */}
+            {/* Business Name and Description fields */}
             <div className="space-y-2">
               <Label htmlFor="businessName">Business Name *</Label>
               <Input 
@@ -190,6 +244,7 @@ export default function CreateSalonProfile() {
               )}
             </div>
             
+            {/* Owner and Contact Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="ownerName">Owner Name *</Label>
@@ -219,6 +274,7 @@ export default function CreateSalonProfile() {
               </div>
             </div>
             
+            {/* Website and Business Registration */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="website">Website (Optional)</Label>
@@ -242,22 +298,49 @@ export default function CreateSalonProfile() {
               </div>
             </div>
             
+            {/* Location Map */}
             <div className="space-y-2">
-              <Label htmlFor="address">Address *</Label>
-              <div className="flex items-center">
+              <Label htmlFor="address">Salon Location *</Label>
+              <p className="text-sm text-gray-500 mb-2">
+                Click on the map to set your salon's exact location
+              </p>
+              
+              {/* Google Map Component */}
+              <div className="h-[300px] w-full rounded-md border overflow-hidden">
+                {isLoaded ? (
+                  <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={selectedLocation}
+                    zoom={14}
+                    onClick={handleMapClick}
+                  >
+                    <Marker position={selectedLocation} />
+                  </GoogleMap>
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Display the selected address */}
+              <div className="flex items-center mt-2">
                 <MapPin className="h-4 w-4 mr-2 text-gray-500" />
                 <Input 
                   id="address"
-                  placeholder="Full address"
-                  {...register("address", { required: "Address is required" })}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Address will appear here after selecting location on map"
+                  disabled
+                  className="bg-gray-50"
                 />
               </div>
-              {errors.address && (
-                <p className="text-sm text-red-500">{errors.address.message}</p>
-              )}
-              <p className="text-xs text-gray-500">
-                Note: You will be able to set your location precisely on the map after creating your profile.
-              </p>
+              
+              <div className="flex gap-2 text-xs text-gray-500 mt-1">
+                <p>Selected coordinates:</p>
+                <p>Lat: {selectedLocation.lat.toFixed(6)}</p>
+                <p>Lng: {selectedLocation.lng.toFixed(6)}</p>
+              </div>
             </div>
           </CardContent>
           
