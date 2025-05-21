@@ -33,7 +33,7 @@ interface Service {
   id: string;
   name: string;
   price: number;
-  duration: string;
+  duration: number;
   timeSlot?: string;
   professional?: string;
 }
@@ -204,7 +204,7 @@ export default function SelectTime() {
   const formatServicesForSalonCard = (services: Service[]): FormattedService[] => {
     return services.map(service => ({
       name: service.name,
-      time: service.timeSlot || service.duration,
+      time: service.timeSlot || `${service.duration} mins`,
       professional: service.professional || selectedProfessionalName,
       price: `LKR ${service.price.toLocaleString()}`
     }));
@@ -219,9 +219,9 @@ export default function SelectTime() {
 
   // Extra services available to add
   const extraServices: Service[] = [
-    { id: "extra-1", name: "Facial Treatment", duration: "30 mins", price: 2000 },
-    { id: "extra-2", name: "Manicure", duration: "15 mins", price: 1000 },
-    { id: "extra-3", name: "Pedicure", duration: "20 mins", price: 1500 },
+    { id: "extra-1", name: "Facial Treatment", duration: 30, price: 2000 },
+    { id: "extra-2", name: "Manicure", duration: 15, price: 1000 },
+    { id: "extra-3", name: "Pedicure", duration: 20, price: 1500 },
   ];
 
   // Handle booking continue
@@ -242,8 +242,7 @@ export default function SelectTime() {
       sessionStorage.setItem("bookingProfessional", selectedProfessionalName);
       sessionStorage.setItem("bookingDate", format(selectedDate, "yyyy-MM-dd"));
       sessionStorage.setItem("bookingTime", format(new Date(slot.start_time), "h:mm a"));
-      
-      // Save complete time slot information
+        // Save complete time slot information with all needed fields
       sessionStorage.setItem("selectedTimeSlot", JSON.stringify({
         id: slot.slot_id,
         slot_id: slot.slot_id, // Include both formats to ensure compatibility
@@ -251,8 +250,10 @@ export default function SelectTime() {
         time: format(new Date(slot.start_time), "h:mm a"),
         date: format(selectedDate, "EEEE, MMMM d, yyyy"),
         staffId: selectedStaff,
-        period: slot.period,
-        timestamp: slot.start_time      }));
+        period: slot.period || 30, // Ensure period is always set (default to 30 mins)
+        timestamp: new Date(slot.start_time).getTime(),
+        available: true // Mark as available by default
+      }));
       
       // Save selected staff member information if one was selected
       if (selectedStaff) {
@@ -401,7 +402,9 @@ export default function SelectTime() {
                       </tr>
                       <tr>
                         <td className="pb-1.5 text-gray-500">Duration:</td>
-                        <td className="pb-1.5 text-right font-medium">30 mins</td>
+                        <td className="pb-1.5 text-right font-medium">
+                          {mainServices[0]?.duration || 30} mins
+                        </td>
                       </tr>
                       <tr className="border-t border-gray-100">
                         <td className="pt-2 pb-1 text-gray-500">Price:</td>
@@ -421,16 +424,19 @@ export default function SelectTime() {
           {/* Middle Column - Staff and Time Slots */}
           <div className="lg:col-span-2">            {/* Staff Selection - Simplified */}
             {staffMembers.length > 0 && (
-              <Card className="p-4 mb-4 shadow-sm">
-                <div className="flex justify-between items-center mb-3">
+              <Card className="p-4 mb-4 shadow-sm">                <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium text-lg">Select Professional</h3>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Optional</span>
                 </div>
                 
-                <div className="bg-gray-50 p-3 rounded-md mb-3 text-center">
-                  <p className="text-sm">
+                <div className="bg-gray-50 p-3 rounded-md mb-3">
+                  <p className="text-sm text-center mb-2">
                     Currently selected: <span className="font-medium">{selectedProfessionalName}</span>
                   </p>
+                  <div className="text-xs text-gray-600 border-t border-gray-200 pt-2">
+                    <p className="mb-1">• Choosing "Any Professional" lets the salon assign a staff member.</p>
+                    <p>• Selecting a specific staff member guarantees your appointment with them.</p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-2">
@@ -549,7 +555,7 @@ export default function SelectTime() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-purple-700">LKR 2,200</p>
-                      <p className="text-xs text-gray-500">30 mins</p>
+                      <p className="text-xs text-gray-500">{mainServices[0]?.duration || 30} mins</p>
                     </div>
                   </div>
                   
@@ -651,7 +657,7 @@ export default function SelectTime() {
                         <p className="font-medium">{service.name}</p>
                         <div className="flex items-center mt-1">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 mr-1"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                          <p className="text-sm text-gray-600 mr-3">{service.duration}</p>
+                          <p className="text-sm text-gray-600 mr-3">{service.duration} mins</p>
                           <p className="text-sm font-semibold text-purple-700">
                             LKR {service.price.toLocaleString()}
                           </p>

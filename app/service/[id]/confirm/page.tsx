@@ -151,13 +151,40 @@ const ConfirmPage = () => {
       let timeSlot = null;
       
       if (timeSlotData) {
-        timeSlot = JSON.parse(timeSlotData);
+        try {
+          timeSlot = JSON.parse(timeSlotData);
+          console.log("Retrieved time slot data:", timeSlot);
+        } catch (err) {
+          console.error("Error parsing time slot data:", err);
+          alert("Error: Invalid booking information. Please try selecting your time again.");
+          return;
+        }
       }
       
       if (!timeSlot) {
         console.error("No time slot data found");
-        alert("Error: Missing booking information. Please try again.");
+        alert("Error: Missing booking information. Please try selecting your time again.");
         return;
+      }
+      
+      // Enhanced validation for time slot data
+      if (!timeSlot.start_time) {
+        console.error("Missing start time in time slot data");
+        alert("Error: Invalid time slot information. Please try selecting your time again.");
+        return;
+      }
+      
+      // Ensure slot_id is set correctly - this is critical for matching with the database
+      if (!timeSlot.slot_id && timeSlot.id) {
+        timeSlot.slot_id = timeSlot.id;
+        console.log("Set slot_id from id:", timeSlot.slot_id);
+      }
+      
+      // Ensure period is set
+      if (!timeSlot.period) {
+        const serviceDuration = selectedServices.length > 0 ? (selectedServices[0].duration || 30) : 30;
+        timeSlot.period = serviceDuration;
+        console.log("Set default period for time slot:", timeSlot.period);
       }
 
       // Get the first service ID as the main service
@@ -172,26 +199,46 @@ const ConfirmPage = () => {
       }
       
       // Get the salon ID from selected salon if available
-      const salonUserId = selectedSalon && selectedSalon.id ? selectedSalon.id : params.id;
+      let salonUserId = selectedSalon && selectedSalon.id ? selectedSalon.id : params.id;
       console.log("Using salon ID:", salonUserId);
       
-      // Use "65f58b022d09d7ff334d8910" as fallback valid MongoDB ID if we don't have valid IDs
-      // This is just a temporary solution for testing - replace with real IDs in production
-      const validMongoId = "65f58b022d09d7ff334d8910";
+      // For debugging purposes, see if we have a direct salon ID from the URL
+      if (typeof params.id === 'string') {
+        console.log("URL params ID:", params.id);
+      } else if (Array.isArray(params.id)) {
+        console.log("URL params ID (array):", params.id[0]);
+        salonUserId = params.id[0]; // Use the first value if it's an array
+      }
       
       // Prepare the data for the booking API
       const bookingData = {
-        timeSlot: timeSlot,
-        salonId: salonUserId || validMongoId,
-        userId: salonUserId || validMongoId, // Using salon ID as the user ID
-        clientId: salonUserId || validMongoId, // Using salon ID as the client ID for demo purposes
-        serviceId: serviceId || validMongoId,
+        timeSlot: {
+          ...timeSlot,
+          // Ensure both id and slot_id are set correctly
+          slot_id: timeSlot.slot_id || timeSlot.id,
+          id: timeSlot.id || timeSlot.slot_id,
+          // Make sure we include all fields needed for creating a new time slot
+          start_time: timeSlot.start_time,
+          period: timeSlot.period || 30,
+          timestamp: timeSlot.timestamp || new Date(timeSlot.start_time).getTime()
+        },
+        salonId: salonUserId,
+        userId: salonUserId, // Using salon ID as the user ID
+        clientId: salonUserId, // Using salon ID as the client ID for demo purposes
+        serviceId: serviceId || salonUserId, // Fallback to salonId if no serviceId
         staffId: staffMember ? staffMember._id : null, // Use staffMember._id if a specific staff was selected
         paymentMethod: paymentMethod,
         note: bookingNotes,
         date: selectedDate,
         time: selectedTime
       };
+      
+      // Final validation before sending
+      if (!bookingData.timeSlot || !bookingData.timeSlot.slot_id) {
+        console.error("Invalid time slot data:", bookingData.timeSlot);
+        alert("Error: Invalid time slot information. Please try selecting your time again.");
+        return;
+      }
       
       // Add a debug log to see what's being sent
       console.log("Sending booking data:", JSON.stringify(bookingData, null, 2));
@@ -209,7 +256,17 @@ const ConfirmPage = () => {
       
       if (!response.ok) {
         console.error("Error booking appointment:", result);
-        alert(`There was an error booking your appointment: ${result.error || 'Unknown error'}. Please try again.`);
+        
+        // Handle specific error cases with more helpful messages
+        let errorMessage = result.error || 'Unknown error';
+        
+        if (errorMessage.includes("Time slot not found in salon schedule")) {
+          errorMessage = "The selected time slot is no longer available. Please select another time slot.";
+        } else if (errorMessage.includes("Salon not found")) {
+          errorMessage = "Salon information couldn't be found. Please try again or contact support.";
+        }
+        
+        alert(`There was an error booking your appointment: ${errorMessage}. Please try again.`);
         return;
       }
       
