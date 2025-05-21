@@ -42,9 +42,9 @@ interface SalonUser {
 
 interface WorkingHour {
   day: string;
-  open: number;
-  close: number;
   isOpen: boolean;
+  open: string;
+  close: string;
 }
 
 interface SalonContext {
@@ -53,21 +53,17 @@ interface SalonContext {
   businessName: string;
   website?: string;
   businessRegistrationNumber?: string;
-  businessCategory: string;
-  streetAddress: string;
-  city: string;
-  postalCode?: string;
-  workingHours: WorkingHour[];
-  numberOfReviewers?: number;
-  reviewScore?: number;
+  description: string;
   location: {
     lat: number;
     lng: number;
   };
-  description: string;
   phoneNumber: string;
   ownerName: string;
   profilePictureUrl: string;
+  numberOfReviewers?: number;
+  reviewScore?: number;
+  businessHours: WorkingHour[];
 }
 
 interface StaffMember {
@@ -486,11 +482,6 @@ export default function ServiceDetail() {
                         </div>
                         
                         <div className="grid grid-cols-3 py-1">
-                          <dt className="font-medium">Business Category:</dt>
-                          <dd className="col-span-2">{service.salonContext.businessCategory}</dd>
-                        </div>
-                        
-                        <div className="grid grid-cols-3 py-1">
                           <dt className="font-medium">Website:</dt>
                           <dd className="col-span-2">
                             {service.salonContext.website ? (
@@ -528,8 +519,7 @@ export default function ServiceDetail() {
                       <div className="space-y-4">
                         <div className="bg-muted/50 p-4 rounded-lg">
                           <p className="font-medium">{service.salonContext.businessName}</p>
-                          <p>{service.salonContext.streetAddress}</p>
-                          <p>{service.salonContext.city}{service.salonContext.postalCode ? `, ${service.salonContext.postalCode}` : ''}</p>
+                          <p>{service.salonContext.description}</p>
                           <p>{service.userId?.country}</p>
                         </div>
 
@@ -551,14 +541,14 @@ export default function ServiceDetail() {
                     )}
                   </div>
 
-                  {service.salonContext?.workingHours && service.salonContext.workingHours.length > 0 && (
+                  {service.salonContext?.businessHours && service.salonContext.businessHours.length > 0 && (
                     <div>
                       <h3 className="text-lg font-medium flex items-center gap-2">
                         <Clock className="h-5 w-5" /> Working Hours
                       </h3>
                       <Separator className="my-2" />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {service.salonContext.workingHours.map((hour, index) => (
+                        {service.salonContext.businessHours.map((hour, index) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
                             <span className="font-medium">{hour.day}</span>
                             <span>
@@ -590,9 +580,11 @@ export default function ServiceDetail() {
   );
 }
 
-function formatTime(time: number) {
-  const hours = Math.floor(time / 100);
-  const minutes = time % 100;
+function formatTime(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  
+  if (isNaN(hours) || isNaN(minutes)) return time;
+  
   const period = hours >= 12 ? 'PM' : 'AM';
   const formattedHours = hours % 12 || 12;
   return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${period}`;
