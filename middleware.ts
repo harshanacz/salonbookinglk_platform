@@ -116,6 +116,14 @@ export default clerkMiddleware(async (auth, req) => {
   const isProtectedRoute = Object.values(ROUTE_CONFIG).some((config) =>
     config.pattern(req)
   );
+  
+  // Also consider all /user/ routes as protected
+  const isUserRoute = req.nextUrl.pathname.startsWith("/user/");
+  
+  // If not authenticated and trying to access protected routes or user routes
+  if (!authObject.userId && (isProtectedRoute || isUserRoute)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
+  }
 
   // If authenticated, handle user type specific redirects
   if (authObject.userId) {
@@ -155,9 +163,8 @@ export default clerkMiddleware(async (auth, req) => {
       }
     }
     
-    // Check if customer has completed profile
+    // Check if customer has completed profile - for ALL customer routes
     if (userType === "CUSTOMER" && 
-        req.nextUrl.pathname.startsWith("/user/profile") && 
         !PROFILE_CHECK_EXCLUDED_ROUTES.some(path => req.nextUrl.pathname.startsWith(path))) {
       
       const isProfileComplete = await checkCustomerProfile(req);

@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
 export enum Day {
   MON = "MON",
@@ -10,23 +10,31 @@ export enum Day {
   SUN = "SUN",
 }
 
-const workingHourSchema = new mongoose.Schema(
+interface ITimeSlot {
+  slot_id: string;
+  start_time: Date;
+  appointmentId: mongoose.Types.ObjectId | null;
+  period: number;
+}
+
+const timeSlotSchema = new mongoose.Schema(
   {
-    day: {
-      type: String,
-      enum: Object.values(Day),
-      required: true,
-    },
-    isWorking: {
-      type: Boolean,
-      required: true,
-    },
-    start: {
+    slot_id: {
       type: String,
       required: true,
+      default: () => new mongoose.Types.ObjectId().toString(),
     },
-    end: {
-      type: String,
+    start_time: {
+      type: Date,
+      required: true,
+    },
+    appointmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
+      default: null,
+    },
+    period: {
+      type: Number,
       required: true,
     },
   },
@@ -55,6 +63,32 @@ const businessHourSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
+interface ISalonContext extends Document {
+  userId: mongoose.Types.ObjectId;
+  numberOfReviewers: number;
+  reviewScore: number;
+  businessName: string;
+  description: string;
+  website?: string;
+  businessRegistrationNumber?: string;
+  isVerified: boolean;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  phoneNumber: string;
+  ownerName: string;
+  businessHours: Array<{
+    day: Day;
+    isOpen: boolean;
+    open: string;
+    close: string;
+  }>;
+  profilePictureUrl?: string;
+  timeSlots: ITimeSlot[];
+  cleanupTimeSlots(): Promise<ISalonContext>;
+}
 
 const salonContextSchema = new mongoose.Schema(
   {
@@ -104,16 +138,6 @@ const salonContextSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    workingHours: {
-      type: [workingHourSchema],
-      required: true,
-      validate: {
-        validator: function (hours: any[]) {
-          return hours.length === 7;
-        },
-        message: "Working hours must be specified for all 7 days of the week",
-      },
-    },
     businessHours: {
       type: [businessHourSchema],
       required: true,
@@ -125,11 +149,31 @@ const salonContextSchema = new mongoose.Schema(
       },
     },
     profilePictureUrl: String,
+    timeSlots: {
+      type: [timeSlotSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,
   }
 );
 
+// Method to clean up old time slots
+salonContextSchema.methods.cleanupTimeSlots = function(this: ISalonContext) {
+  const now = new Date();
+  this.timeSlots = this.timeSlots.filter((slot: ITimeSlot) => {
+    const slotDate = new Date(slot.start_time);
+    return slotDate >= now;
+  });
+  return this.save();
+};
+
+// Pre-save middleware to automatically clean up old time slots
+salonContextSchema.pre('save', function(this: ISalonContext, next) {
+  this.cleanupTimeSlots();
+  next();
+});
+
 export default mongoose.models.SalonContext ||
-  mongoose.model("SalonContext", salonContextSchema);
+  mongoose.model<ISalonContext>("SalonContext", salonContextSchema);
