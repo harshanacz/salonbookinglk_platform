@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -12,6 +12,19 @@ interface Service {
   price: number;
   duration: string;
   selectedTime?: string;
+  professional?: string;
+  timeSlot?: string;
+}
+
+interface Salon {
+  id?: number;
+  name: string;
+  rating?: number;
+  image: string;
+  closingTime?: string;
+  isOpen?: boolean;
+  address?: string;
+  mapLink?: string;
 }
 
 interface Appointment {
@@ -28,28 +41,13 @@ const AppointmentSummary = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [services, setServices] = useState<Service[]>([
-    { id: "1", name: "Layer Hair Cut", price: 3000, duration: "45 min", selectedTime: "14:15" },
-    { id: "2", name: "Hair Styling", price: 2000, duration: "30 min", selectedTime: "15:00" }
-  ]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [hasUpcomingAppointment, setHasUpcomingAppointment] = useState(false);
+  const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
+  const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
+  const [userName, setUserName] = useState("User");
+  const [selectedTime, setSelectedTime] = useState("");
   const router = useRouter();
-
-  const userName = "Naduni";
-  const selectedSalon = {
-    name: "Salon Dmesh",
-    image: "/Dmesh.jpg"
-  };
-
-  // New state to track if there's an upcoming appointment 
-  const [hasUpcomingAppointment, setHasUpcomingAppointment] = useState(true);
-  
-  const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment>({
-    salon: "Salon Dmesh",
-    date: new Date(),
-    price: services.reduce((sum, service) => sum + service.price, 0),
-    image: "/Dmesh.jpg",
-    services: services
-  });
 
   const [pastAppointments, setPastAppointments] = useState([
     {
@@ -67,6 +65,69 @@ const AppointmentSummary = () => {
       image: "/nailpolish.jpg",
     }
   ]);
+
+  // Load booking data from sessionStorage when component mounts
+  useEffect(() => {
+    try {
+      // Get final booking data
+      const bookingDataStr = sessionStorage.getItem("finalBookingData");
+      const savedAppointmentsStr = localStorage.getItem("appointments");
+      
+      if (bookingDataStr) {
+        const bookingData = JSON.parse(bookingDataStr);
+        
+        // Set services
+        if (bookingData.services) {
+          setServices(bookingData.services);
+        }
+        
+        // Set salon
+        if (bookingData.salon) {
+          setSelectedSalon(bookingData.salon);
+        }
+        
+        // Set date and time
+        if (bookingData.date) {
+          const appointmentDate = new Date(bookingData.date);
+          setSelectedDate(appointmentDate);
+        }
+        
+        if (bookingData.time) {
+          setSelectedTime(bookingData.time);
+        }
+        
+        // Calculate total price
+        const totalPrice = bookingData.services.reduce(
+          (sum: number, service: Service) => sum + service.price, 
+          0
+        );
+        
+        // Create upcoming appointment
+        if (bookingData.salon && bookingData.date) {
+          setUpcomingAppointment({
+            salon: bookingData.salon.name,
+            date: new Date(bookingData.date),
+            price: totalPrice,
+            image: bookingData.salon.image,
+            services: bookingData.services
+          });
+          
+          setHasUpcomingAppointment(true);
+        }
+      }
+      
+      // Get user info if available
+      const userInfoStr = localStorage.getItem("userInfo");
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        if (userInfo.name) {
+          setUserName(userInfo.name);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading booking data:", error);
+    }
+  }, []);
 
   // Calendar generation logic
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -166,11 +227,13 @@ const AppointmentSummary = () => {
     setActivePopup(null);
     
     // Update the upcoming appointment with new date and services with updated times
-    setUpcomingAppointment(prev => ({
-      ...prev,
-      date: selectedDate,
-      services: [...services]
-    }));
+    if (upcomingAppointment) {
+      setUpcomingAppointment({
+        ...upcomingAppointment,
+        date: selectedDate,
+        services: [...services]
+      });
+    }
   };
 
   const handleCancelAppointment = () => {
@@ -178,18 +241,20 @@ const AppointmentSummary = () => {
     setActivePopup(null);
     
     // Move the canceled appointment to past appointments
-    const canceledAppointment = {
-      id: pastAppointments.length + 1,
-      name: upcomingAppointment.services.map(s => s.name).join(", "),
-      price: upcomingAppointment.price,
-      date: formatDate(upcomingAppointment.date),
-      image: upcomingAppointment.image,
-    };
-    
-    setPastAppointments(prev => [canceledAppointment, ...prev]);
-    
-    // Remove from upcoming appointments
-    setHasUpcomingAppointment(false);
+    if (upcomingAppointment) {
+      const canceledAppointment = {
+        id: pastAppointments.length + 1,
+        name: upcomingAppointment.services.map(s => s.name).join(", "),
+        price: upcomingAppointment.price,
+        date: formatDate(upcomingAppointment.date),
+        image: upcomingAppointment.image,
+      };
+      
+      setPastAppointments(prev => [canceledAppointment, ...prev]);
+      
+      // Remove from upcoming appointments
+      setHasUpcomingAppointment(false);
+    }
   };
 
   const getStatusStyle = () => {
@@ -211,10 +276,12 @@ const AppointmentSummary = () => {
   };
 
   const formatTime = (time: string) => {
+    if (!time || time.length < 5) return "";
+    
     const [hours, minutes] = time.split(':');
     const hourNum = parseInt(hours);
     const period = hourNum >= 12 ? 'PM' : 'AM';
-    const displayHour = hourNum > 12 ? hourNum - 12 : hourNum;
+    const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
     return `${displayHour}:${minutes} ${period}`;
   };
 
@@ -227,7 +294,7 @@ const AppointmentSummary = () => {
         <div>
           <div className="bg-white p-4 rounded-lg shadow-md w-full">
             <h2 className="font-semibold text-lg mb-2">Upcoming</h2>
-            {hasUpcomingAppointment && appointmentStatus !== "Canceled" ? (
+            {hasUpcomingAppointment && appointmentStatus !== "Canceled" && upcomingAppointment ? (
               <div className="flex items-center gap-4">
                 <Image
                   src={upcomingAppointment.image}
@@ -239,9 +306,11 @@ const AppointmentSummary = () => {
                 <div>
                   <h3 className="font-semibold">{upcomingAppointment.salon}</h3>
                   <p className="text-sm text-gray-500">
-                    {formatDate(upcomingAppointment.date)} at {upcomingAppointment.services[0].selectedTime 
-                      ? formatTime(upcomingAppointment.services[0].selectedTime) 
-                      : ""}
+                    {formatDate(upcomingAppointment.date)} at {selectedTime 
+                      ? formatTime(selectedTime) 
+                      : (upcomingAppointment.services[0]?.selectedTime 
+                        ? formatTime(upcomingAppointment.services[0].selectedTime) 
+                        : "")}
                   </p>
                   <p className="font-bold">
                     LKR {upcomingAppointment.price.toLocaleString()}
@@ -288,7 +357,7 @@ const AppointmentSummary = () => {
 
         {/* Right Column - Appointment Details */}
         <div className="bg-white col-span-2 p-6 rounded-lg shadow-md">
-          {hasUpcomingAppointment && appointmentStatus !== "Canceled" ? (
+          {hasUpcomingAppointment && appointmentStatus !== "Canceled" && upcomingAppointment && selectedSalon ? (
             <>
               <div className="w-full mt-3">
                 <Image
@@ -306,8 +375,12 @@ const AppointmentSummary = () => {
               </h2>
               
               <p className="text-gray-600">
-                {formatDate(upcomingAppointment.date)} at {upcomingAppointment.services.map(s => 
-                  s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}
+                {selectedDate 
+                  ? formatDate(selectedDate) // Use selectedDate if available
+                  : formatDate(upcomingAppointment.date)} at {selectedTime 
+                    ? formatTime(selectedTime) 
+                    : upcomingAppointment.services.map(s => 
+                      s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}
               </p>
 
               <div className="mt-4 space-y-2">
@@ -418,10 +491,16 @@ const AppointmentSummary = () => {
             <div className="mb-6">
               <h3 className="font-semibold text-gray-700 mb-2">Current Appointment</h3>
               <div className="bg-gray-50 p-3 rounded">
-                <p><span className="font-medium">Date:</span> {formatDate(upcomingAppointment.date)}</p>
-                <p><span className="font-medium">Time:</span> {upcomingAppointment.services.map(s => 
-                  s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}</p>
-                <p><span className="font-medium">Services:</span> {upcomingAppointment.services.map(s => s.name).join(", ")}</p>
+                {upcomingAppointment && (
+                  <>
+                    <p><span className="font-medium">Date:</span> {formatDate(upcomingAppointment.date)}</p>
+                    <p><span className="font-medium">Time:</span> {selectedTime 
+                      ? formatTime(selectedTime) 
+                      : upcomingAppointment.services.map(s => 
+                        s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}</p>
+                    <p><span className="font-medium">Services:</span> {upcomingAppointment.services.map(s => s.name).join(", ")}</p>
+                  </>
+                )}
               </div>
             </div>
             

@@ -33,8 +33,8 @@ export async function POST(req: Request) {
       phoneNumber,
       ownerName,
       businessRegistrationNumber,
-      workingHours,
-      businessHours
+      businessHours,
+      profilePictureUrl
     } = body;
 
     // Create salon context
@@ -47,8 +47,7 @@ export async function POST(req: Request) {
       phoneNumber,
       ownerName,
       businessRegistrationNumber,
-      workingHours,
-      businessHours
+      businessHours,profilePictureUrl 
     });
 
     return NextResponse.json(salonContext);

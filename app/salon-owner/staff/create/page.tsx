@@ -37,6 +37,7 @@ import { ArrowLeft, Upload } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
+import { UploadButton } from "@/lib/uploadthing";
 
 const staffFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -78,8 +79,6 @@ export default function CreateStaffMember() {
 
   async function onSubmit(data: StaffFormValues) {
     try {
-      console.log("Submitting data:", data); // Debug log
-
       const formData = {
         name: data.name,
         email: data.email,
@@ -88,8 +87,8 @@ export default function CreateStaffMember() {
         bio: data.bio || "",
         availability: data.availability,
         workingDays: data.workingDays,
-        status: "Active", // Add default status
-        profileImage: image || "", // Add image if available
+        status: "Active",
+        profileImage: image || "", // Use image state directly
       };
 
       const response = await fetch('/api/salon-owner/staff', {
@@ -125,15 +124,15 @@ export default function CreateStaffMember() {
     }
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImage(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  // Replace handleImageChange with handleImageUpload
+  const handleImageUpload = async (res: any) => {
+    if (!res || !res[0]?.url) return;
+    const imageUrl = res[0].url;
+    setImage(imageUrl);
+    toast({
+      title: "Success",
+      description: "Profile image uploaded successfully",
+    });
   };
 
   const handleAvailabilityChange = (value: string) => {
@@ -174,7 +173,7 @@ export default function CreateStaffMember() {
                       <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                         {image ? (
                           <img
-                            src={image || "/placeholder.svg"}
+                            src={image}
                             alt="Profile preview"
                             className="w-full h-full object-cover"
                           />
@@ -183,11 +182,16 @@ export default function CreateStaffMember() {
                         )}
                       </div>
                       <div>
-                        <Input
-                          id="profile-image"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
+                        <UploadButton
+                          endpoint="imageUploader"
+                          onClientUploadComplete={handleImageUpload}
+                          onUploadError={(error: Error) => {
+                            toast({
+                              title: "Error",
+                              description: `Failed to upload image: ${error.message}`,
+                              variant: "destructive",
+                            });
+                          }}
                         />
                         <p className="text-xs text-gray-500 mt-1">
                           Upload a profile picture (max 2MB)

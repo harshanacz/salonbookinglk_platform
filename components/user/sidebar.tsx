@@ -22,7 +22,7 @@ import {
   BellIcon,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 const routes = [
@@ -63,6 +63,29 @@ const routes = [
 export const UserSidebar = () => {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userData, setUserData] = useState({ fullName: "" });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/user/profile');
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error('Failed to fetch user profile');
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -102,7 +125,9 @@ export const UserSidebar = () => {
           <div className="flex items-center gap-2">
             <CircleUserRound className="h-10 w-10 text-[var(--secondary)]" />
             <div>
-              <div className="font-medium text-sm">John Doe</div>
+              <div className="font-medium text-sm">
+                {isLoading ? "Loading..." : userData.fullName || "Guest User"}
+              </div>
             </div>
           </div>
         </div>

@@ -95,10 +95,17 @@ export default function NotificationForm() {
       try {
         // Fetch salons (SALON_OWNER)
         setIsLoadingSalons(true);
-        const salonResponse = await fetch("/api/admin/users?type=SALON_OWNER");
+        const salonResponse = await fetch("/api/admin/users?type=SALON_OWNER&limit=100");
         if (salonResponse.ok) {
           const salonData = await salonResponse.json();
-          setSalons(salonData);
+          setSalons(salonData.users || []);
+        } else {
+          console.error("Failed to fetch salons:", salonResponse.status);
+          toast({
+            title: "Error",
+            description: "Failed to load salons",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error fetching salons:", error);
@@ -114,10 +121,17 @@ export default function NotificationForm() {
       try {
         // Fetch clients (CUSTOMER)
         setIsLoadingClients(true);
-        const clientResponse = await fetch("/api/admin/users?type=CUSTOMER");
+        const clientResponse = await fetch("/api/admin/users?type=CUSTOMER&limit=100");
         if (clientResponse.ok) {
           const clientData = await clientResponse.json();
-          setClients(clientData);
+          setClients(clientData.users || []);
+        } else {
+          console.error("Failed to fetch clients:", clientResponse.status);
+          toast({
+            title: "Error",
+            description: "Failed to load clients",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error fetching clients:", error);
@@ -197,8 +211,6 @@ export default function NotificationForm() {
         selectedClients: [],
         recipientType: "salons",
       });
-      setOpen(false);
-      setOpenClients(false);
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -294,6 +306,7 @@ export default function NotificationForm() {
                     </FormItem>
                   )}
                 />
+
                 {/* Salon Select */}
                 {watchRecipientType === "salons" && (
                   <>
@@ -322,7 +335,7 @@ export default function NotificationForm() {
                         </FormItem>
                       )}
                     />
-                    {/* All salons select */}
+
                     {!watchAllSalons && (
                       <>
                         <FormField
@@ -348,7 +361,7 @@ export default function NotificationForm() {
                             </FormItem>
                           )}
                         />
-                        {/* Only verified salons select */}
+
                         {!watchOnlyVerifiedSalons && (
                           <FormField
                             control={form.control}
@@ -369,7 +382,7 @@ export default function NotificationForm() {
                                   <PopoverTrigger asChild>
                                     <FormControl>
                                       <Button
-                                        variant="outlineDate"
+                                        variant="outline"
                                         role="combobox"
                                         aria-expanded={open}
                                         className="w-full justify-between"
@@ -404,32 +417,18 @@ export default function NotificationForm() {
                                           {filteredSalons.map((salon) => (
                                             <CommandItem
                                               key={salon._id}
-                                              value={`${salon.userName} ${salon.email}`}
-                                              onSelect={(value) => {
+                                              value={`${salon.userName || ""} ${salon.email}`}
+                                              onSelect={() => {
                                                 const selectedValues =
                                                   field.value || [];
-                                                const clickedSalon =
-                                                  salons.find(
-                                                    (s) =>
-                                                      `${s.userName} ${s.email}` ===
-                                                      value
-                                                  );
-                                                if (!clickedSalon) return;
-
-                                                const newValues =
-                                                  selectedValues.includes(
-                                                    clickedSalon._id
-                                                  )
-                                                    ? selectedValues.filter(
-                                                        (id) =>
-                                                          id !==
-                                                          clickedSalon._id
-                                                      )
-                                                    : [
-                                                        ...selectedValues,
-                                                        clickedSalon._id,
-                                                      ];
-
+                                                const isSelected = selectedValues.includes(
+                                                  salon._id
+                                                );
+                                                const newValues = isSelected
+                                                  ? selectedValues.filter(
+                                                      (id) => id !== salon._id
+                                                    )
+                                                  : [...selectedValues, salon._id];
                                                 form.setValue(
                                                   "selectedSalons",
                                                   newValues
@@ -474,6 +473,7 @@ export default function NotificationForm() {
                     )}
                   </>
                 )}
+
                 {/* Clients select */}
                 {watchRecipientType === "clients" && (
                   <>
@@ -502,7 +502,7 @@ export default function NotificationForm() {
                         </FormItem>
                       )}
                     />
-                    {/* All clients select */}
+
                     {!watchAllClients && (
                       <FormField
                         control={form.control}
@@ -525,7 +525,7 @@ export default function NotificationForm() {
                               <PopoverTrigger asChild>
                                 <FormControl>
                                   <Button
-                                    variant="outlineDate"
+                                    variant="outline"
                                     role="combobox"
                                     aria-expanded={openClients}
                                     className="w-full justify-between"
@@ -560,30 +560,18 @@ export default function NotificationForm() {
                                       {clients.map((client) => (
                                         <CommandItem
                                           key={client._id}
-                                          value={`${client.userName} ${client.email}`}
-                                          onSelect={(value) => {
+                                          value={`${client.userName || ""} ${client.email}`}
+                                          onSelect={() => {
                                             const selectedValues =
                                               field.value || [];
-                                            const clickedClient = clients.find(
-                                              (c) =>
-                                                `${c.userName} ${c.email}` ===
-                                                value
+                                            const isSelected = selectedValues.includes(
+                                              client._id
                                             );
-                                            if (!clickedClient) return;
-
-                                            const newValues =
-                                              selectedValues.includes(
-                                                clickedClient._id
-                                              )
-                                                ? selectedValues.filter(
-                                                    (id) =>
-                                                      id !== clickedClient._id
-                                                  )
-                                                : [
-                                                    ...selectedValues,
-                                                    clickedClient._id,
-                                                  ];
-
+                                            const newValues = isSelected
+                                              ? selectedValues.filter(
+                                                  (id) => id !== client._id
+                                                )
+                                              : [...selectedValues, client._id];
                                             form.setValue(
                                               "selectedClients",
                                               newValues
