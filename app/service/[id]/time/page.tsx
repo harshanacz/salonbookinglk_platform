@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { ArrowLeft, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format, addDays, parse, isAfter, isBefore, addMinutes } from "date-fns";
 import Image from "next/image";
-import SalonCard from "@/components/booking/salon-card";
+
 import BookingNavigation from "@/components/booking/booking-navigation";
 
 // Define TimeSlot interface for availability
@@ -63,7 +63,7 @@ export default function SelectTime() {
   const router = useRouter();
   const params = useParams();
   const serviceId = params.id as string;
-  
+
   // States
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
@@ -77,19 +77,19 @@ export default function SelectTime() {
   const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
   const [selectedExtraServices, setSelectedExtraServices] = useState<Service[]>([]);
   const [showPopup, setShowPopup] = useState<boolean>(false);
-  
+
   // Load services and salon info from sessionStorage
   useEffect(() => {
     const servicesData = sessionStorage.getItem("bookingServices");
     if (servicesData) {
       setMainServices(JSON.parse(servicesData));
     }
-    
+
     const salonData = sessionStorage.getItem("salonInfo");
     if (salonData) {
       setSelectedSalon(JSON.parse(salonData));
     }
-    
+
     // Fetch staff members for this service
     const fetchStaffMembers = async () => {
       try {
@@ -113,19 +113,19 @@ export default function SelectTime() {
     const fetchTimeSlots = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const formattedDate = format(selectedDate, "yyyy-MM-dd");
-        const endpoint = selectedStaff 
+        const endpoint = selectedStaff
           ? `/api/services/${serviceId}/availability?date=${formattedDate}&staffId=${selectedStaff}`
           : `/api/services/${serviceId}/availability?date=${formattedDate}`;
-        
+
         const response = await fetch(endpoint);
-        
+
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         setAvailableTimeSlots(data.timeSlots);
       } catch (err) {
@@ -188,14 +188,14 @@ export default function SelectTime() {
     const slot = availableTimeSlots.find(s => s.slot_id === slotId);
     if (slot) {
       const timeString = format(new Date(slot.start_time), "h:mm a");
-      
+
       // Update main services with selected time and professional
       const updatedMainServices = mainServices.map(service => ({
         ...service,
         timeSlot: timeString,
         professional: selectedProfessionalName
       }));
-      
+
       setMainServices(updatedMainServices);
     }
   };
@@ -230,7 +230,7 @@ export default function SelectTime() {
       alert("Please select a time slot before continuing");
       return;
     }
-    
+
     setShowPopup(true);
   };
   // Navigate to confirmation page
@@ -242,7 +242,7 @@ export default function SelectTime() {
       sessionStorage.setItem("bookingProfessional", selectedProfessionalName);
       sessionStorage.setItem("bookingDate", format(selectedDate, "yyyy-MM-dd"));
       sessionStorage.setItem("bookingTime", format(new Date(slot.start_time), "h:mm a"));
-        // Save complete time slot information with all needed fields
+      // Save complete time slot information with all needed fields
       sessionStorage.setItem("selectedTimeSlot", JSON.stringify({
         id: slot.slot_id,
         slot_id: slot.slot_id, // Include both formats to ensure compatibility
@@ -254,7 +254,7 @@ export default function SelectTime() {
         timestamp: new Date(slot.start_time).getTime(),
         available: true // Mark as available by default
       }));
-      
+
       // Save selected staff member information if one was selected
       if (selectedStaff) {
         const staffMember = staffMembers.find(s => s._id === selectedStaff);
@@ -265,13 +265,13 @@ export default function SelectTime() {
         // Clear any previously selected staff member
         sessionStorage.removeItem("selectedStaffMember");
       }
-      
+
       // If we have selected extra services, add them too
       if (selectedExtraServices.length > 0) {
         const allServices = [...mainServices, ...selectedExtraServices];
         sessionStorage.setItem("bookingServices", JSON.stringify(allServices));
       }
-      
+
       router.push(`/service/${serviceId}/confirm`);
     }
   };
@@ -280,17 +280,18 @@ export default function SelectTime() {
   const handleSelectExtraService = (service: Service) => {
     // Check if this service is already selected
     const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
-    
+
     if (!isAlreadySelected) {
       const updatedService = {
         ...service,
         timeSlot: format(new Date(), "h:mm a"), // Default to current time
         professional: selectedProfessionalName
       };
-      
+
       setSelectedExtraServices(prev => [...prev, updatedService]);
     }
   };
+
   // Loading state
   if (loading && !availableTimeSlots.length) {
     return (
@@ -305,16 +306,18 @@ export default function SelectTime() {
       </div>
     );
   }
+
   return (
     <div className="p-4 md:p-8 w-full min-h-screen bg-purple-50 overflow-y-auto pb-24">
-      <div className="w-full lg:w-4/5 xl:w-3/4 mx-auto max-w-7xl">
+      <div className="w-full mx-auto max-w-7xl">
         <BookingNavigation salonId={Number(serviceId)} />
-          {/* Booking Progress Indicator - Simplified */}
+
+        {/* Progress Indicator - Full Width */}
         <div className="mb-5 pt-4">
           <div className="flex items-center justify-center max-w-sm mx-auto">
             <div className="text-center mx-3">
               <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs mx-auto">✓</div>
-              <span className="text-xs mt-1 block text-green-600">Service</span>
+              <span className="text-xs mt-1 block text-green-600">Professional</span>
             </div>
             <div className="flex-1 h-0.5 bg-green-500"></div>
             <div className="text-center mx-3">
@@ -328,107 +331,19 @@ export default function SelectTime() {
             </div>
           </div>
         </div>
-        
-        <h2 className="text-xl font-medium mb-5 text-center">Select Date & Time</h2>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Calendar and Salon Info */}
-          <div className="lg:sticky lg:top-4 self-start">
-            <Card className="p-4 mb-4 shadow-sm">
-              <div className="mb-4">
-                <h3 className="font-medium text-lg flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2" /> 
-                  Select Date
-                </h3>
-              </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                disabled={(date) => 
-                  isBefore(date, new Date()) || 
-                  isAfter(date, addDays(new Date(), 30))
-                }
-                className="rounded-md border"
-              />
-            </Card>              {/* Salon Info Card - Simplified */}
-            {selectedSalon && (
-              <Card className="p-4 shadow-sm">
-                <h3 className="font-medium text-base mb-3">Selected Salon</h3>
-                <div className="flex items-center mb-4">
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
-                    <Image
-                      src={selectedSalon.image || "/placeholder-logo.svg"}
-                      alt="Testing Purpose"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="font-semibold text-gray-800">Testing Purpose</h3>
-                    <div className="flex items-center text-sm">
-                      <span className="text-yellow-500">4.5 ⭐⭐⭐⭐⭐</span>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="text-sm mb-1 text-green-600 flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                  <span>Open until 23:30 • Now Open</span>
-                </div>
-                
-                <div className="flex items-center text-xs text-gray-500 mb-3">
-                  <span>6.9271, 79.8612</span>
-                  <button className="ml-2 text-blue-600 hover:underline flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-0.5"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
-                    Get direction
-                  </button>
-                </div>
-                
-                <div className="border-t border-gray-100 pt-3 mt-2">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      <tr>
-                        <td className="pb-1.5 text-gray-500">Professional:</td>
-                        <td className="pb-1.5 text-right font-medium">Any Professional</td>
-                      </tr>
-                      <tr>
-                        <td className="pb-1.5 text-gray-500">Date:</td>
-                        <td className="pb-1.5 text-right font-medium">November 15</td>
-                      </tr>
-                      <tr>
-                        <td className="pb-1.5 text-gray-500">Service:</td>
-                        <td className="pb-1.5 text-right font-medium">Testing Purpose</td>
-                      </tr>
-                      <tr>
-                        <td className="pb-1.5 text-gray-500">Duration:</td>
-                        <td className="pb-1.5 text-right font-medium">
-                          {mainServices[0]?.duration || 30} mins
-                        </td>
-                      </tr>
-                      <tr className="border-t border-gray-100">
-                        <td className="pt-2 pb-1 text-gray-500">Price:</td>
-                        <td className="pt-2 pb-1 text-right font-medium">LKR 2,200</td>
-                      </tr>
-                      <tr>
-                        <td className="font-medium">Total</td>
-                        <td className="text-right font-medium text-purple-700">LKR 2,200</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            )}
-          </div>
-          
-          {/* Middle Column - Staff and Time Slots */}
-          <div className="lg:col-span-2">            {/* Staff Selection - Simplified */}
+
+        {/* Updated Grid Layout with Corner Positioning */}
+        <div className="flex justify-between gap-8">
+          {/* Left Column - Selection Components */}
+          <div className="w-[45%] space-y-4">
+            {/* Staff Selection */}
             {staffMembers.length > 0 && (
-              <Card className="p-4 mb-4 shadow-sm">                <div className="flex justify-between items-center mb-3">
+              <Card className="p-4 shadow-sm">
+                <div className="flex justify-between items-center mb-3">
                   <h3 className="font-medium text-lg">Select Professional</h3>
                   <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Optional</span>
                 </div>
-                
+
                 <div className="bg-gray-50 p-3 rounded-md mb-3">
                   <p className="text-sm text-center mb-2">
                     Currently selected: <span className="font-medium">{selectedProfessionalName}</span>
@@ -438,15 +353,15 @@ export default function SelectTime() {
                     <p>• Selecting a specific staff member guarantees your appointment with them.</p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-2">
                   {staffMembers.map((staff) => (
-                    <div 
-                      key={staff._id} 
+                    <div
+                      key={staff._id}
                       onClick={() => handleStaffSelect(staff._id)}
                       className={`cursor-pointer rounded-md border p-2 text-center ${
-                        selectedStaff === staff._id 
-                          ? 'border-purple-500 bg-purple-50' 
+                        selectedStaff === staff._id
+                          ? 'border-purple-500 bg-purple-50'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -466,18 +381,40 @@ export default function SelectTime() {
                   ))}
                 </div>
               </Card>
-            )}{/* Time Slots Selection - Simplified */}
+            )}
+
+            {/* Calendar Selection */}
+            <Card className="p-4 shadow-sm">
+              <div className="mb-4">
+                <h3 className="font-medium text-lg flex items-center">
+                  <CalendarIcon className="h-5 w-5 mr-2" />
+                  Select Date
+                </h3>
+              </div>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateSelect}
+                disabled={(date) =>
+                  isBefore(date, new Date()) ||
+                  isAfter(date, addDays(new Date(), 30))
+                }
+                className="rounded-md border"
+              />
+            </Card>
+
+            {/* Time Slots Selection */}
             <Card className="p-4 shadow-sm">
               <div className="mb-3">
                 <h3 className="font-medium text-lg flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-purple-600" /> 
+                  <Clock className="h-5 w-5 mr-2 text-purple-600" />
                   Available Time Slots
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">
                   Please select a time for your appointment on <span className="font-medium">{format(selectedDate, "EEEE, MMMM d")}</span>
                 </p>
               </div>
-              
+
               {loading ? (
                 <div className="flex items-center justify-center p-6">
                   <div className="animate-spin rounded-full h-6 w-6 border-2 border-purple-500 border-t-transparent"></div>
@@ -494,13 +431,13 @@ export default function SelectTime() {
                     <div className="bg-green-50 rounded-md p-2 mb-3 border border-green-200 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 mr-2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                       <span className="text-sm text-green-800">
-                        Time selected: {availableTimeSlots.find(s => s.slot_id === selectedTimeSlot) ? 
-                          format(new Date(availableTimeSlots.find(s => s.slot_id === selectedTimeSlot)!.start_time), "h:mm a") : 
+                        Time selected: {availableTimeSlots.find(s => s.slot_id === selectedTimeSlot) ?
+                          format(new Date(availableTimeSlots.find(s => s.slot_id === selectedTimeSlot)!.start_time), "h:mm a") :
                           ""}
                       </span>
                     </div>
                   )}
-                  
+
                   <div className="overflow-y-auto max-h-[400px] pr-1">
                     {groupTimeSlotsByHour().map(([hour, slots]) => (
                       <div key={hour}>
@@ -530,78 +467,80 @@ export default function SelectTime() {
                   </div>
                 </>
               )}
-            </Card>              {/* Booking Summary Card - Simplified */}
-            <div className="mt-6">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-3 bg-purple-50 border-b border-purple-100">
-                  <h3 className="text-lg font-medium text-purple-800">Booking Summary</h3>
+            </Card>
+          </div>
+
+          {/* Right Column - Salon Card and Booking Summary */}
+          <div className="w-[45%] flex flex-col space-y-6">
+           
+            {/* Booking Summary - Fixed position below SalonCard */}
+            <div className="mt-4">
+              <Card className="p-4 shadow-sm bg-white">
+                <div className="bg-purple-50 -m-4 p-4 mb-4 border-b">
+                  <h3 className="font-medium text-lg text-purple-800">Booking Summary</h3>
                 </div>
-                
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden relative">
-                        <Image 
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 relative rounded-full overflow-hidden">
+                        <Image
                           src={selectedSalon?.image || "/placeholder-logo.svg"}
-                          alt="Testing Purpose"
+                          alt="Salon"
                           fill
                           className="object-cover"
                         />
                       </div>
-                      <div className="ml-3">
-                        <h4 className="font-medium">Testing Purpose</h4>
-                        <p className="text-xs text-gray-500">Any Professional</p>
+                      <div>
+                        <p className="font-medium">Testing Purpose</p>
+                        <p className="text-sm text-gray-600">{selectedProfessionalName}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-purple-700">LKR 2,200</p>
-                      <p className="text-xs text-gray-500">{mainServices[0]?.duration || 30} mins</p>
+                      <p className="text-sm text-gray-500">{mainServices[0]?.duration || 30} mins</p>
                     </div>
                   </div>
-                  
-                  <div className="border-t border-gray-100 pt-3 mb-4">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-gray-600 text-sm">Date:</span>
-                      <span className="font-medium text-sm">November 15</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Time:</span>
-                      <span className="font-medium text-sm">
-                        {selectedTimeSlot ? format(new Date(availableTimeSlots.find(s => s.slot_id === selectedTimeSlot)?.start_time || new Date()), "h:mm a") : "Not selected"}
-                      </span>
+
+                  <div className="border-t pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Date</p>
+                        <p className="font-medium">{selectedDate ? format(selectedDate, "MMMM d, yyyy") : "Not selected"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Time</p>
+                        <p className="font-medium">
+                          {selectedTimeSlot ?
+                            format(new Date(availableTimeSlots.find(s => s.slot_id === selectedTimeSlot)?.start_time || new Date()), "h:mm a")
+                            : "Not selected"
+                          }
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  
-                  {!selectedTimeSlot && (
-                    <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800 mb-4 text-center">
-                      Please select a time slot above
-                    </div>
-                  )}
-                  
-                  <button 
+
+                  <Button
                     onClick={handleContinue}
                     disabled={!selectedTimeSlot}
-                    className={`w-full py-3 rounded-md font-medium text-center ${
-                      selectedTimeSlot 
-                        ? 'bg-purple-600 text-white hover:bg-purple-700' 
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   >
                     Continue to Extras & Confirm
-                  </button>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
         </div>
       </div>
-        {/* Extra Services Popup */}
+
+      {/* Extra Services Popup */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden">
             <div className="flex justify-between items-center bg-purple-50 border-b border-purple-100 p-4">
               <h3 className="text-lg font-semibold text-purple-800">Add Extra Services</h3>
-              <button 
+              <button
                 onClick={() => setShowPopup(false)}
                 className="w-8 h-8 rounded-full bg-white text-gray-500 hover:text-gray-800 flex items-center justify-center border border-gray-200 transition-colors"
                 aria-label="Close popup"
@@ -609,7 +548,7 @@ export default function SelectTime() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            
+
             <div className="p-4 border-b">
               <div className="flex items-start mb-4">
                 <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 mr-3">
@@ -622,7 +561,7 @@ export default function SelectTime() {
                   </p>
                 </div>
               </div>
-              
+
               {selectedExtraServices.length > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
                   <p className="text-sm text-green-800 font-medium mb-1">
@@ -637,17 +576,17 @@ export default function SelectTime() {
 
             <div className="max-h-60 overflow-y-auto p-4 space-y-3">
               <p className="font-medium text-gray-700 mb-2">Available Extra Services:</p>
-              
+
               {extraServices.map((service) => {
                 // Check if this service is already selected
                 const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
-                
+
                 return (
                   <div
                     key={service.id}
                     className={`p-4 rounded-lg border ${
-                      isAlreadySelected 
-                        ? "bg-green-50 border-green-200" 
+                      isAlreadySelected
+                        ? "bg-green-50 border-green-200"
                         : "bg-white border-gray-200 hover:bg-purple-50 hover:border-purple-300 cursor-pointer"
                     } transition-colors`}
                     onClick={() => !isAlreadySelected && handleSelectExtraService(service)}
@@ -675,19 +614,19 @@ export default function SelectTime() {
                 );
               })}
             </div>
-            
+
             <div className="p-4 border-t bg-gray-50">
               <div className="flex flex-col space-y-3">
-                <button 
+                <button
                   className="w-full bg-purple-600 text-white py-3 rounded-lg text-base font-medium hover:bg-purple-700 transition-colors"
                   onClick={navigateToConfirm}
                 >
-                  {selectedExtraServices.length > 0 
-                    ? "Continue with Selected Extra Services" 
+                  {selectedExtraServices.length > 0
+                    ? "Continue with Selected Extra Services"
                     : "Skip Extra Services"
                   }
                 </button>
-                <button 
+                <button
                   className="text-gray-600 text-sm hover:underline"
                   onClick={() => setShowPopup(false)}
                 >
