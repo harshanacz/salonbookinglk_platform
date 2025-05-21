@@ -43,7 +43,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface StaffMember {
   _id: string;
   name: string;
-  image?: string;
+  profileImage?: string; // Update interface to match Staff model
   role: string;
   services: string[];
   status: string;
@@ -180,12 +180,13 @@ export default function StaffManagement() {
                   <TableRow key={staff._id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100">
                           <Image
-                            src={staff.image || "/placeholder.svg"}
+                            src={staff.profileImage || "/placeholder.svg"}
                             alt={staff.name}
                             fill
                             className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
                         </div>
                         <div className="font-medium">{staff.name}</div>
