@@ -110,43 +110,49 @@ export async function GET(
           );
         });
       }
-    }
-
-    // Mark booked slots as unavailable
+    }    // Mark booked slots as unavailable
     timeSlots.forEach((slot) => {
-      // Check if the slot is booked in salon
-      const isSlotBookedInSalon = salonBooked.some((bookedSlot: { start_time: string | number | Date; period: number; }) => {
-        const bookedStart = new Date(bookedSlot.start_time);
-        const slotStart = new Date(slot.start_time);
-        const slotEnd = addMinutes(slotStart, serviceDuration);
-        const bookedEnd = addMinutes(bookedStart, bookedSlot.period);
+      const slotStart = new Date(slot.start_time);
+      const slotEnd = addMinutes(slotStart, serviceDuration);
+      
+      // If a specific staff member is selected, only check if that staff is booked
+      if (staffId) {
+        // For a specific staff member, we only care about their bookings
+        const isStaffBooked = staffBooked.some((bookedSlot: { start_time: string | number | Date; period: number; }) => {
+          const bookedStart = new Date(bookedSlot.start_time);
+          const bookedEnd = addMinutes(bookedStart, bookedSlot.period);
+          
+          // Check if the slots overlap
+          return (
+            (slotStart >= bookedStart && slotStart < bookedEnd) ||
+            (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
+            (slotStart <= bookedStart && slotEnd >= bookedEnd)
+          );
+        });
         
-        // Check if the slots overlap
-        return (
-          (slotStart >= bookedStart && slotStart < bookedEnd) ||
-          (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
-          (slotStart <= bookedStart && slotEnd >= bookedEnd)
-        );
-      });
-
-      // Check if the slot is booked for the selected staff member
-      const isSlotBookedForStaff = staffId ? staffBooked.some((bookedSlot: { start_time: string | number | Date; period: number; }) => {
-        const bookedStart = new Date(bookedSlot.start_time);
-        const slotStart = new Date(slot.start_time);
-        const slotEnd = addMinutes(slotStart, serviceDuration);
-        const bookedEnd = addMinutes(bookedStart, bookedSlot.period);
+        // Mark as unavailable only if this specific staff is booked
+        if (isStaffBooked) {
+          slot.available = false;
+        }
+      } else {
+        // For "Any Professional" (general booking), we only care about slots that 
+        // are booked for the salon in general (not staff-specific bookings)
+        const isGenerallyBooked = salonBooked.some((bookedSlot: { start_time: string | number | Date; period: number; }) => {
+          const bookedStart = new Date(bookedSlot.start_time);
+          const bookedEnd = addMinutes(bookedStart, bookedSlot.period);
+          
+          // Check if the slots overlap
+          return (
+            (slotStart >= bookedStart && slotStart < bookedEnd) ||
+            (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
+            (slotStart <= bookedStart && slotEnd >= bookedEnd)
+          );
+        });
         
-        // Check if the slots overlap
-        return (
-          (slotStart >= bookedStart && slotStart < bookedEnd) ||
-          (slotEnd > bookedStart && slotEnd <= bookedEnd) ||
-          (slotStart <= bookedStart && slotEnd >= bookedEnd)
-        );
-      }) : false;
-
-      // Mark slot as unavailable if booked either at salon level or staff level
-      if (isSlotBookedInSalon || isSlotBookedForStaff) {
-        slot.available = false;
+        // Mark as unavailable only for general salon bookings
+        if (isGenerallyBooked) {
+          slot.available = false;
+        }
       }
     });
 

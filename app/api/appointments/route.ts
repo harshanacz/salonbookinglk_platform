@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     // Parse the request body
     const data = await req.json();
-    console.log("[API/appointments] Incoming booking data:", data);
+    console.log("[API/appointments] Incoming booking data:", JSON.stringify(data, null, 2));
     const { 
       timeSlot, 
       salonId,
@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       staffId,
       paymentMethod,
       note,
-      date, // Format: "YYYY-MM-DD"
-      time  // Format: "h:mm a"
+      date,
+      time
     } = data;
     
     // Debug log for ID validation
@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
       note: note || "",
       status: AppointmentStatus.CONFIRMED,
     };
+
     // Add staffId to appointment data if provided and valid
     if (staffId && staffId !== "null" && staffId !== null) {
       console.log("[API/appointments] Processing staffId:", staffId, "type:", typeof staffId);
@@ -168,11 +169,54 @@ export async function POST(req: NextRequest) {
         );
         
         if (slotIndex === -1) {
-          console.error(`[API/appointments] Time slot ${slotId} not found in staff schedule`);
-          return NextResponse.json(
-            { error: "Time slot not found in staff schedule" },
-            { status: 404 }
-          );
+          console.log(`[API/appointments] Time slot ${slotId} not found in staff schedule. Creating it dynamically.`);
+          
+          // Parse slot information from the timeSlot data in the request
+          try {
+            // Extract start time from the timeSlot passed in request
+            console.log(`[API/appointments] Extracting time slot data:`, JSON.stringify(timeSlot, null, 2));
+            
+            if (!timeSlot.start_time) {
+              console.error(`[API/appointments] Missing start_time in time slot data`);
+              return NextResponse.json(
+                { error: "Invalid time slot data: missing start_time" },
+                { status: 400 }
+              );
+            }
+            
+            const startTime = new Date(timeSlot.start_time);
+            const period = timeSlot.period || 30; // Default to 30 minutes if not provided
+            
+            // Create new time slot and add it to the staff schedule
+            const newTimeSlot = {
+              slot_id: slotId,
+              start_time: startTime,
+              appointmentId: savedAppointment._id,
+              period: period
+            };
+            
+            staffMember.timeSlots.push(newTimeSlot);
+            console.log(`[API/appointments] Created new time slot with ID: ${slotId} for staff member`);
+            await staffMember.save();
+            
+            // No need to update the salon's general timeSlots when a specific staff is booked
+            // This allows other staff members to still be available at this time slot
+            
+            return NextResponse.json(
+              { 
+                success: true, 
+                message: "Appointment booked successfully with staff member (new slot created)", 
+                appointment: savedAppointment,
+              },
+              { status: 201 }
+            );
+          } catch (error) {
+            console.error(`[API/appointments] Error creating time slot dynamically:`, error);
+            return NextResponse.json(
+              { error: "Failed to create time slot. Missing or invalid time slot data." },
+              { status: 400 }
+            );
+          }
         }
         
         console.log(`[API/appointments] Found time slot at index: ${slotIndex}, updating with appointment ID: ${savedAppointment._id}`);
@@ -193,62 +237,94 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-    } else {
-      try {
-        console.log(`[API/appointments] Looking for salon with userId or _id: ${salonId}`);
-        
-        // Try to find salon by userId first
-        let salon = await SalonContext.findOne({ userId: salonId });
-        
-        // If not found by userId, try to find by _id
-        if (!salon) {
-          console.log(`[API/appointments] Salon not found by userId, trying _id: ${salonId}`);
-          salon = await SalonContext.findById(salonId);
-        }
-        
-        // If still not found, return error
-        if (!salon) {
-          console.error(`[API/appointments] Salon not found with userId or _id: ${salonId}`);
-          return NextResponse.json(
-            { error: "Salon not found" },
-            { status: 404 }
-          );
-        }
-        console.log(`[API/appointments] Found salon: ${salon.businessName}`);
-        
-        const slotId = timeSlot.id || timeSlot.slot_id;
-        console.log(`[API/appointments] Looking for time slot with ID: ${slotId} in salon schedule`);
-        
-        const slotIndex = salon.timeSlots.findIndex(
-          (slot: any) => slot.slot_id === slotId
-        );
-        
-        if (slotIndex === -1) {
-          console.error(`[API/appointments] Time slot ${slotId} not found in salon schedule`);
-          return NextResponse.json(
-            { error: "Time slot not found in salon schedule" },
-            { status: 404 }
-          );
-        }
-        
-        console.log(`[API/appointments] Found time slot at index: ${slotIndex}, updating with appointment ID: ${savedAppointment._id}`);
-        salon.timeSlots[slotIndex].appointmentId = savedAppointment._id;
-        await salon.save();
+    }
+
+    try {
+      console.log(`[API/appointments] Looking for salon with ID: ${salonId}`);
+      
+      // Try to find salon by _id first
+      let salon = await SalonContext.findById(salonId);
+      
+      // If not found by _id, try to find by userId
+      if (!salon) {
+        console.log(`[API/appointments] Salon not found by _id, trying userId: ${salonId}`);
+        salon = await SalonContext.findOne({ userId: salonId });
+      }
+      
+      // If still not found, return error
+      if (!salon) {
+        console.error(`[API/appointments] Salon not found with ID: ${salonId}`);
         return NextResponse.json(
-          { 
-            success: true, 
-            message: "Appointment booked successfully with salon", 
-            appointment: savedAppointment,
-          },
-          { status: 201 }
-        );
-      } catch (error: any) {
-        console.error("Error updating salon time slot:", error);
-        return NextResponse.json(
-          { error: "Failed to book appointment with salon" },
-          { status: 500 }
+          { error: "Salon not found" },
+          { status: 404 }
         );
       }
+      
+      console.log(`[API/appointments] Found salon: ${salon.businessName}`);
+      
+      const slotId = timeSlot.id || timeSlot.slot_id;
+      console.log(`[API/appointments] Looking for time slot with ID: ${slotId} in salon schedule`);
+      
+      const slotIndex = salon.timeSlots.findIndex(
+        (slot: any) => slot.slot_id === slotId
+      );
+      
+      if (slotIndex === -1) {
+        console.log(`[API/appointments] Time slot ${slotId} not found in salon schedule. Creating it dynamically.`);
+        
+        // Parse slot information from the timeSlot data in the request
+        try {
+          // Extract start time from the timeSlot passed in request
+          const startTime = new Date(timeSlot.start_time);
+          const period = timeSlot.period || 30; // Default to 30 minutes if not provided
+          
+          // Create new time slot and add it to the salon schedule
+          const newTimeSlot = {
+            slot_id: slotId,
+            start_time: startTime,
+            appointmentId: savedAppointment._id,
+            period: period
+          };
+          
+          salon.timeSlots.push(newTimeSlot);
+          console.log(`[API/appointments] Created new time slot with ID: ${slotId}`);
+          await salon.save();
+          
+          return NextResponse.json(
+            { 
+              success: true, 
+              message: "Appointment booked successfully with salon (new slot created)", 
+              appointment: savedAppointment,
+            },
+            { status: 201 }
+          );
+        } catch (error) {
+          console.error(`[API/appointments] Error creating time slot dynamically:`, error);
+          return NextResponse.json(
+            { error: "Failed to create time slot. Missing or invalid time slot data." },
+            { status: 400 }
+          );
+        }
+      }
+      
+      console.log(`[API/appointments] Found time slot at index: ${slotIndex}, updating with appointment ID: ${savedAppointment._id}`);
+      salon.timeSlots[slotIndex].appointmentId = savedAppointment._id;
+      await salon.save();
+      
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: "Appointment booked successfully with salon", 
+          appointment: savedAppointment,
+        },
+        { status: 201 }
+      );
+    } catch (error: any) {
+      console.error("Error updating salon time slot:", error);
+      return NextResponse.json(
+        { error: "Failed to book appointment with salon" },
+        { status: 500 }
+      );
     }
   } catch (error: any) {
     console.error("[API/appointments] Error in appointment booking API:", error);
