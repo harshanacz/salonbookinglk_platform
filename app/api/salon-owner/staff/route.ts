@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create new staff with profile image
     const newStaff = await Staff.create({
       userId: user._id,
       name,
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
       availability,
       workingDays,
       bio: bio || "",
-      profileImage: profileImage || "",
+      profileImage: profileImage || "", // Store the uploaded image URL
       status: status || "Active" // Ensure status is set
     });
 
