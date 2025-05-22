@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Added useEffect import
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,110 +18,115 @@ import {
   Calendar,
   Clock,
   User,
-  Home,
   Scissors,
   UserCheck,
   Phone,
   Mail,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-// Mock data - in a real application, you would fetch this from an API
-const appointments = [
-  {
-    id: 1,
-    client: "John Doe",
-    salon: "Salon Elegance",
-    service: "Haircut",
-    staff: "Dhanuka",
-    date: "2024-01-15",
-    time: "10:00 AM",
-    status: "Confirmed",
-    email: "john.doe@example.com",
-    phone: "+94 77 123 4567",
-    notes: "Regular customer, prefers quick service",
-    price: "Rs. 1,500",
-  },
-  {
-    id: 2,
-    client: "Jane Smith",
-    salon: "Beauty Hub",
-    service: "Hair Coloring",
-    staff: "Samantha",
-    date: "2024-01-15",
-    time: "11:30 AM",
-    status: "Pending",
-    email: "jane.smith@example.com",
-    phone: "+94 76 234 5678",
-    notes: "First time customer, wants ash blonde color",
-    price: "Rs. 4,500",
-  },
-  {
-    id: 3,
-    client: "Alice Johnson",
-    salon: "Glamour Studio",
-    service: "Manicure",
-    staff: "Priyanka",
-    date: "2024-01-16",
-    time: "2:00 PM",
-    status: "Completed",
-    email: "alice.j@example.com",
-    phone: "+94 71 345 6789",
-    notes: "Preferred nail polish: pastel colors",
-    price: "Rs. 2,000",
-  },
-  {
-    id: 4,
-    client: "Bob Brown",
-    salon: "Style Masters",
-    service: "Facial",
-    staff: "Nimal",
-    date: "2024-01-16",
-    time: "3:30 PM",
-    status: "Cancelled",
-    email: "bob.brown@example.com",
-    phone: "+94 70 456 7890",
-    notes: "Sensitive skin, use gentle products",
-    price: "Rs. 3,000",
-  },
-  {
-    id: 5,
-    client: "Eva Green",
-    salon: "Trendy Cuts",
-    service: "Pedicure",
-    staff: "Kumari",
-    date: "2024-01-17",
-    time: "9:00 AM",
-    status: "Confirmed",
-    email: "eva.green@example.com",
-    phone: "+94 75 567 8901",
-    notes: "Regular customer, allergic to strong fragrances",
-    price: "Rs. 2,500",
-  },
-];
+// Define appointment type
+interface Appointment {
+  _id: string;
+  clientId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  serviceId: {
+    _id: string;
+    name: string;
+    price: number;
+    duration: number;
+  };
+  staffId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  date: string;
+  time: string;
+  status: string;
+  note?: string;
+}
 
 export default function AppointmentDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("");
 
-  // Find the appointment with the matching ID
-  const appointment = appointments.find(
-    (appt) => appt.id === Number(params.id)
-  );
-
-  // Use useEffect to initialize the status from appointment
   useEffect(() => {
-    if (appointment) {
-      setStatus(appointment.status);
-    }
-  }, [appointment]);
+    const fetchAppointment = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const response = await fetch(`/api/admin/appointments/${params.id}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error fetching appointment: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setAppointment(data);
+        setStatus(data.status);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load appointment');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  if (!appointment) {
+    if (params.id) {
+      fetchAppointment();
+    }
+  }, [params.id]);
+
+  const handleStatusChange: (newStatus: string) => Promise<void> = async (newStatus) => {
+    try {
+      const response = await fetch(`/api/admin/appointments/${params.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error updating appointment: ${response.status}`);
+      }
+      
+      const updatedAppointment = await response.json();
+      setAppointment(updatedAppointment);
+      setStatus(updatedAppointment.status);
+    } catch (err) {
+      console.error('Failed to update status:', err);
+    }
+  };
+
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh]">
-        <h1 className="text-2xl font-bold mb-4">Appointment Not Found</h1>
+        <Loader2 className="h-8 w-8 animate-spin mb-4" />
+        <p>Loading appointment details...</p>
+      </div>
+    );
+  }
+
+  if (error || !appointment) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh]">
+        <h1 className="text-2xl font-bold mb-4">
+          {error || "Appointment Not Found"}
+        </h1>
         <Button asChild>
           <Link href="/admin/appointments">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Appointments
@@ -130,11 +135,6 @@ export default function AppointmentDetailsPage() {
       </div>
     );
   }
-
-  const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
-    // In a real app, you would make an API call to update the status
-  };
 
   return (
     <div className="space-y-6">
@@ -147,20 +147,20 @@ export default function AppointmentDetailsPage() {
         <h1 className="text-3xl font-bold">Appointment Details</h1>
       </div>
 
-      <div className=" gap-6">
+      <div className="gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex justify-between">
-              <span>Appointment #{appointment.id}</span>
+              <span>Appointment #{appointment._id.substring(0, 8)}</span>
               <Badge
                 variant={
-                  appointment.status === "Confirmed"
+                  appointment.status === "CONFIRMED"
                     ? "default"
-                    : appointment.status === "Pending"
+                    : appointment.status === "PENDING"
                     ? "pending"
-                    : appointment.status === "Completed"
+                    : appointment.status === "COMPLETED"
                     ? "secondary"
-                    : appointment.status === "Cancelled"
+                    : appointment.status === "CANCELLED"
                     ? "destructive"
                     : "outline"
                 }
@@ -180,17 +180,17 @@ export default function AppointmentDetailsPage() {
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Name:</span>{" "}
-                  {appointment.client}
+                  {appointment.clientId.firstName} {appointment.clientId.lastName}
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Email:</span>{" "}
-                  {appointment.email}
+                  {appointment.clientId.email}
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Phone:</span>{" "}
-                  {appointment.phone}
+                  {appointment.clientId.phone}
                 </div>
               </div>
             </div>
@@ -201,19 +201,14 @@ export default function AppointmentDetailsPage() {
               <div className="font-semibold text-lg">Appointment Details</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Salon:</span>{" "}
-                  {appointment.salon}
-                </div>
-                <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Service:</span>{" "}
-                  {appointment.service}
+                  {appointment.serviceId.name}
                 </div>
                 <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Staff:</span>{" "}
-                  {appointment.staff}
+                  {appointment.staffId.firstName} {appointment.staffId.lastName}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -226,20 +221,51 @@ export default function AppointmentDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Price:</span>{" "}
-                  {appointment.price}
+                  Rs. {appointment.serviceId.price.toLocaleString()}
                 </div>
               </div>
             </div>
 
-            <Separator />
-
-            <div className="space-y-2">
-              <div className="font-semibold">Notes</div>
-              <p className="text-sm text-muted-foreground">
-                {appointment.notes}
-              </p>
-            </div>
+            {appointment.note && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="font-semibold">Notes</div>
+                  <p className="text-sm text-muted-foreground">
+                    {appointment.note}
+                  </p>
+                </div>
+              </>
+            )}
           </CardContent>
+          <CardFooter className="flex justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Update Status:</span>
+              <div className="flex gap-2">
+                <Button 
+                  variant={status === "CONFIRMED" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => handleStatusChange("CONFIRMED")}
+                >
+                  Confirm
+                </Button>
+                <Button 
+                  variant={status === "COMPLETED" ? "success" : "outline"} 
+                  size="sm"
+                  onClick={() => handleStatusChange("COMPLETED")}
+                >
+                  Complete
+                </Button>
+                <Button 
+                  variant={status === "CANCELLED" ? "destructive" : "outline"} 
+                  size="sm"
+                  onClick={() => handleStatusChange("CANCELLED")}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>
