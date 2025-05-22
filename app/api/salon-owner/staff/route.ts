@@ -88,7 +88,7 @@ export async function GET(req: Request) {
       const staff = await Staff.find({ 
         userId: salonId,
         status: 'Active'
-      }).select('_id name role profileImage');
+      }).select('_id name role profileImage status availability createdAt');
       return NextResponse.json(staff);
     }
 
@@ -110,9 +110,9 @@ export async function GET(req: Request) {
     }
 
     const staff = await Staff.find({ 
-      userId: user._id,
-      status: 'Active'
-    }).select('_id name role profileImage');
+      userId: user._id
+    }).select('_id name role profileImage status availability createdAt')
+      .sort({ createdAt: -1 }); // Sort by latest added first
     
     return NextResponse.json(staff);
 
