@@ -56,9 +56,11 @@ interface ServiceData {
 }
 
 interface StaffMember {
-  id: number;
+  _id: string;
   name: string;
-  image: string;
+  role: string;
+  profileImage: string;
+  status: string;
 }
 
 interface RelatedService {
@@ -110,7 +112,22 @@ export default function ServicePage(props: ServicePageProps) {
         const data = await response.json();
         setService(data.service);
         setRelatedServices(data.relatedServices);
-        setStaffMembers(data.staff);
+
+        // Fetch staff members if there are staff IDs
+        if (data.service.staffAssigned && data.service.staffAssigned.length > 0) {
+          const staffResponse = await fetch('/api/staff/batch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ staffIds: data.service.staffAssigned }),
+          });
+
+          if (staffResponse.ok) {
+            const staffData = await staffResponse.json();
+            setStaffMembers(staffData);
+          }
+        }
 
         // Track the service view
         trackServiceView(params.id);
@@ -451,23 +468,30 @@ export default function ServicePage(props: ServicePageProps) {
 
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Staff Members</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {staffMembers.map((staff) => (
-                <div key={staff.id} className="flex flex-col items-center">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
-                    <Image
-                      src={staff.image}
-                      alt={staff.name}
-                      fill
-                      className="object-cover"
-                    />
+            {staffMembers.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                {staffMembers.map((staff) => (
+                  <div key={staff._id} className="flex flex-col items-center">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
+                      <Image
+                        src={staff.profileImage || "/placeholder-user.jpg"}
+                        alt={staff.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="text-xs text-center text-gray-600">
+                      {staff.name}
+                    </span>
+                    <span className="text-xs text-center text-gray-500 capitalize">
+                      {staff.role.replace('-', ' ')}
+                    </span>
                   </div>
-                  <span className="text-xs text-center text-gray-600">
-                    {staff.name}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-600">No staff members assigned to this service.</p>
+            )}
           </div>
 
           <div>
