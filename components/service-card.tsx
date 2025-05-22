@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Star, MapPin, Clock, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ServiceCardProps {
   service: {
@@ -14,6 +14,7 @@ interface ServiceCardProps {
     price: number;
     salon: string;
     salonLogo?: string;
+    salonContextId?: string;
     rating: number;
     reviews: number;
     location: string;
@@ -24,6 +25,51 @@ interface ServiceCardProps {
 
 export function ServiceCard({ service }: ServiceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [salonName, setSalonName] = useState(service.salon || "Unknown Salon");
+  const [salonLogo, setSalonLogo] = useState(service.salonLogo || "/placeholder-logo.svg");
+  const [isLoading, setIsLoading] = useState(!!service.salonContextId);
+  
+  // Fetch salon context details if salonContextId is provided
+  useEffect(() => {
+    const fetchSalonContext = async () => {
+      // If no salonContextId, use default values and skip fetching
+      if (!service.salonContextId) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        console.log(`[ServiceCard] Fetching salon context with ID: ${service.salonContextId}`);
+        
+        const response = await fetch(`/api/salons/${service.salonContextId}`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to fetch salon details: ${response.status} - ${errorText}`);
+        }
+        
+        const salonData = await response.json();
+        console.log(`[ServiceCard] Salon data fetched:`, salonData);
+        
+        // Update salon name and logo from the fetched context
+        if (salonData && salonData.businessName) {
+          setSalonName(salonData.businessName);
+        }
+        
+        if (salonData && salonData.profilePictureUrl) {
+          setSalonLogo(salonData.profilePictureUrl);
+        }
+      } catch (error) {
+        console.error('Failed to fetch salon context:', error, `(salonContextId: ${service.salonContextId})`);
+        // No need to reset state, keep the default values
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSalonContext();
+  }, [service.salonContextId]);
   
   // Function to track service view
   const trackServiceView = useCallback(async () => {
@@ -96,27 +142,35 @@ export function ServiceCard({ service }: ServiceCardProps) {
         {/* Content */}
         <CardContent className="p-4 pb-2">
           {/* Salon information with logo */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
+          <div className="flex items-center justify-between mb-3">              <div className="flex items-center">
               <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative">
                 <Image
-                  src={service.salonLogo || "/placeholder-logo.svg"}
-                  alt={service.salon || "Salon"}
+                  src={salonLogo}
+                  alt={salonName}
                   fill
                   className="object-cover"
+                  onError={(e) => {
+                    // If image fails to load, set to fallback
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/placeholder-logo.svg";
+                  }}
                 />
               </div>
-              <span className="ml-2 text-sm font-medium line-clamp-1">{service.salon || "Unknown Salon"}</span>
+              <span className="ml-2 text-sm font-medium line-clamp-1">
+                {isLoading ? (
+                  <span className="inline-block w-20 h-4 bg-gray-200 animate-pulse rounded"></span>
+                ) : (
+                  salonName
+                )}
+              </span>
             </div>
             
-            {/* Only show reviews if they exist */}
-            {service.reviews > 0 && (
-              <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
-                <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
-                <span className="font-medium">{service.rating.toFixed(1)}</span>
-                <span className="text-gray-500 ml-1">({service.reviews})</span>
-              </div>
-            )}
+            {/* Show reviews */}
+            <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
+              <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
+              <span className="font-medium">{service.reviews > 0 ? service.rating.toFixed(1) : "0"}</span>
+              <span className="text-gray-500 ml-1">({service.reviews})</span>
+            </div>
           </div>
 
           {/* Title */}

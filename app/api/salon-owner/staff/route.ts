@@ -79,6 +79,20 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const salonId = searchParams.get('salonId');
+
+    // If salonId is provided, fetch staff for that salon
+    if (salonId) {
+      await dbConnect();
+      const staff = await Staff.find({ 
+        userId: salonId,
+        status: 'Active'
+      }).select('_id name role profileImage');
+      return NextResponse.json(staff);
+    }
+
+    // Otherwise, fetch staff for the authenticated salon owner
     const { userId: clerkUserId } = await auth();
     if (!clerkUserId) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -95,12 +109,22 @@ export async function GET(req: Request) {
       return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
     }
 
-    const staff = await Staff.find({ userId: user._id });
+    const staff = await Staff.find({ 
+      userId: user._id,
+      status: 'Active'
+    }).select('_id name role profileImage');
+    
     return NextResponse.json(staff);
 
   } catch (error: any) {
     console.error("[STAFF_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse(
+      JSON.stringify({ 
+        message: error.message || "Internal Error",
+        error: error.toString()
+      }), 
+      { status: 500 }
+    );
   }
 }
 
