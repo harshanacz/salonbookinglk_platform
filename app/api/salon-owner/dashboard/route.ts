@@ -132,6 +132,41 @@ export async function GET() {
       }
     ]);
 
+    // Get weekly appointments data
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Start from Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyAppointments = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id,
+          createdAt: { $gte: startOfWeek }
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Convert to array of counts for each day
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const todayIndex = new Date().getDay();
+    const weeklyData = {
+      labels: daysOfWeek.slice(0, todayIndex + 1),
+      counts: new Array(7).fill(0)
+    };
+
+    weeklyAppointments.forEach((day) => {
+      weeklyData.counts[day._id - 1] = day.count;
+    });
+
     return NextResponse.json({
       services: {
         active: activeServices,
@@ -147,6 +182,10 @@ export async function GET() {
         today: todayAppointments
       },
       popularServices,
+      weeklyData: {
+        labels: weeklyData.labels,
+        counts: weeklyData.counts.slice(0, todayIndex + 1)
+      }
     });
     
   } catch (error: any) {
