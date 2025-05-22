@@ -8,8 +8,25 @@ import mongoose from "mongoose";
 // In-memory storage for simple implementations
 let inMemoryAppointments: any[] = [];
 
-export async function GET() {
-  return NextResponse.json({ appointments: inMemoryAppointments });
+export async function GET(req: NextRequest) {
+  await dbConnect();
+  // Optionally, filter by salonId if provided as a query param
+  const { searchParams } = new URL(req.url);
+  const salonId = searchParams.get("salonId");
+
+  let filter: any = {};
+  if (salonId && mongoose.Types.ObjectId.isValid(salonId)) {
+    filter.userId = salonId;
+  }
+
+  // Populate client, service, and staff for display
+  const appointments = await Appointment.find(filter)
+    .populate("clientId", "name phone")
+    .populate("serviceId", "name")
+    .populate("staffId", "name") // <-- Add this line
+    .sort({ date: -1, time: 1 });
+
+  return NextResponse.json({ appointments });
 }
 
 export async function POST(req: NextRequest) {
@@ -339,11 +356,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const data = await req.json();
-  const idx = inMemoryAppointments.findIndex((a) => a.id === data.id);
-  if (idx !== -1) {
-    inMemoryAppointments[idx].status = data.status;
-    return NextResponse.json({ success: true, appointment: inMemoryAppointments[idx] });
+  await dbConnect();
+  const { id, status } = await req.json();
+  const updated = await Appointment.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true }
+  );
+  if (updated) {
+    return NextResponse.json({ success: true, appointment: updated });
   }
   return NextResponse.json({ success: false, message: "Appointment not found" }, { status: 404 });
 }
