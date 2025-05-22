@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import { useRouter } from "next/navigation";
+import { useFavoritesStore } from "@/store/favoritesStore";
 
 interface ServicePageProps {
   params: {
@@ -74,6 +75,7 @@ export default function ServicePage(props: ServicePageProps) {
   const { params } = props;
   const router = useRouter();
   const addService = useCheckoutStore((state) => state.addService);
+  const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore();
 
   // Define state for our data
   const [service, setService] = useState<ServiceData | null>(null);
@@ -97,18 +99,18 @@ export default function ServicePage(props: ServicePageProps) {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/services/${params.id}`);
-        
+
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         setService(data.service);
         setRelatedServices(data.relatedServices);
         setStaffMembers(data.staff);
-        
+
         // Track the service view
         trackServiceView(params.id);
       } catch (err) {
@@ -118,7 +120,7 @@ export default function ServicePage(props: ServicePageProps) {
         setLoading(false);
       }
     };
-    
+
     fetchServiceData();
   }, [params.id]);
 
@@ -141,7 +143,31 @@ export default function ServicePage(props: ServicePageProps) {
       console.error('Failed to track service view:', error);
     }
   };
-  
+
+  // Check if service is in favorites
+  const isCurrentServiceFavorite = service ? isFavorite(service.id) : false;
+
+  // Toggle favorite status
+  const toggleFavorite = () => {
+    if (!service) return;
+
+    const favoriteService = {
+      id: service.id,
+      title: service.title,
+      image: service.images[0] || "/placeholder.svg",
+      price: service.price,
+      salon: service.salon.name,
+      rating: service.salon.rating,
+      reviews: service.salon.reviews,
+      location: service.salon.location,
+    };
+
+    if (isCurrentServiceFavorite) {
+      removeFavorite(service.id);
+    } else {
+      addFavorite(favoriteService);
+    }
+  };
 
   // Handle adding to checkout and navigation
   const handleBookNow = () => {
@@ -403,8 +429,15 @@ export default function ServicePage(props: ServicePageProps) {
                   Book now
                 </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1">
-                    <Heart className="h-4 w-4 mr-2" /> Save
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={toggleFavorite}
+                  >
+                    <Heart 
+                      className={`h-4 w-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
+                    /> 
+                    {isCurrentServiceFavorite ? "Saved" : "Save"}
                   </Button>
                   <Button variant="outline" className="flex-1">
                     <Share2 className="h-4 w-4 mr-2" /> Share
@@ -517,9 +550,15 @@ export default function ServicePage(props: ServicePageProps) {
                 Book Now
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Save
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={toggleFavorite}
+                >
+                  <Heart 
+                    className={`w-4 h-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
+                  />
+                  {isCurrentServiceFavorite ? "Saved" : "Save"}
                 </Button>
                 <Button variant="outline" className="flex-1">
                   <Share2 className="w-4 h-4 mr-2" />
