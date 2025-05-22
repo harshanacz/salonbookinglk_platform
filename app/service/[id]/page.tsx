@@ -403,8 +403,11 @@ export default function ServicePage(props: ServicePageProps) {
                   />
                 </svg>
                 <div>
-                  <div>Open until {service.salon.openUntil}</div>
-                  <div className="text-green-600 font-medium">Now Open</div>
+                  {service.salon.isOpen ? (
+                    <div>Open until {service.salon.openUntil}</div>
+                  ) : (
+                    <div>Closed for today</div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center text-sm text-gray-700 mb-6">
@@ -533,28 +536,16 @@ export default function ServicePage(props: ServicePageProps) {
                   {service.salon.isOpen ? (
                     <>Open until {service.salon.openUntil}</>
                   ) : (
-                    "Closed"
+                    "Closed for today"
                   )}
                 </span>
               </div>
             </div>
 
-            {/* <div className="mb-6">
-              <h4 className="font-semibold mb-2">Today's Hours</h4>
-              <div className="text-sm">
-                {service.salon.isOpen ? (
-                  <span>Open until {service.salon.todaysClosingTime || service.salon.openUntil}</span>
-                ) : (
-                  <span>Closed today</span>
-                )}
-              </div>
-            </div> */}
-
             <div className="space-y-3">
               <Button
                 className="w-full"
                 onClick={handleBookNow}
-                disabled={!service.salon.isOpen}
               >
                 Book Now
               </Button>
