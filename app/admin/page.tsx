@@ -130,11 +130,9 @@ const Page = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    const fetchSalonsCount = async () => {
+    };    const fetchSalonsCount = async () => {
       try {
-        const response = await fetch("/api/admin/users?type=SALON_OWNER");
+        const response = await fetch("/api/admin/users?type=SALON_OWNER&limit=all");
         if (response.ok) {
           const data = await response.json();
           const salons = data.users || [];
@@ -146,7 +144,6 @@ const Page = () => {
           const newSalons = salons.filter(
             (salon: any) => new Date(salon.createdAt) > oneMonthAgo
           ).length;
-
           setLastMonthSalons(newSalons);
 
           setStats((prevStats) =>
@@ -164,15 +161,18 @@ const Page = () => {
       } catch (error) {
         console.error("Error fetching salon count:", error);
       }
-    };
-
-    const fetchUsersCount = async () => {
+    };    const fetchUsersCount = async () => {
       try {
-        const response = await fetch("/api/admin/users");
+        // Fetch all users and filter them by type
+        const response = await fetch("/api/admin/users?limit=all");
         if (response.ok) {
           const data = await response.json();
           const users = data.users || [];
-          const totalUsers = users.length;
+          
+          // Count salon owners and clients only (exclude admins)
+          const salonOwners = users.filter((user: any) => user.role === "SALON_OWNER").length;
+          const clients = users.filter((user: any) => user.role === "CLIENT").length;
+          const totalUsers = salonOwners + clients;
 
           setStats((prevStats) =>
             prevStats.map((stat) =>
@@ -180,7 +180,7 @@ const Page = () => {
                 ? {
                     ...stat,
                     value: totalUsers,
-                    description: "All registered users",
+                    description: "Salon owners and clients only",
                   }
                 : stat
             )
@@ -189,11 +189,9 @@ const Page = () => {
       } catch (error) {
         console.error("Error fetching users count:", error);
       }
-    };
-
-    const fetchPendingServices = async () => {
+    };const fetchPendingServices = async () => {
       try {
-        const response = await fetch("/api/admin/service-cards");
+        const response = await fetch("/api/admin/service-cards?limit=all");
         if (response.ok) {
           const data = await response.json();
           // Limit to the 5 most recent services for display

@@ -1,64 +1,52 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
+// Define the appointment status enum
 export enum AppointmentStatus {
-  PENDING = "PENDING",
-  CONFIRMED = "CONFIRMED",
-  CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+  NO_SHOW = 'NO_SHOW'
 }
 
-export enum PaymentMethod {
-  CASH = "CASH",
-  CARD = "CARD",
-  ONLINE = "ONLINE",
+// Interface to define the appointment document structure
+export interface IAppointment extends Document {
+  clientId: mongoose.Types.ObjectId;
+  salonId?: mongoose.Types.ObjectId;
+  salonContextId?: mongoose.Types.ObjectId;
+  serviceId: mongoose.Types.ObjectId;
+  staffId?: mongoose.Types.ObjectId;
+  date: Date;
+  time: number; // Time in minutes from midnight
+  paymentMethod?: string;
+  note?: string;
+  status: AppointmentStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const appointmentSchema = new mongoose.Schema(
+// Define the appointment schema
+const appointmentSchema = new Schema<IAppointment>(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    clientId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    serviceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Service",
-      required: true,
-    },
-    staffId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Staff",
-      required: false, // Allow staffId to be optional
-    },
-    date: {
-      type: Date,
-      required: true,
-    },
-    time: {
-      type: Number,
-      required: true,
-    },
-    paymentMethod: {
-      type: String,
-      enum: Object.values(PaymentMethod),
-      required: true,
-    },
-    note: String,
+    clientId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    salonId: { type: Schema.Types.ObjectId, ref: 'User' },
+    salonContextId: { type: Schema.Types.ObjectId, ref: 'SalonContext' },
+    serviceId: { type: Schema.Types.ObjectId, ref: 'Service', required: true },
+    staffId: { type: Schema.Types.ObjectId, ref: 'Staff' },
+    date: { type: Date, required: true },
+    time: { type: Number, required: true }, // Time in minutes from midnight
+    paymentMethod: { type: String },
+    note: { type: String },
     status: {
       type: String,
       enum: Object.values(AppointmentStatus),
       default: AppointmentStatus.PENDING,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-export default mongoose.models.Appointment ||
-  mongoose.model("Appointment", appointmentSchema);
+// Create and export the model
+const Appointment = mongoose.models.Appointment || mongoose.model<IAppointment>('Appointment', appointmentSchema);
+
+export default Appointment;

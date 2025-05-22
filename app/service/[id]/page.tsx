@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import { useRouter } from "next/navigation";
+import { useFavoritesStore } from "@/store/favoritesStore";
 
 interface ServicePageProps {
   params: {
@@ -37,6 +38,7 @@ interface ServiceData {
     openUntil: string;
     bestSeller: boolean;
     profilePictureUrl: string;
+    todaysClosingTime: string;
     workingHours: Array<{
       day: string;
       isWorking: boolean;
@@ -54,9 +56,10 @@ interface ServiceData {
 }
 
 interface StaffMember {
-  id: number;
+  _id: string;
   name: string;
-  image: string;
+  role: string;
+  profileImage: string;
 }
 
 interface RelatedService {
@@ -74,6 +77,7 @@ export default function ServicePage(props: ServicePageProps) {
   const { params } = props;
   const router = useRouter();
   const addService = useCheckoutStore((state) => state.addService);
+  const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore();
 
   // Define state for our data
   const [service, setService] = useState<ServiceData | null>(null);
@@ -97,18 +101,18 @@ export default function ServicePage(props: ServicePageProps) {
       try {
         setLoading(true);
         setError(null);
-        
+
         const response = await fetch(`/api/services/${params.id}`);
-        
+
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         setService(data.service);
         setRelatedServices(data.relatedServices);
         setStaffMembers(data.staff);
-        
+
         // Track the service view
         trackServiceView(params.id);
       } catch (err) {
@@ -118,7 +122,7 @@ export default function ServicePage(props: ServicePageProps) {
         setLoading(false);
       }
     };
-    
+
     fetchServiceData();
   }, [params.id]);
 
@@ -141,7 +145,31 @@ export default function ServicePage(props: ServicePageProps) {
       console.error('Failed to track service view:', error);
     }
   };
-  
+
+  // Check if service is in favorites
+  const isCurrentServiceFavorite = service ? isFavorite(service.id) : false;
+
+  // Toggle favorite status
+  const toggleFavorite = () => {
+    if (!service) return;
+
+    const favoriteService = {
+      id: service.id,
+      title: service.title,
+      image: service.images[0] || "/placeholder.svg",
+      price: service.price,
+      salon: service.salon.name,
+      rating: service.salon.rating,
+      reviews: service.salon.reviews,
+      location: service.salon.location,
+    };
+
+    if (isCurrentServiceFavorite) {
+      removeFavorite(service.id);
+    } else {
+      addFavorite(favoriteService);
+    }
+  };
 
   // Handle adding to checkout and navigation
   const handleBookNow = () => {
@@ -375,8 +403,11 @@ export default function ServicePage(props: ServicePageProps) {
                   />
                 </svg>
                 <div>
-                  <div>Open until {service.salon.openUntil}</div>
-                  <div className="text-green-600 font-medium">Now Open</div>
+                  {service.salon.isOpen ? (
+                    <div>Open until {service.salon.openUntil}</div>
+                  ) : (
+                    <div>Closed for today</div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center text-sm text-gray-700 mb-6">
@@ -404,8 +435,15 @@ export default function ServicePage(props: ServicePageProps) {
                   Book now
                 </Button>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1">
-                    <Heart className="h-4 w-4 mr-2" /> Save
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={toggleFavorite}
+                  >
+                    <Heart 
+                      className={`h-4 w-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
+                    /> 
+                    {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                   </Button>
                   <Button variant="outline" className="flex-1">
                     <Share2 className="h-4 w-4 mr-2" /> Share
@@ -417,23 +455,32 @@ export default function ServicePage(props: ServicePageProps) {
 
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4">Staff Members</h2>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {staffMembers.map((staff) => (
-                <div key={staff.id} className="flex flex-col items-center">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
-                    <Image
-                      src={staff.image}
-                      alt={staff.name}
-                      fill
-                      className="object-cover"
-                    />
+            {staffMembers.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                {staffMembers.map((staff) => (
+                  <div key={staff._id} className="flex flex-col items-center">
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-200 mb-2">
+                      <Image
+                        src={staff.profileImage || "/placeholder-user.jpg"}
+                        alt={staff.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span className="text-xs text-center text-gray-600">
+                      {staff.name}
+                    </span>
+                    <span className="text-xs text-center text-gray-500 capitalize">
+                      {staff.role.replace('-', ' ')}
+                    </span>
                   </div>
-                  <span className="text-xs text-center text-gray-600">
-                    {staff.name}
-                  </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex justify-center items-center p-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-600">No staff members available</p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -468,7 +515,7 @@ export default function ServicePage(props: ServicePageProps) {
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="text-sm">
-                    {Number(service.salon.rating).toFixed(1)} ({service.salon.reviews} reviews)
+                    {service.salon.reviews > 0 ? Number(service.salon.rating).toFixed(1) : "0"} ({service.salon.reviews} reviews)
                   </span>
                 </div>
               </div>
@@ -489,23 +536,9 @@ export default function ServicePage(props: ServicePageProps) {
                   {service.salon.isOpen ? (
                     <>Open until {service.salon.openUntil}</>
                   ) : (
-                    "Closed"
+                    "Closed for today"
                   )}
                 </span>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <h4 className="font-semibold mb-2">Business Hours</h4>
-              <div className="space-y-2">
-                {service.salon.businessHours.map((hours, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>{hours.day}</span>
-                    <span>
-                      {hours.isOpen ? `${hours.open} - ${hours.close}` : "Closed"}
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -513,14 +546,19 @@ export default function ServicePage(props: ServicePageProps) {
               <Button
                 className="w-full"
                 onClick={handleBookNow}
-                disabled={!service.salon.isOpen}
               >
                 Book Now
               </Button>
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Save
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={toggleFavorite}
+                >
+                  <Heart 
+                    className={`w-4 h-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
+                  />
+                  {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                 </Button>
                 <Button variant="outline" className="flex-1">
                   <Share2 className="w-4 h-4 mr-2" />

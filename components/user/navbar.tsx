@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, User } from "lucide-react";
 import { useAuth, SignOutButton } from "@clerk/nextjs";
 import {
   NavigationMenu,
@@ -14,6 +14,12 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -66,18 +72,41 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Right section: For Business + Sign In + Join */}
+        {/* Right section: For Business + Sign In + Join OR Profile Icon */}
         <div className="hidden md:flex items-center gap-6">
           {isSignedIn ? (
-            <SignOutButton>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-600 hover:text-black font-medium"
-              >
-                Sign Out
-              </Button>
-            </SignOutButton>
+            <>
+              <Link href="/user/booking/user-appointments">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-black font-medium"
+                >
+                  My Bookings
+                </Button>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full h-8 w-8 bg-purple-600/10 text-black hover:bg-purple-700/15 hover:text-black"
+                  >
+                    <User className="h-12 w-12" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/user/profile">My Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <SignOutButton>
+                      <span className="w-full text-left">Sign Out</span>
+                    </SignOutButton>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
             <Link href="/sign-up?role=salon-owner">
@@ -182,11 +211,27 @@ export function Navbar() {
               <hr className="my-2" />
 
               {isSignedIn ? (
-                <SignOutButton>
-                  <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300">
-                    Sign Out
-                  </Button>
-                </SignOutButton>
+                <>
+                  <Link
+                    href="/user/profile"
+                    className="font-medium"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <Link
+                    href="/user/booking"
+                    className="font-medium"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Bookings
+                  </Link>
+                  <SignOutButton>
+                    <Button className="w-full bg-white text-black hover:bg-gray-100 border border-gray-300 mt-2">
+                      Sign Out
+                    </Button>
+                  </SignOutButton>
+                </>
               ) : (
                 <>
                   <Link

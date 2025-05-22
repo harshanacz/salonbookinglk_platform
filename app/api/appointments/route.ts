@@ -1,30 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
 import Staff from "@/models/Staff";
+import User from "@/models/User";
 import Appointment, { AppointmentStatus, PaymentMethod } from "@/models/Appointment";
 import mongoose from "mongoose";
 
 // In-memory storage for simple implementations
 let inMemoryAppointments: any[] = [];
 
-export async function GET() {
-  return NextResponse.json({ appointments: inMemoryAppointments });
+export async function GET(req: NextRequest) {
+  await dbConnect();
+  // Optionally, filter by salonId if provided as a query param
+  const { searchParams } = new URL(req.url);
+  const salonId = searchParams.get("salonId");
+
+  let filter: any = {};
+  if (salonId && mongoose.Types.ObjectId.isValid(salonId)) {
+    filter.userId = salonId;
+  }
+
+  // Populate client, service, and staff for display
+  const appointments = await Appointment.find(filter)
+    .populate("clientId", "name phone")
+    .populate("serviceId", "name")
+    .populate("staffId", "name") // <-- Add this line
+    .sort({ date: -1, time: 1 });
+
+  return NextResponse.json({ appointments });
 }
 
 export async function POST(req: NextRequest) {
   try {
     // Connect to database
     await dbConnect();
+    
+    // Get the current authenticated user
+    const clerkUser = await currentUser();
+    
+    if (!clerkUser) {
+      console.log("[API/appointments] Authentication failed: No user found");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
+    console.log("[API/appointments] Authenticated user ID:", clerkUser.id);
 
     // Parse the request body
     const data = await req.json();
     console.log("[API/appointments] Incoming booking data:", JSON.stringify(data, null, 2));
     const { 
       timeSlot, 
-      salonId,
-      userId,
-      clientId, 
+      salonId,      
+      clientId, // This is ignored - we'll use the authenticated user instead
       serviceId,
       staffId,
       paymentMethod,
@@ -38,10 +66,6 @@ export async function POST(req: NextRequest) {
       salonId: { 
         value: salonId, 
         isValid: mongoose.Types.ObjectId.isValid(salonId)
-      },
-      userId: { 
-        value: userId, 
-        isValid: mongoose.Types.ObjectId.isValid(userId) 
       },
       clientId: { 
         value: clientId, 
@@ -92,13 +116,6 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    if (!mongoose.Types.ObjectId.isValid(clientId || userId)) {
-      return NextResponse.json(
-        { error: "Invalid client ID format" },
-        { status: 400 }
-      );
-    }
-    
     if (!mongoose.Types.ObjectId.isValid(serviceId)) {
       return NextResponse.json(
         { error: "Invalid service ID format" },
@@ -106,10 +123,56 @@ export async function POST(req: NextRequest) {
       );
     }
     
+    // Find the current user in the database using Clerk ID
+    let currentDbUser;
+    try {
+      currentDbUser = await User.findOne({ clerkUserId: clerkUser.id });
+      if (!currentDbUser) {
+        console.log(`[API/appointments] User not found for Clerk ID: ${clerkUser.id}, creating new profile`);
+        // Create a new user if not exists
+        currentDbUser = await User.create({
+          clerkUserId: clerkUser.id,
+          type: "CUSTOMER", // Default type for this flow
+          userName: clerkUser.firstName + " " + clerkUser.lastName,
+          email: clerkUser.emailAddresses[0]?.emailAddress,
+        });
+        console.log(`[API/appointments] Created new user profile: ${currentDbUser._id}`);
+      } else {
+        console.log(`[API/appointments] Found user profile: ${currentDbUser._id}`);
+      }
+    } catch (error) {
+      console.error("[API/appointments] Error finding or creating user:", error);
+      return NextResponse.json(
+        { error: "Failed to find or create user profile" },
+        { status: 500 }
+      );
+    }
+    
+    // Try to find the salonContextId based on salonId
+    let salonContext;
+    try {
+      salonContext = await SalonContext.findOne({ userId: salonId });
+      if (!salonContext) {
+        console.error(`[API/appointments] SalonContext not found for salonId: ${salonId}`);
+        return NextResponse.json(
+          { error: "Salon context not found for the provided salon ID" },
+          { status: 404 }
+        );
+      }
+      console.log(`[API/appointments] Found SalonContext: ${salonContext._id} for salonId: ${salonId}`);
+    } catch (error) {
+      console.error("[API/appointments] Error finding SalonContext:", error);
+      return NextResponse.json(
+        { error: "Failed to find salon context" },
+        { status: 500 }
+      );
+    }
+
     // Build appointment data with valid ObjectIds
     const appointmentData = {
-      userId: new mongoose.Types.ObjectId(salonId),
-      clientId: new mongoose.Types.ObjectId(clientId || userId),
+      salonId: new mongoose.Types.ObjectId(salonId),
+      salonContextId: salonContext._id,
+      clientId: currentDbUser._id, // Use the authenticated user's ID instead of passed clientId
       serviceId: new mongoose.Types.ObjectId(serviceId),
       date: new Date(date),
       time: timeAsNumber,
@@ -242,13 +305,13 @@ export async function POST(req: NextRequest) {
     try {
       console.log(`[API/appointments] Looking for salon with ID: ${salonId}`);
       
-      // Try to find salon by _id first
-      let salon = await SalonContext.findById(salonId);
+      // Try to find salon by userId field first (this is the most common case)
+      let salon = await SalonContext.findOne({ userId: salonId });
       
-      // If not found by _id, try to find by userId
+      // If not found by userId, try to find by _id directly
       if (!salon) {
-        console.log(`[API/appointments] Salon not found by _id, trying userId: ${salonId}`);
-        salon = await SalonContext.findOne({ userId: salonId });
+        console.log(`[API/appointments] Salon not found by userId, trying _id: ${salonId}`);
+        salon = await SalonContext.findById(salonId);
       }
       
       // If still not found, return error
@@ -264,6 +327,10 @@ export async function POST(req: NextRequest) {
       
       const slotId = timeSlot.id || timeSlot.slot_id;
       console.log(`[API/appointments] Looking for time slot with ID: ${slotId} in salon schedule`);
+      
+      // Store salonContextId in the appointment for future reference
+      savedAppointment.salonContextId = salon._id;
+      await savedAppointment.save();
       
       const slotIndex = salon.timeSlots.findIndex(
         (slot: any) => slot.slot_id === slotId
@@ -339,11 +406,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const data = await req.json();
-  const idx = inMemoryAppointments.findIndex((a) => a.id === data.id);
-  if (idx !== -1) {
-    inMemoryAppointments[idx].status = data.status;
-    return NextResponse.json({ success: true, appointment: inMemoryAppointments[idx] });
+  await dbConnect();
+  const { id, status } = await req.json();
+  const updated = await Appointment.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true }
+  );
+  if (updated) {
+    return NextResponse.json({ success: true, appointment: updated });
   }
   return NextResponse.json({ success: false, message: "Appointment not found" }, { status: 404 });
 }
