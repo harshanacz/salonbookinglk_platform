@@ -57,6 +57,81 @@ export async function GET() {
       createdAt: { $gte: lastMonthDate }
     });
 
+    // Get today's start and end
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Fetch today's created appointments (modified query)
+    const todayAppointments = await Appointment.find({
+      salonId: user._id,
+      createdAt: {  // Changed from 'date' to 'createdAt'
+        $gte: today,
+        $lt: tomorrow
+      }
+    })
+    .populate('clientId', 'name')
+    .populate('serviceId', 'name')
+    .sort({ createdAt: -1 }) // Sort by creation time, newest first
+    .lean();
+
+    // Get popular services for last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const popularServices = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id,
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: "$serviceId",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 5
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "_id",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $unwind: "$service"
+      },
+      {
+        $project: {
+          name: "$service.type", // Changed from "$service.name" to "$service.type"
+          count: 1,
+          trend: {
+            $concat: [
+              "+",
+              {
+                $toString: {
+                  $round: [
+                    { $multiply: [{ $divide: ["$count", totalAppointments] }, 100] },
+                    0
+                  ]
+                }
+              },
+              "%"
+            ]
+          }
+        }
+      }
+    ]);
+
     return NextResponse.json({
       services: {
         active: activeServices,
@@ -68,8 +143,10 @@ export async function GET() {
       },
       appointments: {
         total: totalAppointments,
-        lastMonth: lastMonthAppointments
-      }
+        lastMonth: lastMonthAppointments,
+        today: todayAppointments
+      },
+      popularServices,
     });
     
   } catch (error: any) {
