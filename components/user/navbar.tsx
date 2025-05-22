@@ -75,30 +75,38 @@ export function Navbar() {
         {/* Right section: For Business + Sign In + Join OR Profile Icon */}
         <div className="hidden md:flex items-center gap-6">
           {isSignedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="rounded-full h-10 w-10 text-gray-600 hover:text-black hover:bg-gray-100"
+            <>
+              <Link href="/user/booking/user-appointments">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-gray-600 hover:text-black font-medium"
                 >
-                  <User className="h-5 w-5" />
+                  My Bookings
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem asChild>
-                  <Link href="/user/profile">My Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="user/booking/user-appointments">My Bookings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <SignOutButton>
-                    <span className="w-full text-left">Sign Out</span>
-                  </SignOutButton>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full h-8 w-8 bg-purple-600/10 text-black hover:bg-purple-700/15 hover:text-black"
+                  >
+                    <User className="h-12 w-12" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/user/profile">My Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <SignOutButton>
+                      <span className="w-full text-left">Sign Out</span>
+                    </SignOutButton>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <>
             <Link href="/sign-up?role=salon-owner">

@@ -70,6 +70,7 @@ export async function GET(
         salon: user && typeof user === "object" && "businessName" in user && user.businessName
           ? user.businessName
           : "Unknown Salon",
+        salonContextId: service.salonContextId ? service.salonContextId.toString() : null,
         location: "Colombo", // Default location
         rating: service.averageRating || 4.5,
         reviews: service.reviewCount || 0,
