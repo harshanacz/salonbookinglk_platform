@@ -282,10 +282,10 @@ export default function SalonOwnerDashboard() {
                       </div>
                       <div>
                         <div className="font-medium">
-                          {appointment.clientId?.name || "Client"}
+                          {appointment.clientId?.userName || appointment.clientId?.name || "Client"}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {appointment.serviceId?.name || "Service"}
+                          {appointment.serviceId?.name || "Service"} - {appointment.serviceId?.type}
                         </div>
                       </div>
                     </div>
