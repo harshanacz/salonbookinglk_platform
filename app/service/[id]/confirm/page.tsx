@@ -222,9 +222,7 @@ const ConfirmPage = () => {
           period: timeSlot.period || 30,
           timestamp: timeSlot.timestamp || new Date(timeSlot.start_time).getTime()
         },
-        salonId: salonUserId,
-        userId: salonUserId, // Using salon ID as the user ID
-        clientId: salonUserId, // Using salon ID as the client ID for demo purposes
+        salonId: salonUserId, // Salon owner's userId
         serviceId: serviceId || salonUserId, // Fallback to salonId if no serviceId
         staffId: staffMember ? staffMember._id : null, // Use staffMember._id if a specific staff was selected
         paymentMethod: paymentMethod,

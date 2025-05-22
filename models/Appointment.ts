@@ -15,14 +15,19 @@ export enum PaymentMethod {
 
 const appointmentSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      required: true, // This represents the current user ID
+    },
+    salonId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User", // Reference to salon owner user
+      required: true,
+    },
+    salonContextId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SalonContext", // Reference to salon context
       required: true,
     },
     serviceId: {
