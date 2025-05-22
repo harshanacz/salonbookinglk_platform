@@ -31,17 +31,11 @@ export default function SearchPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const location = searchParams.get("location");
-    if (location) {
-      setSearchQuery(location);
-    }
-  }, [searchParams]);
-
-  const handleSearch = async () => {
+  // Function to perform search
+  const performSearch = async (query: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/services/search?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/services/search?q=${encodeURIComponent(query)}`);
       if (!response.ok) throw new Error('Search failed');
       const data = await response.json();
       setServices(data);
@@ -49,6 +43,21 @@ export default function SearchPage() {
       console.error('Search error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Handle initial search from URL parameters
+  useEffect(() => {
+    const query = searchParams.get("q");
+    if (query) {
+      setSearchQuery(query);
+      performSearch(query);
+    }
+  }, [searchParams]);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      performSearch(searchQuery);
     }
   };
 
