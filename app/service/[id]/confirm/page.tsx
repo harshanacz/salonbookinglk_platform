@@ -251,9 +251,9 @@ const ConfirmPage = () => {
         },
         body: JSON.stringify(bookingData),
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         console.error("Error booking appointment:", result);
         
@@ -272,12 +272,8 @@ const ConfirmPage = () => {
       
       console.log("Booking successful:", result);
       
-      // Navigate based on payment method
-      if (paymentMethod === "venue") {
-        router.push("/user/booking/user-appointments");
-      } else {
-        router.push("/user/booking/payment-success");
-      }
+      // Redirect to user appointments page
+      router.push("/user/booking/user-appointments");
     } catch (error) {
       console.error("Error processing booking:", error);
       alert("There was an error booking your appointment. Please try again.");
