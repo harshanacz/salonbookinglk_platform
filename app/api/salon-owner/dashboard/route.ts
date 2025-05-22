@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Service, { ServiceStatus } from "@/models/Service";
 import Staff from "@/models/Staff";
+import Appointment from "@/models/Appointment";
 
 // Add runtime configuration
 export const runtime = 'nodejs';
@@ -44,6 +45,18 @@ export async function GET() {
       createdAt: { $gte: new Date(new Date().setDate(1)) },
     });
 
+    // Add this new section to fetch appointment counts
+    const totalAppointments = await Appointment.countDocuments({
+      salonId: user._id
+    });
+
+    const lastMonthDate = new Date();
+    lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+    const lastMonthAppointments = await Appointment.countDocuments({
+      salonId: user._id,
+      createdAt: { $gte: lastMonthDate }
+    });
+
     return NextResponse.json({
       services: {
         active: activeServices,
@@ -53,6 +66,10 @@ export async function GET() {
         total: totalStaff,
         newThisMonth: newStaffThisMonth,
       },
+      appointments: {
+        total: totalAppointments,
+        lastMonth: lastMonthAppointments
+      }
     });
     
   } catch (error: any) {

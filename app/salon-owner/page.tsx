@@ -61,6 +61,7 @@ export default function SalonOwnerDashboard() {
   const [dashboardData, setDashboardData] = useState({
     services: { active: 0, pending: 0 },
     staff: { total: 0, newThisMonth: 0 },
+    appointments: { total: 0, lastMonth: 0 },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,8 +162,13 @@ export default function SalonOwnerDashboard() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">+6% from last month</p>
+            <div className="text-2xl font-bold">
+              {isLoading ? "Loading..." : dashboardData.appointments.total}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Loading..." : `${dashboardData.appointments.lastMonth} in last month`}
+            </p>
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </CardContent>
         </Card>
         <Card>
