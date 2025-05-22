@@ -63,17 +63,24 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Fetch today's created appointments (modified query)
+    // Fetch today's created appointments with populated fields
     const todayAppointments = await Appointment.find({
       salonId: user._id,
-      createdAt: {  // Changed from 'date' to 'createdAt'
+      createdAt: {
         $gte: today,
         $lt: tomorrow
       }
     })
-    .populate('clientId', 'name')
-    .populate('serviceId', 'name')
-    .sort({ createdAt: -1 }) // Sort by creation time, newest first
+    .populate({
+      path: 'clientId',
+      select: 'userName', // Added userName
+      model: 'User'  // Explicitly specify the model
+    })
+    .populate({
+      path: 'serviceId',
+      select: 'name type price'
+    })
+    .sort({ createdAt: -1 })
     .lean();
 
     // Get popular services for last 30 days
