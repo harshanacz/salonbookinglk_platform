@@ -129,7 +129,7 @@ export async function GET(
         openUntil: openUntil,
         bestSeller: service.popularityScore > 10,
         profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
-        businessHours: salonContext?.businessHours || [],
+        todaysClosingTime: openUntil,
       },
       staffAssigned: service.staffAssigned || [],
     };

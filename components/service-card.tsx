@@ -165,14 +165,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
               </span>
             </div>
             
-            {/* Only show reviews if they exist */}
-            {service.reviews > 0 && (
-              <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
-                <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
-                <span className="font-medium">{service.rating.toFixed(1)}</span>
-                <span className="text-gray-500 ml-1">({service.reviews})</span>
-              </div>
-            )}
+            {/* Show reviews */}
+            <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
+              <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
+              <span className="font-medium">{service.reviews > 0 ? service.rating.toFixed(1) : "0"}</span>
+              <span className="text-gray-500 ml-1">({service.reviews})</span>
+            </div>
           </div>
 
           {/* Title */}
