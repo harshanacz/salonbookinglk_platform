@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,7 +33,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronDown, Search, Eye, Loader2 } from "lucide-react";
+import { CalendarIcon, ChevronDown, Search, Eye, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -210,10 +211,9 @@ export default function AdminAppointmentsPage() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full md:w-[180px] justify-start text-left font-normal"
-                >
+                variant="outlineDate"
+                className="w-full md:w-[240px] justify-start text-left font-normal h-10"
+              >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
@@ -314,39 +314,40 @@ export default function AdminAppointmentsPage() {
                       </TableRow>
                     ))}
                   </TableBody>
-                </Table>
-              </div>
-
-              {pagination.pages > 1 && (
-                <div className="flex justify-between items-center mt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
-                    {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-                    {pagination.total} appointments
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                      disabled={pagination.page <= 1}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                      disabled={pagination.page >= pagination.pages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
+                </Table>              </div>
             </>
           )}
         </CardContent>
+        {!isLoading && !error && pagination.pages > 1 && (
+          <CardFooter className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} appointments
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={pagination.page <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Previous Page</span>
+              </Button>
+              <div className="text-sm font-medium">
+                Page {pagination.page} of {pagination.pages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={pagination.page >= pagination.pages}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Next Page</span>
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );
