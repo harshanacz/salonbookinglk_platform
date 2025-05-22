@@ -4,6 +4,7 @@ import Service, { ServiceStatus } from "@/models/Service";
 import User from "@/models/User";
 import SalonContext, { Day } from "@/models/SalonContext";
 import mongoose from "mongoose";
+import Staff from "@/models/Staff";
 
 interface BusinessHours {
   day: Day;
@@ -170,26 +171,12 @@ export async function GET(
     }));
     
     // Fetch staff if available
-    const staffMembers = [];
-    if (service.staffAssigned && service.staffAssigned.length > 0) {
-      // You could fetch real staff data here if available
-      // For now, we'll use placeholder data
-      for (let i = 0; i < service.staffAssigned.length; i++) {
-        staffMembers.push({
-          id: i + 1,
-          name: `${service.staffAssigned[i]}`,
-          image: "/placeholder.svg?height=100&width=100"
-        });
-      }
-    } else {
-      // Generate placeholder staff
-      for (let i = 0; i < 6; i++) {
-        staffMembers.push({
-          id: i + 1,
-          name: `Staff Member ${i + 1}`,
-          image: "/placeholder.svg?height=100&width=100"
-        });
-      }
+    let staffMembers = [];
+    if (service.userId?._id) {
+      staffMembers = await Staff.find({
+        userId: service.userId._id,
+        status: 'Active'
+      }).select('_id name role profileImage');
     }
     
     console.log(`[Service API] Successfully returning service data for ID: ${id}`);

@@ -60,7 +60,6 @@ interface StaffMember {
   name: string;
   role: string;
   profileImage: string;
-  status: string;
 }
 
 interface RelatedService {
@@ -112,22 +111,7 @@ export default function ServicePage(props: ServicePageProps) {
         const data = await response.json();
         setService(data.service);
         setRelatedServices(data.relatedServices);
-
-        // Fetch staff members if there are staff IDs
-        if (data.service.staffAssigned && data.service.staffAssigned.length > 0) {
-          const staffResponse = await fetch('/api/staff/batch', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ staffIds: data.service.staffAssigned }),
-          });
-
-          if (staffResponse.ok) {
-            const staffData = await staffResponse.json();
-            setStaffMembers(staffData);
-          }
-        }
+        setStaffMembers(data.staff);
 
         // Track the service view
         trackServiceView(params.id);
@@ -490,7 +474,9 @@ export default function ServicePage(props: ServicePageProps) {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600">No staff members assigned to this service.</p>
+              <div className="flex justify-center items-center p-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-600">No staff members available</p>
+              </div>
             )}
           </div>
 
