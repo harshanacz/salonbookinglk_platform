@@ -109,6 +109,7 @@ export async function GET(req: Request) {
       clicks: 0,
       appointments: 0,
       staffAssigned: Array.isArray(service.staffAssigned) ? service.staffAssigned.length : 0,
+      salonContextId: service.salonContextId ? service.salonContextId.toString() : null,
     }));
 
     return NextResponse.json(response);
