@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { MapPin, Search, Star, Clock } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { Search } from "lucide-react";
+import { ServiceCard } from "@/components/service-card";
 
 interface Service {
   id: string;
@@ -30,8 +28,6 @@ interface Service {
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedSalon, setSelectedSalon] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,68 +80,34 @@ export default function SearchPage() {
       </div>
 
       <div className="container mx-auto px-4 py-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Service List */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {isLoading ? (
-              <div className="flex justify-center items-center h-40">
-                <Clock className="h-8 w-8 animate-spin text-primary" />
+              <div className="col-span-full flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
+              <div className="col-span-full text-center text-gray-500 py-8">
                 No services found. Try a different search term.
               </div>
             ) : (
               services.map((service) => (
-                <Card
+                <ServiceCard
                   key={service.id}
-                  className={`p-4 cursor-pointer transition-shadow hover:shadow-md ${
-                    selectedSalon === service.id ? "ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => setSelectedSalon(service.id)}
-                >
-                  <Link href={`/services/${service.id}`}>
-                    <div className="flex gap-4">
-                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden">
-                        <Image
-                          src={service.image}
-                          alt={service.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {service.isBestSeller && (
-                            <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-                              Best Seller
-                            </span>
-                          )}
-                          <div className="flex items-center">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="ml-1 text-sm font-medium">
-                              {service.rating}
-                            </span>
-                            <span className="ml-1 text-sm text-gray-500">
-                              ({service.reviews})
-                            </span>
-                          </div>
-                        </div>
-                        <h3 className="font-medium mt-1 text-sm sm:text-base">{service.title}</h3>
-                        <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
-                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
-                          <span className="truncate">{service.address}</span>
-                        </div>
-                        <div className="mt-2 p-2 bg-gray-50 rounded-lg">
-                          <div className="font-medium text-xs sm:text-sm">{service.salon}</div>
-                          <div className="text-xs sm:text-sm">
-                            From Rs. {service.price.toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </Card>
+                  service={{
+                    id: service.id,
+                    title: service.title,
+                    image: service.image,
+                    price: service.price,
+                    salon: service.salon,
+                    salonContextId: service.salonContextId || undefined,
+                    rating: service.rating,
+                    reviews: service.reviews,
+                    location: service.address,
+                    type: service.type
+                  }}
+                />
               ))
             )}
           </div>
