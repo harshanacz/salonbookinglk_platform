@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,62 +27,44 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MoreHorizontal, Search, User } from "lucide-react";
 
-const clients = [
-  {
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+94 77 123 4567",
-    lastVisit: "2024-01-10",
-    totalSpent: 15000,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    phone: "+94 77 234 5678",
-    lastVisit: "2024-01-05",
-    totalSpent: 22000,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Alice Johnson",
-    email: "alice.johnson@example.com",
-    phone: "+94 77 345 6789",
-    lastVisit: "2023-12-28",
-    totalSpent: 18500,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 4,
-    name: "Bob Brown",
-    email: "bob.brown@example.com",
-    phone: "+94 77 456 7890",
-    lastVisit: "2023-12-20",
-    totalSpent: 9000,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 5,
-    name: "Eva Green",
-    email: "eva.green@example.com",
-    phone: "+94 77 567 8901",
-    lastVisit: "2023-12-15",
-    totalSpent: 27500,
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-];
+type Client = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  lastVisit: string;
+  totalSpent: number;
+};
 
 export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch("/api/salon-owner/clients");
+        if (response.ok) {
+          const data = await response.json();
+          setClients(data);
+        }
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
 
   const filteredClients = clients.filter(
     (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery)
+      client.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.phone?.includes(searchQuery)
   );
 
   return (
