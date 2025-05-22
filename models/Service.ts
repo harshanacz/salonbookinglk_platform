@@ -25,6 +25,11 @@ const serviceSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    salonContextId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SalonContext",
+      required: true,
+    },
     status: {
       type: String,
       enum: Object.values(ServiceStatus),

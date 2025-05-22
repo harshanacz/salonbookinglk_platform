@@ -222,9 +222,7 @@ const ConfirmPage = () => {
           period: timeSlot.period || 30,
           timestamp: timeSlot.timestamp || new Date(timeSlot.start_time).getTime()
         },
-        salonId: salonUserId,
-        userId: salonUserId, // Using salon ID as the user ID
-        clientId: salonUserId, // Using salon ID as the client ID for demo purposes
+        salonId: salonUserId, // Salon owner's userId
         serviceId: serviceId || salonUserId, // Fallback to salonId if no serviceId
         staffId: staffMember ? staffMember._id : null, // Use staffMember._id if a specific staff was selected
         paymentMethod: paymentMethod,
@@ -251,9 +249,9 @@ const ConfirmPage = () => {
         },
         body: JSON.stringify(bookingData),
       });
-      
+
       const result = await response.json();
-      
+
       if (!response.ok) {
         console.error("Error booking appointment:", result);
         
@@ -272,12 +270,8 @@ const ConfirmPage = () => {
       
       console.log("Booking successful:", result);
       
-      // Navigate based on payment method
-      if (paymentMethod === "venue") {
-        router.push("/user/booking/user-appointments");
-      } else {
-        router.push("/user/booking/payment-success");
-      }
+      // Redirect to user appointments page
+      router.push("/user/booking/user-appointments");
     } catch (error) {
       console.error("Error processing booking:", error);
       alert("There was an error booking your appointment. Please try again.");

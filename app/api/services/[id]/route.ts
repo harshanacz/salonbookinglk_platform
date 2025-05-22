@@ -4,6 +4,7 @@ import Service, { ServiceStatus } from "@/models/Service";
 import User from "@/models/User";
 import SalonContext, { Day } from "@/models/SalonContext";
 import mongoose from "mongoose";
+import Staff from "@/models/Staff";
 
 interface BusinessHours {
   day: Day;
@@ -129,7 +130,7 @@ export async function GET(
         openUntil: openUntil,
         bestSeller: service.popularityScore > 10,
         profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
-        businessHours: salonContext?.businessHours || [],
+        todaysClosingTime: openUntil,
       },
       staffAssigned: service.staffAssigned || [],
     };
@@ -163,32 +164,19 @@ export async function GET(
         : "/placeholder.svg?height=300&width=400",
       price: relService.price,
       salon: (relService.userId as any)?.businessName || "Unknown Salon",
+      salonContextId: relService.salonContextId ? relService.salonContextId.toString() : null,
       rating: relService.averageRating || 4.5,
       reviews: relService.reviewCount || 0,
       location: "Colombo", // Default location
     }));
     
     // Fetch staff if available
-    const staffMembers = [];
-    if (service.staffAssigned && service.staffAssigned.length > 0) {
-      // You could fetch real staff data here if available
-      // For now, we'll use placeholder data
-      for (let i = 0; i < service.staffAssigned.length; i++) {
-        staffMembers.push({
-          id: i + 1,
-          name: `${service.staffAssigned[i]}`,
-          image: "/placeholder.svg?height=100&width=100"
-        });
-      }
-    } else {
-      // Generate placeholder staff
-      for (let i = 0; i < 6; i++) {
-        staffMembers.push({
-          id: i + 1,
-          name: `Staff Member ${i + 1}`,
-          image: "/placeholder.svg?height=100&width=100"
-        });
-      }
+    let staffMembers = [];
+    if (service.userId?._id) {
+      staffMembers = await Staff.find({
+        userId: service.userId._id,
+        status: 'Active'
+      }).select('_id name role profileImage');
     }
     
     console.log(`[Service API] Successfully returning service data for ID: ${id}`);
