@@ -17,15 +17,21 @@ export async function POST(req: Request) {
 
 
     const user = await User.findOne({ clerkUserId });
-
     
     if (!user) {
       return new NextResponse("User not found", { status: 404 });
     }
 
-
     if (user.type !== UserType.SALON_OWNER) {
       return new NextResponse("Forbidden: User is not a salon owner", { status: 403 });
+    }
+    
+    // Get the SalonContext for this user
+    const SalonContext = require('@/models/SalonContext').default;
+    const salonContext = await SalonContext.findOne({ userId: user._id });
+    
+    if (!salonContext) {
+      return new NextResponse("Salon profile not found. Please complete your salon profile first.", { status: 404 });
     }
 
     const body = await req.json();
@@ -52,7 +58,8 @@ export async function POST(req: Request) {
 
 
     const newService = await Service.create({ 
-      userId: user._id, 
+      userId: user._id,
+      salonContextId: salonContext._id, // Add salonContextId field
       title,
       type,
       description,
