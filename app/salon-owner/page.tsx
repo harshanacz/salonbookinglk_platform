@@ -61,6 +61,13 @@ export default function SalonOwnerDashboard() {
   const [dashboardData, setDashboardData] = useState({
     services: { active: 0, pending: 0 },
     staff: { total: 0, newThisMonth: 0 },
+    appointments: {
+      total: 0,
+      lastMonth: 0,
+      today: [] as any[],
+    },
+    popularServices: [] as any[],
+    weeklyData: { labels: [], counts: [] },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,11 +111,11 @@ export default function SalonOwnerDashboard() {
   };
 
   const appointmentsData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: dashboardData.weeklyData.labels,
     datasets: [
       {
         label: "Appointments",
-        data: [15, 22, 18, 25, 30, 35, 28],
+        data: dashboardData.weeklyData.counts,
         borderColor: "rgb(75, 192, 192)",
         tension: 0.1,
       },
@@ -161,8 +168,13 @@ export default function SalonOwnerDashboard() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">+6% from last month</p>
+            <div className="text-2xl font-bold">
+              {isLoading ? "Loading..." : dashboardData.appointments.total}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {isLoading ? "Loading..." : `${dashboardData.appointments.lastMonth} in last month`}
+            </p>
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </CardContent>
         </Card>
         <Card>
@@ -225,11 +237,17 @@ export default function SalonOwnerDashboard() {
           <CardHeader>
             <CardTitle>Appointment Trend</CardTitle>
             <CardDescription>
-              Daily appointments for the past week
+              Daily appointments from Sunday until today
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Line data={appointmentsData} />
+            {!isLoading && dashboardData.weeklyData.counts.length > 0 ? (
+              <Line data={appointmentsData} />
+            ) : (
+              <div className="text-center text-muted-foreground py-6">
+                No appointment data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -238,30 +256,51 @@ export default function SalonOwnerDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Appointments</CardTitle>
-            <CardDescription>You have 5 appointments today</CardDescription>
+            <CardDescription>
+              {isLoading
+                ? "Loading appointments..."
+                : dashboardData.appointments.today.length > 0
+                ? `${dashboardData.appointments.today.length} new appointments created today`
+                : "No new appointments created today"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between border-b pb-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Users className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium">Client Name {i}</div>
-                      <div className="text-sm text-gray-500">Hair Coloring</div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium">10:3{i} AM</div>
-                    <div className="text-sm text-gray-500">Today</div>
-                  </div>
+              {!isLoading && dashboardData.appointments.today.length === 0 ? (
+                <div className="text-center text-muted-foreground py-6">
+                  No appointments created today
                 </div>
-              ))}
+              ) : (
+                dashboardData.appointments.today.map((appointment: any) => (
+                  <div
+                    key={appointment._id}
+                    className="flex items-center justify-between border-b pb-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Users className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium">
+                          {appointment.clientId?.userName || appointment.clientId?.name || "Client"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.serviceId?.name || "Service"} - {appointment.serviceId?.type}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">
+                        {new Date(appointment.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-500">Created today</div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -274,34 +313,34 @@ export default function SalonOwnerDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { name: "Hair Coloring", count: 45, trend: "+12%" },
-                { name: "Haircut & Styling", count: 38, trend: "+5%" },
-                { name: "Manicure & Pedicure", count: 32, trend: "+8%" },
-                { name: "Facial Treatment", count: 28, trend: "+2%" },
-                { name: "Hair Spa", count: 24, trend: "+15%" },
-              ].map((service, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between border-b pb-3"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Scissors className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{service.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {service.count} bookings
+              {!isLoading && dashboardData.popularServices.length === 0 ? (
+                <div className="text-center text-muted-foreground py-6">
+                  No service bookings in the last 30 days
+                </div>
+              ) : (
+                dashboardData.popularServices.map((service: any, i: number) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between border-b pb-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <Scissors className="h-5 w-5 text-gray-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium">{service.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {service.count} bookings
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center text-green-600">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      {service.trend}
+                    </div>
                   </div>
-                  <div className="flex items-center text-green-600">
-                    <TrendingUp className="h-4 w-4 mr-1" />
-                    {service.trend}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Service, { ServiceStatus } from "@/models/Service";
 import Staff from "@/models/Staff";
+import Appointment from "@/models/Appointment";
 
 // Add runtime configuration
 export const runtime = 'nodejs';
@@ -44,6 +45,135 @@ export async function GET() {
       createdAt: { $gte: new Date(new Date().setDate(1)) },
     });
 
+    // Add this new section to fetch appointment counts
+    const totalAppointments = await Appointment.countDocuments({
+      salonId: user._id
+    });
+
+    const lastMonthDate = new Date();
+    lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+    const lastMonthAppointments = await Appointment.countDocuments({
+      salonId: user._id,
+      createdAt: { $gte: lastMonthDate }
+    });
+
+    // Get today's start and end
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Fetch today's created appointments with populated fields
+    const todayAppointments = await Appointment.find({
+      salonId: user._id,
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow
+      }
+    })
+    .populate({
+      path: 'clientId',
+      select: 'userName', // Added userName
+      model: 'User'  // Explicitly specify the model
+    })
+    .populate({
+      path: 'serviceId',
+      select: 'name type price'
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+    // Get popular services for last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const popularServices = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id,
+          createdAt: { $gte: thirtyDaysAgo }
+        }
+      },
+      {
+        $group: {
+          _id: "$serviceId",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 5
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "_id",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $unwind: "$service"
+      },
+      {
+        $project: {
+          name: "$service.type", // Changed from "$service.name" to "$service.type"
+          count: 1,
+          trend: {
+            $concat: [
+              "+",
+              {
+                $toString: {
+                  $round: [
+                    { $multiply: [{ $divide: ["$count", totalAppointments] }, 100] },
+                    0
+                  ]
+                }
+              },
+              "%"
+            ]
+          }
+        }
+      }
+    ]);
+
+    // Get weekly appointments data
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Start from Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weeklyAppointments = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id,
+          createdAt: { $gte: startOfWeek }
+        }
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Convert to array of counts for each day
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const todayIndex = new Date().getDay();
+    const weeklyData = {
+      labels: daysOfWeek.slice(0, todayIndex + 1),
+      counts: new Array(7).fill(0)
+    };
+
+    weeklyAppointments.forEach((day) => {
+      weeklyData.counts[day._id - 1] = day.count;
+    });
+
     return NextResponse.json({
       services: {
         active: activeServices,
@@ -53,6 +183,16 @@ export async function GET() {
         total: totalStaff,
         newThisMonth: newStaffThisMonth,
       },
+      appointments: {
+        total: totalAppointments,
+        lastMonth: lastMonthAppointments,
+        today: todayAppointments
+      },
+      popularServices,
+      weeklyData: {
+        labels: weeklyData.labels,
+        counts: weeklyData.counts.slice(0, todayIndex + 1)
+      }
     });
     
   } catch (error: any) {
