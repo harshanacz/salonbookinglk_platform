@@ -38,6 +38,7 @@ interface ServiceData {
     openUntil: string;
     bestSeller: boolean;
     profilePictureUrl: string;
+    todaysClosingTime: string;
     workingHours: Array<{
       day: string;
       isWorking: boolean;
@@ -438,7 +439,7 @@ export default function ServicePage(props: ServicePageProps) {
                     <Heart 
                       className={`h-4 w-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
                     /> 
-                    {isCurrentServiceFavorite ? "Saved" : "Save"}
+                    {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                   </Button>
                   <Button variant="outline" className="flex-1">
                     <Share2 className="h-4 w-4 mr-2" /> Share
@@ -501,7 +502,7 @@ export default function ServicePage(props: ServicePageProps) {
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="text-sm">
-                    {Number(service.salon.rating).toFixed(1)} ({service.salon.reviews} reviews)
+                    {service.salon.reviews > 0 ? Number(service.salon.rating).toFixed(1) : "0"} ({service.salon.reviews} reviews)
                   </span>
                 </div>
               </div>
@@ -528,19 +529,16 @@ export default function ServicePage(props: ServicePageProps) {
               </div>
             </div>
 
-            <div className="mb-6">
-              <h4 className="font-semibold mb-2">Business Hours</h4>
-              <div className="space-y-2">
-                {service.salon.businessHours.map((hours, index) => (
-                  <div key={index} className="flex justify-between text-sm">
-                    <span>{hours.day}</span>
-                    <span>
-                      {hours.isOpen ? `${hours.open} - ${hours.close}` : "Closed"}
-                    </span>
-                  </div>
-                ))}
+            {/* <div className="mb-6">
+              <h4 className="font-semibold mb-2">Today's Hours</h4>
+              <div className="text-sm">
+                {service.salon.isOpen ? (
+                  <span>Open until {service.salon.todaysClosingTime || service.salon.openUntil}</span>
+                ) : (
+                  <span>Closed today</span>
+                )}
               </div>
-            </div>
+            </div> */}
 
             <div className="space-y-3">
               <Button
@@ -559,7 +557,7 @@ export default function ServicePage(props: ServicePageProps) {
                   <Heart 
                     className={`w-4 h-4 mr-2 ${isCurrentServiceFavorite ? "fill-red-500 text-red-500" : ""}`} 
                   />
-                  {isCurrentServiceFavorite ? "Saved" : "Save"}
+                  {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                 </Button>
                 <Button variant="outline" className="flex-1">
                   <Share2 className="w-4 h-4 mr-2" />
