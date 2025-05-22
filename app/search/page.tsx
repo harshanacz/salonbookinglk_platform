@@ -32,8 +32,6 @@ export default function SearchPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSalon, setSelectedSalon] = useState<string | null>(null);
-  const [isMapLoading, setIsMapLoading] = useState(true);
-  const [showMap, setShowMap] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,15 +40,6 @@ export default function SearchPage() {
     if (location) {
       setSearchQuery(location);
     }
-    
-    // Set default showMap state based on screen size
-    const handleResize = () => {
-      setShowMap(window.innerWidth >= 1024);
-    };
-    
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, [searchParams]);
 
   const handleSearch = async () => {
@@ -65,17 +54,6 @@ export default function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Generate map URL with markers for all services
-  const getMapUrl = () => {
-    if (!services.length) return "https://maps.google.com/maps?width=600&height=800&hl=en&q=Colombo, Sri Lanka&t=&z=12&ie=UTF8&iwloc=B&output=embed";
-    
-    const markers = services.map(service => 
-      `${service.location.lat},${service.location.lng}`
-    ).join('|');
-    
-    return `https://maps.google.com/maps?width=600&height=800&hl=en&q=Colombo, Sri Lanka&t=&z=12&ie=UTF8&iwloc=B&output=embed&markers=${markers}`;
   };
 
   return (
@@ -103,36 +81,12 @@ export default function SearchPage() {
             <span className="md:hidden">Search</span>
           </Button>
         </div>
-        
-        {/* Mobile toggle for map/list */}
-        <div className="mt-4 lg:hidden flex justify-center">
-          <div className="inline-flex rounded-md shadow-sm" role="group">
-            <button
-              type="button"
-              onClick={() => setShowMap(false)}
-              className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-                !showMap ? "bg-primary text-white" : "bg-white text-gray-700"
-              }`}
-            >
-              List
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowMap(true)}
-              className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-                showMap ? "bg-primary text-white" : "bg-white text-gray-700"
-              }`}
-            >
-              Map
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="container mx-auto px-4 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="max-w-4xl mx-auto">
           {/* Service List */}
-          <div className={`space-y-4 ${showMap ? "hidden lg:block" : "block"}`}>
+          <div className="space-y-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-40">
                 <Clock className="h-8 w-8 animate-spin text-primary" />
@@ -194,30 +148,6 @@ export default function SearchPage() {
                 </Card>
               ))
             )}
-          </div>
-
-          {/* Map */}
-          <div className={`h-[50vh] lg:h-[calc(100vh-8rem)] bg-white rounded-lg overflow-hidden ${showMap ? "block" : "hidden lg:block"}`}>
-            <div className="relative h-full">
-              {isMapLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-                  <div className="flex flex-col items-center gap-2">
-                    <Clock className="h-8 w-8 animate-spin text-primary" />
-                    <span className="text-sm">Loading map...</span>
-                  </div>
-                </div>
-              )}
-              <div className="h-full">
-                <iframe
-                  className="w-full h-full rounded-lg"
-                  src={getMapUrl()}
-                  style={{ border: "none" }}
-                  allowFullScreen
-                  loading="lazy"
-                  onLoad={() => setIsMapLoading(false)}
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
