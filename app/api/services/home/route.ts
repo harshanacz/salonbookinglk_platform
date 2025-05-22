@@ -39,6 +39,7 @@ export async function GET() {
         image: service.images && service.images.length > 0 ? service.images[0] : "/placeholder.svg?height=300&width=400",
         price: service.price,
         salon: businessName,
+        salonContextId: service.salonContextId ? service.salonContextId.toString() : null,
         location: "Colombo", // Default location
         rating: service.averageRating || 4.5, // Default value if no rating
         reviews: service.reviewCount || 0,

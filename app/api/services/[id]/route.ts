@@ -163,6 +163,7 @@ export async function GET(
         : "/placeholder.svg?height=300&width=400",
       price: relService.price,
       salon: (relService.userId as any)?.businessName || "Unknown Salon",
+      salonContextId: relService.salonContextId ? relService.salonContextId.toString() : null,
       rating: relService.averageRating || 4.5,
       reviews: relService.reviewCount || 0,
       location: "Colombo", // Default location
