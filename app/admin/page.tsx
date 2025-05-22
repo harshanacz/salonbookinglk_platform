@@ -163,11 +163,16 @@ const Page = () => {
       }
     };    const fetchUsersCount = async () => {
       try {
+        // Fetch all users and filter them by type
         const response = await fetch("/api/admin/users?limit=all");
         if (response.ok) {
           const data = await response.json();
           const users = data.users || [];
-          const totalUsers = users.length;
+          
+          // Count salon owners and clients only (exclude admins)
+          const salonOwners = users.filter((user: any) => user.role === "SALON_OWNER").length;
+          const clients = users.filter((user: any) => user.role === "CLIENT").length;
+          const totalUsers = salonOwners + clients;
 
           setStats((prevStats) =>
             prevStats.map((stat) =>
@@ -175,7 +180,7 @@ const Page = () => {
                 ? {
                     ...stat,
                     value: totalUsers,
-                    description: "All registered users",
+                    description: "Salon owners and clients only",
                   }
                 : stat
             )
@@ -184,7 +189,7 @@ const Page = () => {
       } catch (error) {
         console.error("Error fetching users count:", error);
       }
-    };    const fetchPendingServices = async () => {
+    };const fetchPendingServices = async () => {
       try {
         const response = await fetch("/api/admin/service-cards?limit=all");
         if (response.ok) {
