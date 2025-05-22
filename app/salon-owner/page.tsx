@@ -67,6 +67,7 @@ export default function SalonOwnerDashboard() {
       today: [] as any[],
     },
     popularServices: [] as any[],
+    weeklyData: { labels: [], counts: [] },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -110,11 +111,11 @@ export default function SalonOwnerDashboard() {
   };
 
   const appointmentsData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: dashboardData.weeklyData.labels,
     datasets: [
       {
         label: "Appointments",
-        data: [15, 22, 18, 25, 30, 35, 28],
+        data: dashboardData.weeklyData.counts,
         borderColor: "rgb(75, 192, 192)",
         tension: 0.1,
       },
@@ -236,11 +237,17 @@ export default function SalonOwnerDashboard() {
           <CardHeader>
             <CardTitle>Appointment Trend</CardTitle>
             <CardDescription>
-              Daily appointments for the past week
+              Daily appointments from Sunday until today
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Line data={appointmentsData} />
+            {!isLoading && dashboardData.weeklyData.counts.length > 0 ? (
+              <Line data={appointmentsData} />
+            ) : (
+              <div className="text-center text-muted-foreground py-6">
+                No appointment data available
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
