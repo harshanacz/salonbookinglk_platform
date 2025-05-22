@@ -83,22 +83,16 @@ export default function SearchPage() {
       {/* Search Bar */}
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-col gap-2 md:flex-row md:gap-4 max-w-3xl mx-auto">
-          <div className="flex-1 flex flex-col md:flex-row gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search for services or salons"
-                className="pl-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Input type="text" placeholder="Map Area" className="flex-1" />
-              <Input type="text" placeholder="Availability" className="flex-1" />
-            </div>
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search for services or salons"
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
           </div>
           <Button 
             className="w-full md:w-auto"
