@@ -22,6 +22,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, User, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 interface Client {
   _id: string;
@@ -67,7 +68,16 @@ export default function AdminClientsPage() {
       }
 
       const data = await response.json();
-      setClients(data.users);
+      
+      // Process client data to ensure booking statistics are available
+      const processedClients = data.users.map((client: Client) => ({
+        ...client,
+        totalBookings: client.totalBookings || 0,
+        totalSpent: client.totalSpent || 0,
+        lastVisit: client.lastVisit || null
+      }));
+      
+      setClients(processedClients);
       setPagination(data.pagination);
     } catch (err) {
       console.error("Error fetching clients:", err);
@@ -76,13 +86,14 @@ export default function AdminClientsPage() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
-    fetchClients();
-  }, [pagination.limit]);
-
+    fetchClients(pagination.page);
+  }, [pagination.limit, pagination.page]);
   const handlePageChange = (newPage: number) => {
-    fetchClients(newPage);
+    setPagination(prev => ({
+      ...prev,
+      page: newPage
+    }));
   };
 
   const filteredClients = clients.filter(
@@ -91,6 +102,72 @@ export default function AdminClientsPage() {
       (client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       (client.mobileNumber?.includes(searchQuery) ?? false)
   );
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return "N/A";
+    }
+  };
+
+  // Function to enrich client data with booking information
+  const fetchClientBookingData = async (clientId: string) => {
+    try {
+      const response = await fetch(`/api/admin/bookings?clientId=${clientId}`);
+      if (response.ok) {
+        const bookingsData = await response.json();
+        
+        // Calculate booking statistics
+        const totalBookings = bookingsData.length || 0;
+        const totalSpent = bookingsData.reduce((sum: number, booking: any) => 
+          sum + (booking.price || 0), 0);
+        
+        // Get last visit date (most recent booking)
+        const sortedBookings = [...bookingsData].sort((a: any, b: any) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime());
+        const lastVisit = sortedBookings.length > 0 ? sortedBookings[0].date : null;
+        
+        // Update the specific client in the clients array
+        setClients(prevClients => 
+          prevClients.map(client => 
+            client._id === clientId 
+              ? {
+                  ...client,
+                  totalBookings,
+                  totalSpent,
+                  lastVisit
+                }
+              : client
+          )
+        );
+      }
+    } catch (error) {
+      console.error(`Error fetching booking data for client ${clientId}:`, error);
+    }
+  };
+
+  // Effect to fetch additional booking data for clients if needed
+  useEffect(() => {
+    if (clients.length > 0 && !isLoading) {
+      // Look for clients that might need booking data
+      clients.forEach(client => {
+        if (
+          (client.totalBookings === undefined || client.totalBookings === 0) &&
+          (client.totalSpent === undefined || client.totalSpent === 0) &&
+          !client.lastVisit
+        ) {
+          // This client likely needs booking data fetched
+          fetchClientBookingData(client._id);
+        }
+      });
+    }
+  }, [clients, isLoading]);
 
   return (
     <div className="h-full flex flex-col gap-6 p-6">
@@ -156,18 +233,17 @@ export default function AdminClientsPage() {
                                 <User className="h-4 w-4" />
                               </AvatarFallback>
                             </Avatar>
-                            {client.userName || "N/A"}
+                            {client.name || client.userName || "N/A"}
                           </div>
                         </TableCell>
                         <TableCell>{client.email || "N/A"}</TableCell>
-                        <TableCell>{client.mobileNumber || "N/A"}</TableCell>
-                        <TableCell>{client.totalBookings || 0}</TableCell>
+                        <TableCell>{client.mobileNumber || "N/A"}</TableCell>                        <TableCell>{client.totalBookings || 0}</TableCell>
                         <TableCell>
                           LKR {(client.totalSpent || 0).toLocaleString()}
                         </TableCell>
                         <TableCell>
                           {client.lastVisit
-                            ? new Date(client.lastVisit).toLocaleDateString()
+                            ? formatDate(client.lastVisit)
                             : "N/A"}
                         </TableCell>
                         <TableCell className="text-right">

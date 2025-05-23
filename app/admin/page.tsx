@@ -78,8 +78,8 @@ const dashboardData = {
       id: 4,
       title: "Active Complaints",
       icon: AlertTriangle,
-      value: 7,
-      description: "3 resolved today",
+      value: 0,
+      description: "0 resolved today",
     },
   ],
 };
@@ -95,15 +95,31 @@ const Page = () => {
   const [newServicesToday, setNewServicesToday] = useState(0);
 
   useEffect(() => {
-    const fetchRecentSalons = async () => {
+    // Debug flag to track API calls completion
+    const apiCalls = {
+      salons: false,
+      services: false,
+      users: false,
+      recentSalons: false
+    };
+    
+    // Helper function to log API status
+    const logApiStatus = () => {
+      if (apiCalls.salons && apiCalls.services && apiCalls.users && apiCalls.recentSalons) {
+        console.log("All API calls completed. Stats data:", stats);
+      }
+    };    const fetchRecentSalons = async () => {
       try {
+        console.log("Fetching recent salons...");
         const response = await fetch(
           "/api/admin/users?type=SALON_OWNER&limit=5&sort=-createdAt"
         );
         if (response.ok) {
           const data = await response.json();
+          console.log("Recent salons response:", data);
           // Extract users array from response
-          const salons = data.users || [];
+          const salons = Array.isArray(data.users) ? data.users : 
+                        (Array.isArray(data) ? data : []);
 
           // Process salon data to ensure consistent structure
           const processedSalons = salons.map((salon: any) => ({
@@ -123,19 +139,24 @@ const Page = () => {
 
           setRecentSalons(processedSalons);
         } else {
-          console.error("Failed to fetch recent salons");
+          console.error("Failed to fetch recent salons, status:", response.status);
         }
       } catch (error) {
         console.error("Error fetching salon data:", error);
       } finally {
         setLoading(false);
+        apiCalls.recentSalons = true;
+        logApiStatus();
       }
     };    const fetchSalonsCount = async () => {
       try {
         const response = await fetch("/api/admin/users?type=SALON_OWNER&limit=all");
         if (response.ok) {
           const data = await response.json();
-          const salons = data.users || [];
+          console.log("Salon count API response:", data); // Log the response for debugging
+          
+          // Ensure we have a valid array of salons
+          const salons = Array.isArray(data.users) ? data.users : [];
           const totalSalons = salons.length;
 
           // Calculate salons created in the last month
@@ -146,41 +167,120 @@ const Page = () => {
           ).length;
           setLastMonthSalons(newSalons);
 
+          // Prepare a more informative description
+          let description = "No new salons this month";
+          if (newSalons > 0) {
+            description = `${newSalons} new ${newSalons === 1 ? 'salon' : 'salons'} this month`;
+          }
+
+          // Update the stats with proper value and description
           setStats((prevStats) =>
             prevStats.map((stat) =>
               stat.id === 1
                 ? {
                     ...stat,
                     value: totalSalons,
-                    description: `+${newSalons} new this month`,
+                    description: description,
+                  }
+                : stat
+            )
+          );
+          
+          console.log("Updated total salons:", totalSalons); 
+        } else {
+          console.error("Failed to fetch salon count, status:", response.status);
+          // Set fallback description for error case
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 1
+                ? {
+                    ...stat,
+                    description: "Unable to fetch salon data",
                   }
                 : stat
             )
           );
         }
-      } catch (error) {
-        console.error("Error fetching salon count:", error);
+      } catch (error) {        console.error("Error fetching salon count:", error);
+        // Set fallback description for error case
+        setStats((prevStats) =>
+          prevStats.map((stat) =>
+            stat.id === 1
+              ? {
+                  ...stat,
+                  description: "Error loading salon data",
+                }
+              : stat
+          )
+        );
+      } finally {
+        apiCalls.salons = true;
+        logApiStatus();
       }
-    };    const fetchUsersCount = async () => {
+    };const fetchUsersCount = async () => {
       try {
         // Fetch all users and filter them by type
         const response = await fetch("/api/admin/users?limit=all");
         if (response.ok) {
           const data = await response.json();
-          const users = data.users || [];
+          console.log("Users API response:", data); 
+          
+          let users = [];
+          if (Array.isArray(data)) {
+            users = data;
+          } else if (data && typeof data === 'object') {
+            users = data.users || [];
+          }
+          
+          console.log("Extracted users array:", users);
           
           // Count salon owners and clients only (exclude admins)
-          const salonOwners = users.filter((user: any) => user.role === "SALON_OWNER").length;
-          const clients = users.filter((user: any) => user.role === "CLIENT").length;
+          const salonOwners = users.filter((user: any) => 
+            user.role === "SALON_OWNER" || user.type === "SALON_OWNER"
+          ).length;
+          
+          const clients = users.filter((user: any) => 
+            user.role === "CUSTOMER" || user.type === "CUSTOMER"
+          ).length;
+          
           const totalUsers = salonOwners + clients;
+          
+          console.log(`Found ${salonOwners} salon owners and ${clients} clients, total: ${totalUsers}`);
 
+          // Only update if we have actual values
+          if (totalUsers > 0 || users.length > 0) {
+            setStats((prevStats) =>
+              prevStats.map((stat) =>
+                stat.id === 3
+                  ? {
+                      ...stat,
+                      value: totalUsers,
+                      description: `${totalUsers} total users this month`,
+                    }
+                  : stat
+              )
+            );
+          } else {
+            // If no users found but API succeeded, set a meaningful message
+            setStats((prevStats) =>
+              prevStats.map((stat) =>
+                stat.id === 3
+                  ? {
+                      ...stat,
+                      description: "No users found in system",
+                    }
+                  : stat
+              )
+            );
+          }
+        } else {
+          console.error("Failed to fetch users count, status:", response.status);
           setStats((prevStats) =>
             prevStats.map((stat) =>
               stat.id === 3
                 ? {
                     ...stat,
-                    value: totalUsers,
-                    description: "Salon owners and clients only",
+                    description: "Failed to load user data",
                   }
                 : stat
             )
@@ -188,6 +288,19 @@ const Page = () => {
         }
       } catch (error) {
         console.error("Error fetching users count:", error);
+        setStats((prevStats) =>
+          prevStats.map((stat) =>
+            stat.id === 3
+              ? {
+                  ...stat,
+                  description: "Error loading user data",
+                }
+              : stat
+          )
+        );
+      } finally {
+        apiCalls.users = true;
+        logApiStatus();
       }
     };const fetchPendingServices = async () => {
       try {
@@ -231,9 +344,10 @@ const Page = () => {
           console.error("Failed to fetch pending services");
         }
       } catch (error) {
-        console.error("Error fetching service data:", error);
-      } finally {
+        console.error("Error fetching service data:", error);      } finally {
         setServicesLoading(false);
+        apiCalls.services = true;
+        logApiStatus();
       }
     };
 
@@ -264,8 +378,7 @@ const Page = () => {
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Stats Cards */}      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
           // Use the count up animation hook
@@ -280,9 +393,11 @@ const Page = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{animatedValue}</div>
+                <div className="text-2xl font-bold">
+                  {animatedValue}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {stat.description}
+                  {stat.description || (loading ? "Loading data..." : "No data available")}
                 </p>
               </CardContent>
             </Card>
