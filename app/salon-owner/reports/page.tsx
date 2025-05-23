@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -16,10 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
+import { Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -27,20 +23,37 @@ import {
   BarChart,
   CalendarIcon,
   Download,
-  LineChart,
+  LineChart as LucideLineChart,
   PieChart,
 } from "lucide-react";
 import { format, subDays } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+} from "recharts";
+
+import { generatePDF } from "@/components/reports/generatePDF";
 
 // This is a placeholder component for charts. In a real application, you'd use a charting library like recharts or Chart.js
 const ChartPlaceholder = ({ type }: { type: string }) => (
   <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
     {type === "bar" && <BarChart className="h-12 w-12 text-gray-400" />}
-    {type === "line" && <LineChart className="h-12 w-12 text-gray-400" />}
+    {type === "line" && <LucideLineChart className="h-12 w-12 text-gray-400" />}
     {type === "pie" && <PieChart className="h-12 w-12 text-gray-400" />}
     <span className="ml-2 text-gray-500">Chart placeholder</span>
   </div>
 );
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState<{
@@ -50,13 +63,53 @@ export default function ReportsPage() {
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReportData = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          from: dateRange.from.toISOString(),
+          to: dateRange.to?.toISOString() || new Date().toISOString(),
+        });
+
+        const response = await fetch(
+          `/api/salon-owner/report?${params}`
+        );
+        const reportData = await response.json();
+        setData(reportData);
+      } catch (error) {
+        console.error("Failed to fetch report data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportData();
+  }, [dateRange]);
+
+  const handleExportPDF = () => {
+    if (!data) return;
+    
+    const reportData = {
+      ...data,
+      dateRange: {
+        from: dateRange.from,
+        to: dateRange.to || new Date(),
+      }
+    };
+
+    generatePDF(reportData);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Reports</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button className="w-full sm:w-auto">
+          <Button onClick={handleExportPDF} disabled={!data}>
             <Download className="mr-2 h-4 w-4" />
             Export Report
           </Button>
@@ -102,32 +155,17 @@ export default function ReportsPage() {
             </PopoverContent>
           </Popover>
         </div>
-        <div className="w-full sm:w-auto">
-          <Select defaultValue="all">
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Select service" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Services</SelectItem>
-              <SelectItem value="haircut">Haircut</SelectItem>
-              <SelectItem value="coloring">Hair Coloring</SelectItem>
-              <SelectItem value="manicure">Manicure</SelectItem>
-              <SelectItem value="pedicure">Pedicure</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">LKR 45,231</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
+            <div className="text-2xl font-bold">
+              LKR {data?.summary.totalRevenue || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -137,10 +175,9 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
+            <div className="text-2xl font-bold">
+              {data?.summary.totalAppointments || 0}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -148,69 +185,75 @@ export default function ReportsPage() {
             <CardTitle className="text-sm font-medium">New Clients</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">32</div>
-            <p className="text-xs text-muted-foreground">+8 from last month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Customer Satisfaction
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4.8/5</div>
-            <p className="text-xs text-muted-foreground">Based on 98 reviews</p>
+            <div className="text-2xl font-bold">
+              {data?.summary.newClients || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="revenue">
-        <TabsList>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="services">Popular Services</TabsTrigger>
-        </TabsList>
-        <TabsContent value="revenue">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>
-                Your revenue trend over the selected period
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartPlaceholder type="line" />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="appointments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment Statistics</CardTitle>
-              <CardDescription>
-                Breakdown of appointments by status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartPlaceholder type="bar" />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="services">
-          <Card>
-            <CardHeader>
-              <CardTitle>Popular Services</CardTitle>
-              <CardDescription>
-                Distribution of services by popularity
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ChartPlaceholder type="pie" />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Distribution</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[400px]">
+            {loading ? (
+              <div>Loading chart...</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsPieChart>
+                  <Pie
+                    data={data?.charts.serviceDistribution || []}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={130}
+                    label={(entry) => entry.name}
+                  >
+                    {(data?.charts.serviceDistribution || []).map((_: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RechartsPieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly Revenue</CardTitle>
+          </CardHeader>
+          <CardContent className="h-[400px]">
+            {loading ? (
+              <div>Loading chart...</div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={data?.charts.weeklyRevenue.labels.map((label: string, index: number) => ({
+                    date: label,
+                    revenue: data.charts.weeklyRevenue.data[index]
+                  })) || []}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#8884d8"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
