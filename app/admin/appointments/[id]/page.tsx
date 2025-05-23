@@ -35,12 +35,14 @@ interface Appointment {
     userName: string;
     email: string;
     mobileNumber: string;
-  };  serviceId: {
+  };
+  serviceId: {
     _id: string;
     type: string;
     price: number;
     duration: number;
-  };staffId: {
+  };
+  staffId: {
     _id: string;
     name: string;
   };
@@ -61,18 +63,20 @@ export default function AppointmentDetailsPage() {
     const fetchAppointment = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const response = await fetch(`/api/admin/appointments/${params.id}`);
-        
+
         if (!response.ok) {
           throw new Error(`Error fetching appointment: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setAppointment(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load appointment');
+        setError(
+          err instanceof Error ? err.message : "Failed to load appointment"
+        );
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -139,9 +143,9 @@ export default function AppointmentDetailsPage() {
               >
                 {appointment.status}
               </Badge>
-            </CardTitle>              <CardDescription>
-              Booked for {format(new Date(appointment.date), "PPP")} at{" "}
-              {appointment.time}
+            </CardTitle>{" "}
+            <CardDescription>
+              Booked for {format(new Date(appointment.date), "PPP")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -170,11 +174,14 @@ export default function AppointmentDetailsPage() {
 
             <div className="space-y-4">
               <div className="font-semibold text-lg">Appointment Details</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {" "}
+                <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Service:</span>{" "}
                   {appointment.serviceId.type}
-                </div><div className="flex items-center gap-2">
+                </div>
+                <div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Staff:</span>{" "}
                   {appointment.staffId.name}
@@ -183,14 +190,14 @@ export default function AppointmentDetailsPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Date:</span>{" "}
                   {format(new Date(appointment.date), "PPP")}
-                </div>                <div className="flex items-center gap-2">
+                </div>{" "}
+                <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Time:</span>{" "}
-                  {appointment.time}
+                  <span className="font-medium">Time:</span> {appointment.time}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Price:</span>{" "}
-                  Rs. {appointment.serviceId.price.toLocaleString()}
+                  <span className="font-medium">Price:</span> Rs.{" "}
+                  {appointment.serviceId.price.toLocaleString()}
                 </div>
               </div>
             </div>
