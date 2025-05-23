@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import ServiceImages from "../../create/components/ServiceImages";
 
-export default function EditServicePage() {
+export default function EditServicePage() { 
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
