@@ -25,10 +25,10 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
   };
 
   return (
-    <div className="w-full flex flex-col items-center md:items-start"> {/* Center items on mobile */}
+    <div className="w-full flex flex-col items-center md:items-start"> 
       <div className="w-full flex flex-col gap-4 md:flex-row md:gap-8 mt-6">
-        <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-          <label htmlFor="title" className="block font-bold mb-2">Service Card Title</label> {/* Added font-bold */}
+        <div className="flex-1 w-full md:w-auto"> 
+          <label htmlFor="title" className="block font-bold mb-2">Service Card Title</label>
           <input
             id="title"
             name="title"
@@ -36,13 +36,13 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
             value={formData.title || ''}
             onChange={handleChange}
           />
-          <p className="text-sm text-gray-500 mt-1 text-center md:text-left"> {/* Center text on mobile */}
+          <p className="text-sm text-gray-500 mt-1 text-center md:text-left"> 
             As your storefront title, include keywords buyers might search.
           </p>
         </div>
-        <div className="flex-1 w-full md:w-auto"> {/* Ensure full width on mobile */}
-          <label className="block font-bold mb-2">Service Category</label> {/* Added font-bold */}
-          <div className="flex flex-wrap gap-2 justify-center md:justify-start"> {/* Center buttons on mobile */}
+        <div className="flex-1 w-full md:w-auto"> 
+          <label className="block font-bold mb-2">Service Category</label> 
+          <div className="flex flex-wrap gap-2 justify-center md:justify-start">
             {categories.map(cat => (
               <button
                 type="button"
@@ -56,8 +56,8 @@ export default function BasicDetailsForm({ formData, updateFormData }: BasicDeta
           </div>
         </div>
       </div>
-      <div className="mt-4 w-full"> {/* Ensure full width on mobile */}
-        <label htmlFor="description" className="block font-bold mb-2">Description (Optional)</label> {/* Added font-bold */}
+      <div className="mt-4 w-full"> 
+        <label htmlFor="description" className="block font-bold mb-2">Description (Optional)</label> 
         <textarea
           id="description"
           name="description"

@@ -45,7 +45,7 @@ export default function CreateServicePage() {
       return formData.staffAssigned && formData.staffAssigned.length > 0;
     }
     if (currentStep === 4) {
-      return imageUrls.length > 0; // Require at least one image
+      return imageUrls.length > 0; 
     }
     return false;
   };
