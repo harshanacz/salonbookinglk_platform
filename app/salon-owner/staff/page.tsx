@@ -172,20 +172,16 @@ export default function StaffManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStaff.map((staff) => (
-                  <TableRow key={staff._id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100">
-                          <Image
-                            src={staff.profileImage || "/placeholder.svg"}
-                            alt={staff.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                        </div>
-                        <div className="font-medium">{staff.name}</div>
+                {filteredStaff.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="text-gray-500">No staff members found</div>
+                        <Button asChild variant="outline" size="sm" className="mt-2">
+                          <Link href="/salon-owner/staff/create">
+                            <Plus className="mr-2 h-4 w-4" /> Add Staff Member
+                          </Link>
+                        </Button>
                       </div>
                     </TableCell>
                     <TableCell>{staff.role}</TableCell>
@@ -233,7 +229,82 @@ export default function StaffManagement() {
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredStaff.map((staff) => (
+                    <TableRow key={staff._id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+                            <Image
+                              src={staff.profileImage || "/placeholder.svg"}
+                              alt={staff.name}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                          </div>
+                          <div className="font-medium">{staff.name}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {staff.role.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={staff.status === "Active" ? "default" : "secondary"}
+                          className={staff.status === "Active" 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-gray-100 text-gray-800"
+                          }
+                        >
+                          {staff.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className="bg-blue-50 text-blue-800 border-blue-200"
+                        >
+                          {staff.availability?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {staff.createdAt ? new Date(staff.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        }) : 'N/A'}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/salon-owner/staff/update-attendance?id=${staff._id}`}>
+                                Update Attendance
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/salon-owner/staff/edit/${staff._id}`}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600 cursor-pointer"
+                              onClick={() => handleDelete(staff._id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           )}
