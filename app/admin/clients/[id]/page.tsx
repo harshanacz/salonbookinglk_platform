@@ -41,6 +41,10 @@ interface Client {
   totalSpent?: number;
   lastVisit?: string;
   avatar?: string;
+  joinDate?: string;
+  membershipStatus?: string;
+  favoriteServices?: string;
+  preferredSalon?: string;
 }
 
 // Interface for booking data
@@ -66,20 +70,67 @@ export default function ClientDetailsPage(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to format time from minutes
+  const formatTimeFromMinutes = (totalMinutes: number) => {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
         // Fetch client data
-        const response = await fetch(`/api/admin/users?id=${clientId}`);
-        const data = await response.json();
-        setClient(data);
+        const response = await fetch(`/api/admin/users/${clientId}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch client: ${response.statusText}`);
+        }        const data = await response.json();
+        console.log("Client data:", data); // Log client data for debugging
         
-        // Fetch bookings for this client
+        setClient({
+          _id: data._id,
+          name: data.userName || 'N/A',
+          email: data.email || 'N/A',
+          phone: data.mobileNumber || 'N/A',
+          totalBookings: data.totalBookings || 0,
+          totalSpent: data.totalSpent || 0,
+          lastVisit: data.lastVisit,          avatar: data.profileImage,
+          // Extract additional client details
+          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : undefined,
+          membershipStatus: data.userType || "",
+          favoriteServices: data.favoriteServices || data.preferredServices,
+          preferredSalon: data.preferredSalon || data.favoriteSalon,
+        });// Fetch bookings for this client
         try {
-          const bookingsResponse = await fetch(`/api/admin/bookings?clientId=${clientId}`);
-          const bookingsData = await bookingsResponse.json();
-          setBookings(bookingsData);
+          // Change clientId to userId in the API query parameter
+          const bookingsResponse = await fetch(`/api/admin/appointments?userId=${clientId}`);
+          if (bookingsResponse.ok) {
+            const bookingsData = await bookingsResponse.json();
+            console.log("API Response:", bookingsData); // Log the actual response for debugging
+            
+            // Check if we have appointments data and log it for debugging
+            if (bookingsData.appointments && bookingsData.appointments.length > 0) {
+              console.log("First appointment structure:", bookingsData.appointments[0]);
+            }
+            
+            // Transform appointments data to match the Booking interface
+            const formattedBookings = bookingsData.appointments?.map((appointment: any) => ({
+              id: appointment._id,
+              date: new Date(appointment.date).toLocaleDateString(),
+              time: formatTimeFromMinutes(appointment.time),
+              salon: appointment.salonId?.userName || 'Unknown Salon',
+              service: appointment.serviceId?.title || 'Unknown Service',
+              price: appointment.serviceId?.price || 0,
+              status: appointment.status,
+            })) || [];
+            
+            console.log("Formatted bookings:", formattedBookings);
+            setBookings(formattedBookings);
+          } else {
+            console.log("API Error:", bookingsResponse.status, bookingsResponse.statusText);            setBookings([]);
+          }
         } catch (bookingError) {
           // If no booking endpoint exists yet, we'll just show empty bookings
           console.error("Could not fetch bookings:", bookingError);
@@ -130,14 +181,14 @@ export default function ClientDetailsPage(
         </Button>
       </div>
     );
-  }
-
-  // Calculate client stats
-  const totalBookings = bookings.length || client.totalBookings || 0;
-  const totalSpent = bookings.reduce((sum, booking) => sum + booking.price, 0) || client.totalSpent || 0;
-  const lastVisit = client.lastVisit || (bookings.length > 0 ? 
-    bookings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date : 
-    "No visits yet");
+  }  // Calculate client stats based on the fetched bookings data
+  const totalBookings = client.totalBookings;
+  const totalSpent = client.totalSpent;
+  
+  // Calculate last visit date from bookings if available
+  const lastVisit = bookings.length > 0 
+    ? new Date(bookings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date).toLocaleDateString() 
+    : "No visits yet";
 
   return (
     <div className="space-y-6">
@@ -170,7 +221,7 @@ export default function ClientDetailsPage(
             </p>
             <p className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" /> Last visit:{" "}
-              {typeof lastVisit === 'string' ? lastVisit : new Date(lastVisit).toLocaleDateString()}
+              {lastVisit}
             </p>
           </div>
         </Card>
@@ -189,100 +240,92 @@ export default function ClientDetailsPage(
               <DollarSign className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Total Spent</p>
               <p className="text-2xl font-bold">
-                LKR {totalSpent.toLocaleString()}
+                LKR {(totalSpent ?? 0).toLocaleString()}
               </p>
             </div>
             <div className="bg-muted p-6 rounded-lg text-center">
               <Clock className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Last Visit</p>
               <p className="text-2xl font-bold">
-                {typeof lastVisit === 'string' ? lastVisit : new Date(lastVisit).toLocaleDateString()}
+                {lastVisit}
               </p>
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Booking History */}
+      </div>      {/* Client Additional Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Booking History</CardTitle>
+          <CardTitle>Client Additional Information</CardTitle>
           <CardDescription>
-            View all bookings made by this client
+            Additional details about this client
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All Bookings</TabsTrigger>
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="completed">Completed</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              <BookingTable bookings={bookings} />
-            </TabsContent>
-
-            <TabsContent value="upcoming">
-              <BookingTable
-                bookings={bookings.filter((b) => b.status === "upcoming")}
-              />
-            </TabsContent>
-
-            <TabsContent value="completed">
-              <BookingTable
-                bookings={bookings.filter((b) => b.status === "completed")}
-              />
-            </TabsContent>
-          </Tabs>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Contact Information</h3>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Name:</span> {client.name}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Email:</span> {client.email}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Phone:</span> {client.phone}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium">Membership Information</h3>                <div className="mt-2 space-y-2">                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Member Since:</span> {client.joinDate || "Not available"}
+                  </div>
+                  {client.membershipStatus && (
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{client.membershipStatus}</Badge>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Activity Summary</h3>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Last Visit:</span> {lastVisit}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Total Spent:</span> LKR {(totalSpent ?? 0).toLocaleString()}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Total Appointments:</span> {totalBookings}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium">Preferences</h3>
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Favorite Services:</span> {client.favoriteServices || "Not specified"}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Preferred Salon:</span> {client.preferredSalon || "Not specified"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function BookingTable({ bookings }: { bookings: Booking[] }) {
-  if (bookings.length === 0) {
-    return (
-      <div className="text-center py-6 text-muted-foreground">
-        No bookings found
-      </div>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Time</TableHead>
-          <TableHead>Salon</TableHead>
-          <TableHead>Service</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {bookings.map((booking) => (
-          <TableRow key={booking.id}>
-            <TableCell>{booking.date}</TableCell>
-            <TableCell>{booking.time}</TableCell>
-            <TableCell>{booking.salon}</TableCell>
-            <TableCell>{booking.service}</TableCell>
-            <TableCell>LKR {booking.price.toLocaleString()}</TableCell>
-            <TableCell>
-              <Badge
-                variant={
-                  booking.status === "completed" ? "secondary" : "default"
-                }
-              >
-                {booking.status.charAt(0).toUpperCase() +
-                  booking.status.slice(1)}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   );
 }

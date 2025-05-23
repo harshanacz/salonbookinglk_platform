@@ -33,7 +33,6 @@ interface Client {
   profileImage?: string;
   totalBookings?: number;
   totalSpent?: number;
-  lastVisit?: string;
 }
 
 interface PaginationInfo {
@@ -211,14 +210,13 @@ export default function AdminClientsPage() {
                     <TableHead>Phone</TableHead>
                     <TableHead>Total Bookings</TableHead>
                     <TableHead>Total Spent</TableHead>
-                    <TableHead>Last Visit</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredClients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-4">
+                      <TableCell colSpan={6} className="text-center py-4">
                         No clients found
                       </TableCell>
                     </TableRow>
@@ -239,12 +237,8 @@ export default function AdminClientsPage() {
                         <TableCell>{client.email || "N/A"}</TableCell>
                         <TableCell>{client.mobileNumber || "N/A"}</TableCell>                        <TableCell>{client.totalBookings || 0}</TableCell>
                         <TableCell>
-                          LKR {(client.totalSpent || 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          {client.lastVisit
-                            ? formatDate(client.lastVisit)
-                            : "N/A"}
+                          {client.totalSpent ? `LKR ${client.totalSpent.toLocaleString()}` : "LKR 0"}
+
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild size="sm" variant="outline">
