@@ -1,0 +1,106 @@
+/* PDF Report Styles */
+.pdf-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.5rem;
+  font-size: 9px;
+}
+
+.pdf-report-table th,
+.pdf-report-table td {
+  padding: 4px 6px;
+  text-align: left;
+  border: 1px solid #e2e8f0;
+}
+
+.pdf-report-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+}
+
+.pdf-report-table tr:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.pdf-summary {
+  page-break-before: always;
+  margin-top: 1rem;
+}
+
+.pdf-header {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.pdf-header h1 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.pdf-header p {
+  margin: 0.1rem 0;
+  color: #64748b;
+  font-size: 10px;
+}
+
+.pdf-section {
+  margin-bottom: 0.75rem;
+}
+
+.pdf-section h2 {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #0f172a;
+}
+
+.pdf-section h4 {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.pdf-footer {
+  text-align: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-size: 8px;
+  color: #64748b;
+}
+
+/* Print-specific styles */
+@media print {
+  .pdf-report-table {
+    break-inside: avoid;
+    font-size: 8px !important;
+  }
+  
+  .pdf-report-table th,
+  .pdf-report-table td {
+    padding: 3px 4px !important;
+  }
+  
+  /* A4 specific adjustments */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+  
+  body {
+    font-size: 10pt;
+  }
+  
+  .pdf-section {
+    page-break-inside: avoid;
+  }
+  
+  .pdf-header {
+    position: running(header);
+  }
+  
+  .pdf-footer {
+    position: running(footer);
+  }
+}
