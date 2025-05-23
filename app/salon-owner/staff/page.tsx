@@ -43,11 +43,10 @@ import { useToast } from "@/components/ui/use-toast";
 interface StaffMember {
   _id: string;
   name: string;
-  profileImage?: string; // Update interface to match Staff model
+  profileImage?: string;
   role: string;
-  services: string[];
-  status: string;
-  availability: string;
+  status: 'Active' | 'Inactive';
+  availability: 'full-time' | 'part-time' | 'weekends-only';
   createdAt: string;
 }
 
@@ -119,10 +118,7 @@ export default function StaffManagement() {
   const filteredStaff = staffMembers.filter(
     (staff) =>
       staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.services.some((service) =>
-        service.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      staff.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
