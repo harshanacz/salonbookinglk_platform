@@ -5,7 +5,7 @@ import User, { UserType } from "@/models/User";
 import Appointment from "@/models/Appointment";
 import Service from "@/models/Service";
 import SalonContext from "@/models/SalonContext";
-import { startOfDay, endOfDay, subDays, format, startOfMonth, endOfMonth } from "date-fns";
+import { subDays, format, startOfMonth, endOfMonth } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.type !== UserType.ADMIN && user.type !== UserType.SUPER_ADMIN) {
+    if (user.type !== UserType.ADMIN) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
