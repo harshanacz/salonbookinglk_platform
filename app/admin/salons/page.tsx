@@ -59,11 +59,10 @@ const Page = () => {
     limit: 10,
     pages: 0
   });
-
   const fetchSalons = async (page = 1) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/admin/users?type=SALON_OWNER&page=${page}&limit=${pagination.limit}`);
+      const response = await fetch(`/api/admin/salons?page=${page}&limit=${pagination.limit}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch salons");
@@ -72,14 +71,16 @@ const Page = () => {
       const data = await response.json();
 
       // Map the API data to the Salon type
-      const formattedSalons: Salon[] = data.users.map((salon: any) => ({
+      const formattedSalons: Salon[] = data.salons.map((salon: any) => ({
         id: salon._id,
-        name: salon.userName || "Unnamed Salon",
-        image: salon.profileImage || "",
+        name: salon.businessName || salon.userName || "Unnamed Salon",
+        image: salon.profilePictureUrl || salon.profileImage || "",
         email: salon.email || "",
-        contactNumber: salon.phoneNumber || salon.contactNumber || "",
-        location: salon.address || salon.location || "",
-        status: salon.status || "Pending",
+        contactNumber: salon.phoneNumber || salon.mobileNumber || "",
+        location: salon.location ? 
+          (typeof salon.location === 'string' ? salon.location : `${salon.location.lat}, ${salon.location.lng}`) : 
+          salon.address || "",
+        status: salon.isVerified ? "Approved" : "Pending",
       }));
 
       setSalons(formattedSalons);
@@ -162,7 +163,6 @@ const Page = () => {
                   <TableHead>Salon</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -184,7 +184,6 @@ const Page = () => {
                       </TableCell>
                       <TableCell>{salon.email}</TableCell>
                       <TableCell>{salon.contactNumber}</TableCell>
-                      <TableCell>{salon.location}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
