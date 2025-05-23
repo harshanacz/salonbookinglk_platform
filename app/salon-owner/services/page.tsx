@@ -280,20 +280,6 @@ export default function ServicesManagement() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/salon-owner/services/${service.id}`}
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" /> View
-                                  </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                  <Link
-                                    href={`/salon-owner/services/${service.id}/edit`}
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                  </Link>
-                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                   className="text-red-600"
                                   onClick={() => handleDelete(service.id)}
