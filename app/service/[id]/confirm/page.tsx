@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import SalonCard from "@/components/booking/salon-card";
 import BookingNavigation from "@/components/booking/booking-navigation";
+import { PaymentMethod } from "@/models/enums";
 
 // Define Service interface - making it compatible with the format from SelectTime
 interface Service {
@@ -38,7 +39,7 @@ interface CardDetails {
 const ConfirmPage = () => {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"venue" | "card">("venue");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.VENUE);
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -97,7 +98,7 @@ const ConfirmPage = () => {
         lastFour: cardLastFour,
         holder: cardHolder,
       });
-      setPaymentMethod("card");
+      setPaymentMethod(PaymentMethod.CARD_PAYMENT);
     }
   }, [searchParams]);
 
@@ -118,7 +119,7 @@ const ConfirmPage = () => {
   }));
 
   const handlePaymentMethodChange = (method: "venue" | "card") => {
-    setPaymentMethod(method);
+    setPaymentMethod(method === "venue" ? PaymentMethod.VENUE : PaymentMethod.CARD_PAYMENT);
   };
 
   const handleContinue = async () => {
@@ -291,7 +292,7 @@ const ConfirmPage = () => {
           <div className="space-y-2">
             <button
               className={`w-full p-3 border rounded-lg flex items-center gap-2 ${
-                paymentMethod === "venue"
+                paymentMethod === PaymentMethod.VENUE
                   ? "border-purple-500 bg-purple-100"
                   : "border-gray-300"
               }`}
@@ -301,7 +302,7 @@ const ConfirmPage = () => {
             </button>
             <button
               className={`w-full p-3 border rounded-lg flex items-center gap-2 ${
-                paymentMethod === "card"
+                paymentMethod === PaymentMethod.CARD_PAYMENT
                   ? "border-purple-500 bg-purple-100"
                   : "border-gray-300"
               }`}
@@ -312,7 +313,7 @@ const ConfirmPage = () => {
           </div>
 
           {/* Selected Card Details (if any) */}
-          {paymentMethod === "card" && selectedCard && (
+          {paymentMethod === PaymentMethod.CARD_PAYMENT && selectedCard && (
             <div className="mt-2 p-3 border border-purple-200 rounded-lg bg-purple-50">
               <div className="flex justify-between items-center">
                 <div>
@@ -359,7 +360,7 @@ const ConfirmPage = () => {
           selectedTime={selectedTime}
           onContinue={handleContinue}
           buttonText="Confirm Booking"
-          paymentMethod={paymentMethod}
+          paymentMethod={paymentMethod === PaymentMethod.VENUE ? "venue" : "card"}
           cardDetails={
             selectedCard
               ? {
