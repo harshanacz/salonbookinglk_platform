@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,25 +33,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ChevronDown, Search, Eye, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarIcon, ChevronDown, Search, Eye } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
-// Import enums directly to avoid issues with mongoose model imports on client side
-enum AppointmentStatus {
-  PENDING = "PENDING",
-  CONFIRMED = "CONFIRMED",
-  CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
-}
-
-enum PaymentMethod {
-  CASH = "CASH",
-  CARD = "CARD",
-  ONLINE = "ONLINE",
-}
-
-interface AppointmentData {
+interface Appointment {
   _id: string;
   clientId: {
     _id: string;
@@ -59,95 +45,60 @@ interface AppointmentData {
     email: string;
     phone: string;
   };
-  salonId: {
-    _id: string;
-    userName: string;
-  };
   serviceId: {
     _id: string;
     title: string;
-    price: number;
+    // price: number;
+    // duration: number;
   };
-  staffId?: {
+  salonId: {
     _id: string;
-    name: string;
+    businessName: string;
   };
   date: string;
-  time: number;
+  time: string;
+  status: string;
   note?: string;
-  status: AppointmentStatus;
-  paymentMethod: PaymentMethod;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PaginationData {
-  total: number;
-  page: number;
-  limit: number;
-  pages: number;
 }
 
 export default function AdminAppointmentsPage() {
   const [date, setDate] = useState<Date | undefined>(undefined);
-  const [status, setStatus] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
-  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
-  const [pagination, setPagination] = useState<PaginationData>({
-    total: 0,
-    page: 1,
-    limit: 10,
-    pages: 0,
-  });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const formatTimeFromMinutes = (totalMinutes: number) => {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    const period = hours >= 12 ? "PM" : "AM";
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  };
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1
+  });
 
   const fetchAppointments = async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      setError(null);
-      
       const params = new URLSearchParams();
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
+      if (date) params.append("date", date.toISOString().split("T")[0]);
       params.append("page", pagination.page.toString());
       params.append("limit", pagination.limit.toString());
       
-      if (date) {
-        params.append("date", date.toISOString().split('T')[0]);
-      }
-      
-      if (status && status !== "all") {
-        params.append("status", status);
-      }
-      
-      if (searchQuery) {
-        params.append("search", searchQuery);
-      }
-
       const response = await fetch(`/api/admin/appointments?${params.toString()}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch appointments: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to fetch appointments");
       }
       
-      const data = await response.json();
-      
-      if (!data.appointments) {
-        throw new Error("No appointment data received");
-      }
-      
-      setAppointments(data.appointments);
-      setPagination(data.pagination);
+      const { data, pagination: paginationData } = await response.json();
+      setAppointments(data);
+      setPagination(paginationData);
     } catch (err) {
-      console.error("Error fetching appointments:", err);
-      setError(err instanceof Error ? err.message : "Failed to load appointments");
+      setError(err instanceof Error ? err.message : 'Failed to load appointments');
+      console.error("Appointment fetch error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -155,33 +106,24 @@ export default function AdminAppointmentsPage() {
 
   useEffect(() => {
     fetchAppointments();
-  }, [pagination.page, pagination.limit, date, status]);
+  }, [date, statusFilter, pagination.page, pagination.limit]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (searchQuery) {
-        fetchAppointments();
-      }
-    }, 500);
+  const filteredAppointments = appointments.filter((appointment) => {
+    const clientName = `${appointment.clientId?.userName }`.toLowerCase();
+    const serviceName = (appointment.serviceId?.title || '').toLowerCase();
     
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+    return !searchQuery ||
+      clientName.includes(searchQuery.toLowerCase()) ||
+      serviceName.includes(searchQuery.toLowerCase());
+  });
 
   const handleStatusChange = (value: string) => {
-    setStatus(value === "all" ? undefined : value);
+    setStatusFilter(value);
     setPagination(prev => ({ ...prev, page: 1 }));
   };
 
-  const handleDateChange = (newDate: Date | undefined) => {
-    setDate(newDate);
-    setPagination(prev => ({ ...prev, page: 1 }));
-  };
-
-  const handleClearFilters = () => {
-    setDate(undefined);
-    setStatus(undefined);
-    setSearchQuery("");
-    setPagination(prev => ({ ...prev, page: 1 }));
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
   return (
@@ -198,12 +140,12 @@ export default function AdminAppointmentsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 space-x-0 md:space-x-4 mb-6">
-            <div className="relative flex-1 w-full">
+          <div className="flex items-center space-x-4 mb-6">
+            <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search appointments..."
-                className="pl-8 w-full"
+                className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -211,9 +153,10 @@ export default function AdminAppointmentsPage() {
             <Popover>
               <PopoverTrigger asChild>
                 <Button
-                variant="outlineDate"
-                className="w-full md:w-[240px] justify-start text-left font-normal h-10"
-              >
+                  variant="outline"
+                  size="lg"
+                  className="w-[240px] justify-start text-left font-normal"
+                >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {date ? format(date, "PPP") : <span>Pick a date</span>}
                 </Button>
@@ -222,132 +165,118 @@ export default function AdminAppointmentsPage() {
                 <Calendar
                   mode="single"
                   selected={date}
-                  onSelect={handleDateChange}
+                  onSelect={setDate}
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
-            <Select onValueChange={handleStatusChange} value={status || "all"}>
-              <SelectTrigger className="w-full md:w-[180px]">
+            <Select value={statusFilter} onValueChange={handleStatusChange}>
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value={AppointmentStatus.CONFIRMED}>Confirmed</SelectItem>
-                <SelectItem value={AppointmentStatus.PENDING}>Pending</SelectItem>
-                <SelectItem value={AppointmentStatus.COMPLETED}>Completed</SelectItem>
-                <SelectItem value={AppointmentStatus.CANCELLED}>Cancelled</SelectItem>
+                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            {(date || status || searchQuery) && (
-              <Button variant="ghost" onClick={handleClearFilters}>
-                Clear Filters
-              </Button>
-            )}
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center items-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading appointments...</span>
+            <div className="flex justify-center items-center h-48">
+              <p>Loading appointments...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-8 text-destructive">
+            <div className="flex justify-center items-center h-48 text-red-500">
               <p>{error}</p>
-              <Button variant="outline" onClick={fetchAppointments} className="mt-4">
-                Try Again
+              <Button variant="outline" className="ml-4" onClick={fetchAppointments}>
+                Retry
               </Button>
             </div>
-          ) : appointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+          ) : filteredAppointments.length === 0 ? (
+            <div className="flex justify-center items-center h-48 text-muted-foreground">
               <p>No appointments found</p>
             </div>
           ) : (
             <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Salon</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead>Staff</TableHead>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right"></TableHead>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Service</TableHead>
+                    <TableHead>Salon</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAppointments.map((appointment) => (
+                    <TableRow key={appointment._id}>
+                      <TableCell>{appointment.clientId.userName}</TableCell>
+                      <TableCell>{appointment.serviceId.title}</TableCell>
+                      <TableCell>{appointment.salonId?.businessName || 'N/A'}</TableCell>
+                      <TableCell>
+                        {format(new Date(appointment.date), "MMM d, yyyy")} at {appointment.time}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            appointment.status === "CONFIRMED"
+                              ? "default"
+                              : appointment.status === "PENDING"
+                              ? "pending"
+                              : appointment.status === "COMPLETED"
+                              ? "secondary"
+                              : appointment.status === "CANCELLED"
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {appointment.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild size="sm">
+                          <Link href={`/admin/appointments/${appointment._id}`}>
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </Link>
+                        </Button>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>                    {appointments.map((appointment) => (
-                      <TableRow key={appointment._id}>
-                        <TableCell>{appointment.clientId.userName}</TableCell>
-                        <TableCell>{appointment.salonId.userName}</TableCell>
-                        <TableCell>{appointment.serviceId.title}</TableCell>
-                        <TableCell>{appointment.staffId?.name || '-'}</TableCell>
-                        <TableCell>
-                          {format(new Date(appointment.date), "MMM d, yyyy")} at{" "}
-                          {formatTimeFromMinutes(appointment.time)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              appointment.status === AppointmentStatus.CONFIRMED
-                                ? "default"
-                                : appointment.status === AppointmentStatus.PENDING
-                                ? "pending"
-                                : appointment.status === AppointmentStatus.COMPLETED
-                                ? "secondary"
-                                : appointment.status === AppointmentStatus.CANCELLED
-                                ? "destructive"
-                                : "outline"
-                            }
-                          >
-                            {appointment.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild size="sm">
-                            <Link href={`/admin/appointments/${appointment._id}`}>
-                              <Eye className="mr-2 h-4 w-4" /> View
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>              </div>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(pagination.page - 1) * pagination.limit + 1}-
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} appointments
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page === 1}
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pagination.page >= pagination.pages}
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </CardContent>
-        {!isLoading && !error && pagination.pages > 1 && (
-          <CardFooter className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} appointments
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                disabled={pagination.page <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="sr-only">Previous Page</span>
-              </Button>
-              <div className="text-sm font-medium">
-                Page {pagination.page} of {pagination.pages}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                disabled={pagination.page >= pagination.pages}
-              >
-                <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Next Page</span>
-              </Button>
-            </div>
-          </CardFooter>
-        )}
       </Card>
     </div>
   );

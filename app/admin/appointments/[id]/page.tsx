@@ -18,7 +18,6 @@ import {
   Calendar,
   Clock,
   User,
-  Home,
   Scissors,
   UserCheck,
   Phone,
@@ -28,79 +27,57 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
-const AppointmentStatusEnum = {
-  PENDING: "PENDING",
-  CONFIRMED: "CONFIRMED",
-  CANCELLED: "CANCELLED",
-  COMPLETED: "COMPLETED",
-  NO_SHOW: "NO_SHOW",
-} as const;
-
-interface AppointmentData {
+// Define appointment type
+interface Appointment {
   _id: string;
   clientId: {
     _id: string;
     userName: string;
     email: string;
-    phone: string;
-  };
-  salonId?: {
-    _id: string;
-  };
-  salonContextId?: {
-    _id: string;
+    mobileNumber: string;
   };
   serviceId: {
     _id: string;
-    title: string;
+    type: string;
     price: number;
-    userId: {
-      _id: string;
-      salonContext: {
-        businessName: string;
-      };
-    };
+    duration: number;
   };
-  staffId?: {
+  staffId: {
     _id: string;
     name: string;
   };
   date: string;
-  time: number;
-  paymentMethod?: string;
+  time: string;
+  status: string;
   note?: string;
-  status: (typeof AppointmentStatusEnum)[keyof typeof AppointmentStatusEnum];
-  createdAt: string;
-  updatedAt: string;
-  businessName?: string;
 }
 
 export default function AppointmentDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const [appointment, setAppointment] = useState<AppointmentData | null>(null);
+  const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAppointment = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setIsLoading(true);
         const response = await fetch(`/api/admin/appointments/${params.id}`);
 
         if (!response.ok) {
-          throw new Error(
-            `Failed to fetch appointment: ${response.statusText}`
-          );
+          throw new Error(`Error fetching appointment: ${response.status}`);
         }
 
         const data = await response.json();
         setAppointment(data);
       } catch (err) {
-        console.error("Error fetching appointment:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load appointment"
         );
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -135,18 +112,6 @@ export default function AppointmentDetailsPage() {
     );
   }
 
-  const formatTimeFromMinutes = (totalMinutes: number) => {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    const period = hours >= 12 ? "PM" : "AM";
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
-  };
-
-  const formatPrice = (price: number) => {
-    return `Rs. ${price.toLocaleString()}`;
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -162,26 +127,25 @@ export default function AppointmentDetailsPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex justify-between">
-              <span>Appointment #{appointment._id.slice(-6)}</span>{" "}
+              <span>Appointment #{appointment._id.substring(0, 8)}</span>
               <Badge
                 variant={
-                  appointment.status === AppointmentStatusEnum.CONFIRMED
+                  appointment.status === "CONFIRMED"
                     ? "default"
-                    : appointment.status === AppointmentStatusEnum.PENDING
+                    : appointment.status === "PENDING"
                     ? "pending"
-                    : appointment.status === AppointmentStatusEnum.COMPLETED
+                    : appointment.status === "COMPLETED"
                     ? "secondary"
-                    : appointment.status === AppointmentStatusEnum.CANCELLED
+                    : appointment.status === "CANCELLED"
                     ? "destructive"
                     : "outline"
                 }
               >
                 {appointment.status}
               </Badge>
-            </CardTitle>
+            </CardTitle>{" "}
             <CardDescription>
-              Booked for {format(new Date(appointment.date), "PPP")} at{" "}
-              {formatTimeFromMinutes(appointment.time)}
+              Booked for {format(new Date(appointment.date), "PPP")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -200,54 +164,44 @@ export default function AppointmentDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Phone:</span>{" "}
-                  {appointment.clientId.phone}
+                  <span className="font-medium">Mobile:</span>{" "}
+                  {appointment.clientId.mobileNumber}
                 </div>
               </div>
             </div>
-            <Separator />{" "}
+
+            <Separator />
+
             <div className="space-y-4">
               <div className="font-semibold text-lg">Appointment Details</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <Home className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Salon:</span>{" "}
-                  {appointment.businessName || "N/A"}
-                </div>
+                {" "}
                 <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Service:</span>{" "}
-                  {appointment.serviceId.title}
+                  {appointment.serviceId.type}
                 </div>
-                {appointment.staffId && (
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Staff:</span>{" "}
-                    {appointment.staffId.name}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Staff:</span>{" "}
+                  {appointment.staffId.name}
+                </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Date:</span>{" "}
                   {format(new Date(appointment.date), "PPP")}
-                </div>
+                </div>{" "}
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Time:</span>{" "}
-                  {formatTimeFromMinutes(appointment.time)}
+                  <span className="font-medium">Time:</span> {appointment.time}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Price:</span>{" "}
-                  {formatPrice(appointment.serviceId.price)}
+                  <span className="font-medium">Price:</span> Rs.{" "}
+                  {appointment.serviceId.price.toLocaleString()}
                 </div>
-                {appointment.paymentMethod && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Payment Method:</span>{" "}
-                    {appointment.paymentMethod}
-                  </div>
-                )}
               </div>
-            </div>{" "}
+            </div>
+
             {appointment.note && (
               <>
                 <Separator />
