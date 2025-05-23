@@ -23,6 +23,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SignOutButton } from "@clerk/nextjs";
+import { useSalon } from "@/hooks/useSalon";
 
 const sidebarItems = [
   {
@@ -80,6 +81,7 @@ const sidebarItems = [
 export function SalonOwnerSidebar() {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const salonData = useSalon();
 
   // Hide sidebar on auth pages
   if (
@@ -123,7 +125,9 @@ export function SalonOwnerSidebar() {
           <div className="flex items-center gap-2">
             <CircleUserRound className="h-10 w-10 text-purple-700" />
             <div>
-              <div className="font-medium text-sm">John Doe</div>
+              <div className="font-medium text-sm">
+                {salonData?.businessName || "Loading..."}
+              </div>
               <div className="text-xs text-gray-500">Salon Owner</div>
             </div>
           </div>

@@ -17,7 +17,10 @@ interface ServiceCardProps {
     salonContextId?: string;
     rating: number;
     reviews: number;
-    location: string;
+    location: {
+      lat: number;
+      lng: number;
+    } | string;
     duration?: string;
     type?: string;
   };
@@ -28,7 +31,25 @@ export function ServiceCard({ service }: ServiceCardProps) {
   const [salonName, setSalonName] = useState(service.salon || "Unknown Salon");
   const [salonLogo, setSalonLogo] = useState(service.salonLogo || "/placeholder-logo.svg");
   const [isLoading, setIsLoading] = useState(!!service.salonContextId);
-  
+  const [formattedAddress, setFormattedAddress] = useState<string>("");
+
+  // Geocoding function to convert coordinates to address
+  const geocodeLocation = useCallback(async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        // Remove any plus code from the address (format: "PLUS_CODE, REST_OF_ADDRESS" or "PLUS_CODE REST_OF_ADDRESS")
+        const formattedAddress = data.results[0].formatted_address;
+        // This regex will match plus codes at the start of the string or after a space
+        const cleanAddress = formattedAddress.replace(/(?:^|\s)[A-Z0-9]+\+[A-Z0-9]+(?:,\s*|\s+)/, ' ').trim();
+        setFormattedAddress(cleanAddress);
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+  }, []);
+
   // Fetch salon context details if salonContextId is provided
   useEffect(() => {
     const fetchSalonContext = async () => {
@@ -60,6 +81,11 @@ export function ServiceCard({ service }: ServiceCardProps) {
         if (salonData && salonData.profilePictureUrl) {
           setSalonLogo(salonData.profilePictureUrl);
         }
+
+        // If location coordinates are available, geocode them
+        if (salonData && salonData.location && salonData.location.lat && salonData.location.lng) {
+          geocodeLocation(salonData.location.lat, salonData.location.lng);
+        }
       } catch (error) {
         console.error('Failed to fetch salon context:', error, `(salonContextId: ${service.salonContextId})`);
         // No need to reset state, keep the default values
@@ -69,7 +95,14 @@ export function ServiceCard({ service }: ServiceCardProps) {
     };
     
     fetchSalonContext();
-  }, [service.salonContextId]);
+  }, [service.salonContextId, geocodeLocation]);
+
+  // If location is provided as coordinates, geocode them
+  useEffect(() => {
+    if (typeof service.location === 'object' && service.location.lat && service.location.lng) {
+      geocodeLocation(service.location.lat, service.location.lng);
+    }
+  }, [service.location, geocodeLocation]);
   
   // Function to track service view
   const trackServiceView = useCallback(async () => {
@@ -184,7 +217,9 @@ export function ServiceCard({ service }: ServiceCardProps) {
           {/* Location */}
           <div className="flex items-center text-gray-500">
             <MapPin className="h-3.5 w-3.5 mr-1" />
-            <span className="line-clamp-1 text-xs">{service.location}</span>
+            <span className="line-clamp-1 text-xs">
+              {formattedAddress || (typeof service.location === 'string' ? service.location : 'Location not available')}
+            </span>
           </div>
           
           {/* Duration if available */}
