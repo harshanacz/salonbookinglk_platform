@@ -4,8 +4,15 @@ import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
 import Staff from "@/models/Staff";
 import User from "@/models/User";
-import Appointment, { AppointmentStatus, PaymentMethod } from "@/models/Appointment";
+import AppointmentModel, { IAppointment } from "@/models/Appointment";
+import { AppointmentStatus, PaymentMethod } from "@/models/enums";
 import mongoose from "mongoose";
+
+// Define interface for Appointment document by extending IAppointment
+interface AppointmentDocument extends IAppointment {}
+
+// Type assertion for the Appointment model
+const Appointment = AppointmentModel as mongoose.Model<AppointmentDocument>;
 
 // In-memory storage for simple implementations
 let inMemoryAppointments: any[] = [];
@@ -25,7 +32,7 @@ export async function GET(req: NextRequest) {
   const appointments = await Appointment.find(filter)
     .populate("clientId", "name phone")
     .populate("serviceId", "name")
-    .populate("staffId", "name") // <-- Add this line
+    .populate("staffId", "name") 
     .sort({ date: -1, time: 1 });
 
   return NextResponse.json({ appointments });
@@ -176,8 +183,7 @@ export async function POST(req: NextRequest) {
       serviceId: new mongoose.Types.ObjectId(serviceId),
       date: new Date(date),
       time: timeAsNumber,
-      paymentMethod: paymentMethod === "card" ? PaymentMethod.CARD : 
-                    paymentMethod === "online" ? PaymentMethod.ONLINE : PaymentMethod.CASH,
+      paymentMethod: paymentMethod, // Use the PaymentMethod value directly
       note: note || "",
       status: AppointmentStatus.CONFIRMED,
     };
