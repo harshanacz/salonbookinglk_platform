@@ -526,7 +526,7 @@ export default function ServicePage(props: ServicePageProps) {
 
           <div>
             <h2 className="text-xl font-semibold mb-4">
-              Services you may like
+              Other Services at this Salon
             </h2>
             {relatedServices.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
