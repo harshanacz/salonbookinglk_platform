@@ -69,11 +69,13 @@ export async function GET(request: Request) {
         select: "userName",
         model: User
       })
-      .lean();
-
-    // Calculate total revenue
+      .lean();    // Calculate total revenue
     const totalRevenue = appointments.reduce((sum, appointment) => {
-      return sum + (appointment.serviceId?.price || 0);
+      const serviceId = appointment.serviceId;
+      const price = serviceId && typeof serviceId === 'object' && 'price' in serviceId
+        ? (serviceId.price as number) || 0 
+        : 0;
+      return sum + price;
     }, 0);
 
     // Get appointment status counts
@@ -121,8 +123,7 @@ export async function GET(request: Request) {
       const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
-      
-      const monthAppointments = await Appointment.find({
+        const monthAppointments = await Appointment.find({
         date: { $gte: monthStart, $lte: monthEnd },
         ...(salonId && salonId !== "all" ? { salonId } : {})
       }).populate({
@@ -130,9 +131,13 @@ export async function GET(request: Request) {
         select: "price",
         model: Service
       }).lean();
-      
-      const monthRevenue = monthAppointments.reduce((sum, appointment) => {
-        return sum + (appointment.serviceId?.price || 0);
+        const monthRevenue = monthAppointments.reduce((sum, appointment) => {
+        // Handle both populated serviceId object and direct price access
+        const serviceId = appointment.serviceId;
+        const price = serviceId && typeof serviceId === 'object' && 'price' in serviceId
+          ? (serviceId.price as number) || 0 
+          : 0;
+        return sum + price;
       }, 0);
       
       monthlyRevenueData.push({

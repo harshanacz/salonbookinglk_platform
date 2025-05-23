@@ -430,7 +430,7 @@ const Page = () => {
                       <div>
                         <div className="font-medium">{service.title}</div>
                         <div className="text-sm text-muted-foreground">
-                          {service.salon}
+                          {service.email}
                         </div>
                       </div>
                     </div>
