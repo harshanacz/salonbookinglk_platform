@@ -32,21 +32,17 @@ interface Appointment {
   _id: string;
   clientId: {
     _id: string;
-    firstName: string;
-    lastName: string;
+    userName: string;
     email: string;
-    phone: string;
-  };
-  serviceId: {
+    mobileNumber: string;
+  };  serviceId: {
     _id: string;
-    name: string;
+    type: string;
     price: number;
     duration: number;
-  };
-  staffId: {
+  };staffId: {
     _id: string;
-    firstName: string;
-    lastName: string;
+    name: string;
   };
   date: string;
   time: string;
@@ -60,7 +56,6 @@ export default function AppointmentDetailsPage() {
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>("");
 
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -76,7 +71,6 @@ export default function AppointmentDetailsPage() {
         
         const data = await response.json();
         setAppointment(data);
-        setStatus(data.status);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load appointment');
         console.error(err);
@@ -89,28 +83,6 @@ export default function AppointmentDetailsPage() {
       fetchAppointment();
     }
   }, [params.id]);
-
-  const handleStatusChange: (newStatus: string) => Promise<void> = async (newStatus) => {
-    try {
-      const response = await fetch(`/api/admin/appointments/${params.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error updating appointment: ${response.status}`);
-      }
-      
-      const updatedAppointment = await response.json();
-      setAppointment(updatedAppointment);
-      setStatus(updatedAppointment.status);
-    } catch (err) {
-      console.error('Failed to update status:', err);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -167,8 +139,7 @@ export default function AppointmentDetailsPage() {
               >
                 {appointment.status}
               </Badge>
-            </CardTitle>
-            <CardDescription>
+            </CardTitle>              <CardDescription>
               Booked for {format(new Date(appointment.date), "PPP")} at{" "}
               {appointment.time}
             </CardDescription>
@@ -180,7 +151,7 @@ export default function AppointmentDetailsPage() {
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Name:</span>{" "}
-                  {appointment.clientId.firstName} {appointment.clientId.lastName}
+                  {appointment.clientId.userName}
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
@@ -189,8 +160,8 @@ export default function AppointmentDetailsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Phone:</span>{" "}
-                  {appointment.clientId.phone}
+                  <span className="font-medium">Mobile:</span>{" "}
+                  {appointment.clientId.mobileNumber}
                 </div>
               </div>
             </div>
@@ -199,25 +170,23 @@ export default function AppointmentDetailsPage() {
 
             <div className="space-y-4">
               <div className="font-semibold text-lg">Appointment Details</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">                <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Service:</span>{" "}
-                  {appointment.serviceId.name}
-                </div>
-                <div className="flex items-center gap-2">
+                  {appointment.serviceId.type}
+                </div><div className="flex items-center gap-2">
                   <UserCheck className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Staff:</span>{" "}
-                  {appointment.staffId.firstName} {appointment.staffId.lastName}
+                  {appointment.staffId.name}
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Date:</span>{" "}
                   {format(new Date(appointment.date), "PPP")}
-                </div>
-                <div className="flex items-center gap-2">
+                </div>                <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Time:</span> {appointment.time}
+                  <span className="font-medium">Time:</span>{" "}
+                  {appointment.time}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Price:</span>{" "}
@@ -238,34 +207,6 @@ export default function AppointmentDetailsPage() {
               </>
             )}
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Update Status:</span>
-              <div className="flex gap-2">
-                <Button 
-                  variant={status === "CONFIRMED" ? "default" : "outline"} 
-                  size="sm"
-                  onClick={() => handleStatusChange("CONFIRMED")}
-                >
-                  Confirm
-                </Button>
-                <Button 
-                  variant={status === "COMPLETED" ? "success" : "outline"} 
-                  size="sm"
-                  onClick={() => handleStatusChange("COMPLETED")}
-                >
-                  Complete
-                </Button>
-                <Button 
-                  variant={status === "CANCELLED" ? "destructive" : "outline"} 
-                  size="sm"
-                  onClick={() => handleStatusChange("CANCELLED")}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </CardFooter>
         </Card>
       </div>
     </div>
