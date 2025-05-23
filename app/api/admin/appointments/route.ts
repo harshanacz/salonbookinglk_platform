@@ -1,206 +1,111 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "@/lib/mongodb";
+import Appointment from "@/models/Appointment";
+import User, { UserType } from "@/models/User";
+import SalonContext from "@/models/SalonContext";
+import Service from "@/models/Service";
 import { auth } from "@clerk/nextjs/server";
-import { UserType } from "@/models/User";
-import connectDB from "@/lib/mongodb"; // Import the UserType enum
 
-export const dynamic = "force-dynamic";
-
-export async function GET(request: Request) {
-  
+export async function GET(request: NextRequest) {
   try {
+    // Authentication
     const { userId } = await auth();
     if (!userId) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    await connectDB();
-    const User = (await import("@/models/User")).default;
-    const Appointment = (await import("@/models/Appointment")).default;
-    const Service = (await import("@/models/Service")).default;
-    const Staff = (await import("@/models/Staff")).default;
 
+    // Database connection
+    await dbConnect();
 
+    // User verification
     const user = await User.findOne({ clerkUserId: userId });
     if (!user) {
-      console.warn("[APPOINTMENTS_API] Authenticated user not found in DB");
-      return new NextResponse("User not found", { status: 404 });
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user.type !== UserType.ADMIN) {
-      console.warn("[APPOINTMENTS_API] Forbidden: non-admin user attempted access");
-      return new NextResponse("User is not an admin", { status: 403 });
-    }
-
-    console.log("[APPOINTMENTS_API] Parsing query parameters...");
+    // Query parameters
     const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status");
+    const clientId = searchParams.get("clientId");
+    const date = searchParams.get("date");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const date = searchParams.get("date");
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
 
-    console.log("[APPOINTMENTS_API] Query parameters:", {
-      page,
-      limit,
-      date,
-      status,
-      search: search ? "***" : null
-    });
+    // Build filter
+    const filter: any = {};
 
-    const query: any = {};
-    console.log("[APPOINTMENTS_API] Building base query...");
+    if (user.type === UserType.CUSTOMER) {
+      filter.clientId = user._id;
+    } else if ([UserType.ADMIN, UserType.SALON_OWNER].includes(user.type)) {
+      if (status) filter.status = status;
+      if (clientId) filter.clientId = clientId;
+    } else {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
+    // Date filter
     if (date) {
-      console.log("[APPOINTMENTS_API] Processing date filter...");
       try {
-        const dateObj = new Date(date);
-        dateObj.setHours(0, 0, 0, 0);
-        const endDate = new Date(dateObj);
+        const startDate = new Date(date);
+        startDate.setUTCHours(0, 0, 0, 0);
+        const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 1);
-        
-        query.date = { 
-          $gte: dateObj,
-          $lt: endDate
-        };
-        console.log("[APPOINTMENTS_API] Date range set:", { 
-          start: dateObj.toISOString(), 
-          end: endDate.toISOString() 
-        });
-      } catch (dateError) {
-        console.error("[APPOINTMENTS_API] Error processing date filter:", dateError);
-        return new NextResponse("Invalid date format", { status: 400 });
+        filter.date = { $gte: startDate, $lt: endDate };
+      } catch (e) {
+        return NextResponse.json(
+          { error: "Invalid date format. Use YYYY-MM-DD" },
+          { status: 400 }
+        );
       }
     }
 
-    if (status) {
-      console.log("[APPOINTMENTS_API] Adding status filter:", status);
-      query.status = status;
-    }
+    // Pagination
+    const total = await Appointment.countDocuments(filter);
+    const skip = (page - 1) * limit;
 
-    let filteredIds: any[] = [];
-    if (search) {
-      console.log("[APPOINTMENTS_API] Processing search filter...");
-      try {
-        console.log("[APPOINTMENTS_API] Fetching initial data for search...");
-        const searchResults = await Appointment.find(query)
-          .populate("clientId", "userName email phone")
-          .populate("salonId", "userName")
-          .populate("serviceId", "title price")
-          .populate("staffId", "name")
-          .sort({ date: -1, time: -1 })
-          .lean();
-
-        console.log(`[APPOINTMENTS_API] Found ${searchResults.length} records to search through`);
-
-        filteredIds = searchResults.filter(appt => {
-          const clientName = appt.clientId?.userName || '';
-          const salonName = appt.salonId?.userName || '';
-          const serviceName = appt.serviceId?.title || '';
-          const staffName = appt.staffId?.name || '';
-          
-          const searchRegex = new RegExp(search, 'i');
-          return searchRegex.test(clientName) || 
-                 searchRegex.test(salonName) || 
-                 searchRegex.test(serviceName) || 
-                 searchRegex.test(staffName);
-        }).map(appt => appt._id);
-
-        console.log(`[APPOINTMENTS_API] Search filtered down to ${filteredIds.length} records`);
-        
-        if (filteredIds.length > 0) {
-          query._id = { $in: filteredIds };
-        } else {
-          return NextResponse.json({
-            appointments: [],
-            pagination: {
-              total: 0,
-              page,
-              limit,
-              pages: 0,
-            },
-          });
+    // Fetch appointments
+    const appointments = await Appointment.find(filter)
+      .populate({
+        path: "clientId",
+        select: "userName email phone",
+        options: { strictPopulate: false },
+      })
+      .populate({
+        path: "serviceId",
+        select: "title userId",
+        model: Service,
+        options: { strictPopulate: false },
+        populate: {
+          path: "userId",
+          select: "businessName",
+          model: SalonContext,
+          options: { strictPopulate: false },
         }
-      } catch (searchError) {
-        return new NextResponse("Failed to process search query", { status: 500 });
-      }
-    }
+      })
+      .sort({ date: 1, time: 1 })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
 
-    let appointments;
-    try {
-      appointments = await Appointment.find(query)
-        .populate({
-          path: "clientId",
-          select: "userName email phone",
-          model: "User"
-        })
-        .populate({
-          path: "salonId",
-          select: "userName",
-          model: "User"
-        })
-        .populate({
-          path: "serviceId",
-          select: "title",
-          model: "Service"
-        })
-        .populate({
-          path: "staffId",
-          select: "name",
-          model: "Staff"
-        })
-        .sort({ date: -1, time: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean();
-      
-    } catch (queryError) {
-      return new NextResponse("Failed to retrieve appointment data", { status: 500 });
-    }
-
-
-    let total;
-    try {
-      if (search) {
-        total = filteredIds.length;
-      } else {
-        total = await Appointment.countDocuments(query);
-      }
-    } catch (countError) {
-      return new NextResponse("Failed to count total appointments", { status: 500 });
-    }
-
-    // Calculate Pagination
-    const pages = Math.ceil(total / limit);
-    console.log("[APPOINTMENTS_API] Pagination calculated:", {
-      total,
-      page,
-      limit,
-      pages
-    });
-
+    // Response
     return NextResponse.json({
-      appointments,
+      data: appointments,
       pagination: {
         total,
         page,
         limit,
-        pages,
+        pages: Math.ceil(total / limit),
       },
     });
-
+    
   } catch (error) {
-
-    const errorDetails = error instanceof Error ? {
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    } : {
-      message: 'Unknown error occurred'
-    };
-
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Appointments API Error:', errorMessage);
+    
     return NextResponse.json(
-      { 
-        error: "Failed to fetch appointments",
-        details: process.env.NODE_ENV === 'development' ? errorDetails : undefined
-      },
+      { error: "Internal Server Error" },
       { status: 500 }
-    )}
+    );
+  }
 }

@@ -13,9 +13,9 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
   };
 
   return (
-    <div className="grid md:grid-cols-2 gap-8 mt-6 items-start"> {/* Use items-start for desktop alignment */}
-      <div className="space-y-6 flex flex-col items-center md:items-start"> {/* Center items on mobile */}
-        <div className="flex items-center gap-2 w-full justify-center md:justify-start"> {/* Center checkbox/label on mobile */}
+    <div className="grid md:grid-cols-2 gap-8 mt-6 items-start">
+      <div className="space-y-6 flex flex-col items-center md:items-start">
+        <div className="flex items-center gap-2 w-full justify-center md:justify-start">
           <input
             id="onlineBooking"
             name="onlineBooking"
@@ -24,13 +24,13 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
             checked={!!formData.onlineBooking}
             onChange={handleChange}
           />
-          <label htmlFor="onlineBooking" className="block font-bold">Online Booking</label> {/* Added font-bold */}
+          <label htmlFor="onlineBooking" className="block font-bold">Online Booking</label>
         </div>
-        <p className="text-sm text-gray-500 text-center md:text-left"> {/* Center text on mobile */}
+        <p className="text-sm text-gray-500 text-center md:text-left">
           Allow clients to book this service online via the SalonBooking.lk Marketplace, socials and your own custom booking links.
         </p>
-        <div className="w-full"> {/* Ensure full width on mobile */}
-          <label htmlFor="availableFor" className="block font-bold mb-2">Available For</label> {/* Added font-bold */}
+        <div className="w-full">
+          <label htmlFor="availableFor" className="block font-bold mb-2">Available For</label>
           <select
             id="availableFor"
             name="availableFor"
@@ -43,8 +43,8 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
             <option value="FEMALE">Female</option>
           </select>
         </div>
-        <div className="w-full"> {/* Ensure full width on mobile */}
-          <label htmlFor="clientInstructions" className="block font-bold mb-2">Instructions for Clients</label> {/* Added font-bold */}
+        <div className="w-full">
+          <label htmlFor="clientInstructions" className="block font-bold mb-2">Instructions for Clients</label>
           <textarea
             id="clientInstructions"
             name="clientInstructions"
@@ -54,16 +54,13 @@ export default function MoreInfoForm({ formData, updateFormData, children }: Mor
           />
         </div>
       </div>
-      <div className="flex flex-col items-center md:items-start"> {/* Center items on mobile */}
-        {/* Only show image preview, not upload */}
+      <div className="flex flex-col items-center md:items-start">
         {formData.images && formData.images.length > 0 && (
-          <div className="w-full"> {/* Ensure full width on mobile */}
-            
-            <p className="text-xs text-gray-500 mt-1 text-center md:text-left">First image is used as the header image.</p> {/* Center text on mobile */}
+          <div className="w-full">
+            <p className="text-xs text-gray-500 mt-1 text-center md:text-left">First image is used as the header image.</p>
           </div>
         )}
-        {/* Ensure children content is also centered/aligned appropriately if needed */} 
-        <div className="w-full flex flex-col items-center md:items-start"> 
+        <div className="w-full flex flex-col items-center md:items-start">
           {children}
         </div>
       </div>
