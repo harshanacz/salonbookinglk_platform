@@ -112,7 +112,7 @@ export async function GET(req: Request) {
     const staff = await Staff.find({ 
       userId: user._id,
       status: 'Active'
-    }).select('_id name role profileImage');
+    }).select('_id name role profileImage status availability createdAt');
     
     return NextResponse.json(staff);
 

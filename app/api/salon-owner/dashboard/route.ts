@@ -174,6 +174,85 @@ export async function GET() {
       weeklyData.counts[day._id - 1] = day.count;
     });
 
+    // Calculate total revenue and last month's revenue
+    const revenueData = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id
+        }
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $unwind: "$service"
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$service.price" },
+          lastMonthRevenue: {
+            $sum: {
+              $cond: [
+                { $gte: ["$createdAt", lastMonthDate] },
+                "$service.price",
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    const revenue = revenueData[0] || { totalRevenue: 0, lastMonthRevenue: 0 };
+    const percentageChange = revenue.lastMonthRevenue ? 
+      ((revenue.totalRevenue - revenue.lastMonthRevenue) / revenue.lastMonthRevenue * 100).toFixed(1) : 0;
+
+    // Get weekly revenue data
+    const weeklyRevenueData = await Appointment.aggregate([
+      {
+        $match: {
+          salonId: user._id,
+          createdAt: { $gte: startOfWeek }
+        }
+      },
+      {
+        $lookup: {
+          from: "services",
+          localField: "serviceId",
+          foreignField: "_id",
+          as: "service"
+        }
+      },
+      {
+        $unwind: "$service"
+      },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          revenue: { $sum: "$service.price" }
+        }
+      },
+      {
+        $sort: { "_id": 1 }
+      }
+    ]);
+
+    // Process weekly revenue data
+    const weeklyRevenue = {
+      labels: weeklyData.labels,
+      data: new Array(7).fill(0)
+    };
+
+    weeklyRevenueData.forEach((day) => {
+      weeklyRevenue.data[day._id - 1] = day.revenue;
+    });
+
     return NextResponse.json({
       services: {
         active: activeServices,
@@ -192,6 +271,15 @@ export async function GET() {
       weeklyData: {
         labels: weeklyData.labels,
         counts: weeklyData.counts.slice(0, todayIndex + 1)
+      },
+      revenue: {
+        total: revenue.totalRevenue,
+        lastMonth: revenue.lastMonthRevenue,
+        percentageChange: Number(percentageChange)
+      },
+      weeklyRevenue: {
+        labels: weeklyRevenue.labels,
+        data: weeklyRevenue.data.slice(0, todayIndex + 1)
       }
     });
     
