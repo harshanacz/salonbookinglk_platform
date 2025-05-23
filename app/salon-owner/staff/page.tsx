@@ -193,8 +193,9 @@ export default function StaffManagement() {
                       <Badge
                         variant={staff.status === "Active" ? "default" : "secondary"}
                         className={staff.status === "Active" 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-gray-100 text-gray-800"
+
+                          ? "bg-green-100 text-green-800 hover:bg-green-100" 
+                          : "bg-red-100 text-red-800 hover:bg-red-100"
                         }
                       >
                         {staff.status}
