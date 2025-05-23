@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     const newService = await Service.create({ 
       userId: user._id,
-      salonContextId: salonContext._id, // Add salonContextId field
+      salonContextId: salonContext._id, 
       title,
       type,
       description,
