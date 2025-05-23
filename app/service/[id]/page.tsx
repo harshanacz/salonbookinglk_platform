@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heart, MapPin, Share2, Star, Phone, Clock } from "lucide-react";
@@ -87,6 +87,28 @@ export default function ServicePage(props: ServicePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSalon, setSelectedSalon] = useState<any>(null);
+  const [formattedAddress, setFormattedAddress] = useState<string>("");
+  const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
+
+  // Function to clean up address by removing plus codes
+  const cleanAddress = (address: string) => {
+    return address.replace(/(?:^|\s)[A-Z0-9]+\+[A-Z0-9]+(?:,\s*|\s+)/, ' ').trim();
+  };
+
+  // Geocoding function to convert coordinates to address
+  const geocodeLocation = useCallback(async (lat: number, lng: number) => {
+    try {
+      setCoordinates({ lat, lng });
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        setFormattedAddress(cleanAddress(address));
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+  }, []);
 
   useEffect(() => {
     const salonData = sessionStorage.getItem("salonInfo");
@@ -113,6 +135,21 @@ export default function ServicePage(props: ServicePageProps) {
         setRelatedServices(data.relatedServices);
         setStaffMembers(data.staff);
 
+        // If location is in coordinates format, geocode it
+        if (data.service?.salon?.location) {
+          const locationStr = data.service.salon.location;
+          if (locationStr.includes(',')) {
+            const [lat, lng] = locationStr.split(',').map((coord: string) => parseFloat(coord.trim()));
+            if (!isNaN(lat) && !isNaN(lng)) {
+              geocodeLocation(lat, lng);
+            } else {
+              setFormattedAddress(cleanAddress(locationStr));
+            }
+          } else {
+            setFormattedAddress(cleanAddress(locationStr));
+          }
+        }
+
         // Track the service view
         trackServiceView(params.id);
       } catch (err) {
@@ -124,7 +161,7 @@ export default function ServicePage(props: ServicePageProps) {
     };
 
     fetchServiceData();
-  }, [params.id]);
+  }, [params.id, geocodeLocation]);
 
   // Function to track service view
   const trackServiceView = async (serviceId: string) => {
@@ -410,16 +447,20 @@ export default function ServicePage(props: ServicePageProps) {
                   )}
                 </div>
               </div>
-              <div className="flex items-center text-sm text-gray-700 mb-6">
-                <MapPin className="h-5 w-5 mr-1 text-gray-500" />
-                <span>{service.salon.location}</span>
-                <Link 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.salon.location)}`} 
-                  target="_blank"
-                  className="ml-2 text-purple-600 hover:underline"
-                >
-                  Get direction
-                </Link>
+              <div className="flex flex-col text-sm text-gray-700 mb-6">
+                <div className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-1 text-gray-500" />
+                  <span>{formattedAddress || service.salon.location}</span>
+                </div>
+                {coordinates && (
+                  <Link 
+                    href={`https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`} 
+                    target="_blank"
+                    className="ml-6 mt-1 text-purple-600 hover:underline"
+                  >
+                    Get direction
+                  </Link>
+                )}
               </div>
               <div className="mb-6">
                 <div className="text-gray-700 mb-1">From</div>
@@ -522,9 +563,20 @@ export default function ServicePage(props: ServicePageProps) {
             </div>
             
             <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="w-4 h-4" />
-                <span>{service.salon.address}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="w-4 h-4" />
+                  <span>{formattedAddress || service.salon.address}</span>
+                </div>
+                {coordinates && (
+                  <Link 
+                    href={`https://www.google.com/maps/search/?api=1&query=${coordinates.lat},${coordinates.lng}`} 
+                    target="_blank"
+                    className="ml-6 text-purple-600 hover:underline text-sm"
+                  >
+                    Get direction
+                  </Link>
+                )}
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="w-4 h-4" />
