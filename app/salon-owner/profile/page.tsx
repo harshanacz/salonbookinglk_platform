@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -48,6 +48,26 @@ export default function SalonOwnerProfile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formattedAddress, setFormattedAddress] = useState<string>("");
+
+  // Geocoder to convert coordinates to address
+  const geocodeLocation = useCallback(async (lat: number, lng: number) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const address = data.results[0].formatted_address;
+        setFormattedAddress(address);
+        return address;
+      }
+      return "";
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return "";
+    }
+  }, []);
 
   // Fetch user and salon context data on mount
   useEffect(() => {
@@ -78,6 +98,15 @@ export default function SalonOwnerProfile() {
         const salon = await salonRes.json();
         console.log("[SALON_DATA]", salon);
 
+        // Get formatted address if location exists
+        let address = "";
+        if (salon.location && salon.location.lat && salon.location.lng) {
+          address = await geocodeLocation(
+            salon.location.lat,
+            salon.location.lng
+          );
+        }
+
         // Set user data
         setUserData({
           ownerName: salon.ownerName || user.userName || "",
@@ -89,13 +118,15 @@ export default function SalonOwnerProfile() {
             "/images/salon/profile.jpg",
         });
 
-        // Set salon data
+        // Set salon data with formatted address if available
         setSalonData({
           salonName: salon.businessName || "",
           description: salon.description || "",
-          address: salon.location
-            ? `${salon.location.lat}, ${salon.location.lng}`
-            : "",
+          address:
+            address ||
+            (salon.location
+              ? `${salon.location.lat}, ${salon.location.lng}`
+              : ""),
           website: salon.website || "",
           businessRegistration: salon.businessRegistrationNumber || "",
         });
@@ -107,7 +138,7 @@ export default function SalonOwnerProfile() {
       }
     };
     fetchData();
-  }, [router]);
+  }, [router, geocodeLocation]);
 
   // Handle edit click
   const handleEditClick = (field: keyof UserData | keyof SalonData) => {
@@ -154,8 +185,11 @@ export default function SalonOwnerProfile() {
         if (editingField === "salonName") patch.businessName = tempValue;
         else if (editingField === "description")
           patch.businessCategory = tempValue;
-        else if (editingField === "address") patch.streetAddress = tempValue;
-        else if (editingField === "businessRegistration")
+        else if (editingField === "address") {
+          // For address, we would ideally update the location in the database
+          // but for now just update the display value
+          patch.streetAddress = tempValue;
+        } else if (editingField === "businessRegistration")
           patch.businessRegistrationNumber = tempValue;
         else patch[editingField as keyof SalonData] = tempValue;
         const res = await fetch("/api/salon-owner/salon-profile", {
@@ -187,15 +221,16 @@ export default function SalonOwnerProfile() {
         body: JSON.stringify({ profileImage: imageUrl }),
       });
       if (!userResp.ok) throw new Error("Failed to update user profile image");
-      
+
       // Update salon context profile picture URL
       const salonResp = await fetch("/api/salon-owner/salon-profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ profilePictureUrl: imageUrl }),
       });
-      if (!salonResp.ok) throw new Error("Failed to update salon profile picture");
-      
+      if (!salonResp.ok)
+        throw new Error("Failed to update salon profile picture");
+
       setUserData((prev) => ({ ...prev, profileImage: imageUrl }));
     } catch (err) {
       console.error("[PROFILE_IMAGE_UPLOAD]", err);
