@@ -377,7 +377,7 @@ export default function ServicePage(props: ServicePageProps) {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+            <h2 className="text-xl font-semibold mb-4">Description</h2>
             {service.description.length > 0 ? (
               <ul className="space-y-4">
                 {service.description.map((item, index) => (
