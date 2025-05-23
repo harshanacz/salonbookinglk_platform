@@ -73,7 +73,6 @@ export default function AdminClientsPage() {
         ...client,
         totalBookings: client.totalBookings || 0,
         totalSpent: client.totalSpent || 0,
-        lastVisit: client.lastVisit || null
       }));
       
       setClients(processedClients);
@@ -158,8 +157,7 @@ export default function AdminClientsPage() {
       clients.forEach(client => {
         if (
           (client.totalBookings === undefined || client.totalBookings === 0) &&
-          (client.totalSpent === undefined || client.totalSpent === 0) &&
-          !client.lastVisit
+          (client.totalSpent === undefined || client.totalSpent === 0) 
         ) {
           // This client likely needs booking data fetched
           fetchClientBookingData(client._id);
@@ -241,7 +239,7 @@ export default function AdminClientsPage() {
 
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild size="sm" variant="outline">
+                          <Button asChild size="sm">
                             <Link href={`/admin/clients/${client._id}`}>
                               <Eye className="mr-2 h-4 w-4" /> View
                             </Link>
