@@ -111,8 +111,10 @@ export async function GET(req: Request) {
 
     const staff = await Staff.find({ 
       userId: user._id
-    }).select('_id name role profileImage status availability createdAt')
-      .sort({ createdAt: -1 }); // Sort by latest added first
+
+      // Removed status: 'Active' filter to get all staff members
+    }).select('_id name role profileImage status availability createdAt');
+
     
     return NextResponse.json(staff);
 
