@@ -52,6 +52,7 @@
     "immer": "latest",
     "input-otp": "1.4.1",
     "install": "^0.13.0",
+    "jspdf": "^3.0.1",
     "leaflet": "latest",
     "legacy": "^0.0.3",
     "lucide-react": "^0.454.0",
