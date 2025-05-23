@@ -34,7 +34,6 @@ function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Load services data on component mount
   useEffect(() => {
     async function fetchServices() {
       try {
