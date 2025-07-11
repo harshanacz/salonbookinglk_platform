@@ -184,12 +184,8 @@ export default function ClientDetailsPage(
   }  // Calculate client stats based on the fetched bookings data
   const totalBookings = client.totalBookings;
   const totalSpent = client.totalSpent;
+  const lastVisit = client.lastVisit;
   
-  // Calculate last visit date from bookings if available
-  const lastVisit = bookings.length > 0 
-    ? new Date(bookings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date).toLocaleDateString() 
-    : "No visits yet";
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -219,10 +215,6 @@ export default function ClientDetailsPage(
             <p className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-muted-foreground" /> {client.phone}
             </p>
-            <p className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" /> Last visit:{" "}
-              {lastVisit}
-            </p>
           </div>
         </Card>
 
@@ -245,7 +237,7 @@ export default function ClientDetailsPage(
             </div>
             <div className="bg-muted p-6 rounded-lg text-center">
               <Clock className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
-              <p className="text-sm text-muted-foreground">Last Visit</p>
+              <p className="text-sm text-muted-foreground">Last Active</p>
               <p className="text-2xl font-bold">
                 {lastVisit}
               </p>
@@ -294,23 +286,6 @@ export default function ClientDetailsPage(
               </div>
             </div>
             <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Activity Summary</h3>
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Last Visit:</span> {lastVisit}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Total Spent:</span> LKR {(totalSpent ?? 0).toLocaleString()}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Total Appointments:</span> {totalBookings}
-                  </div>
-                </div>
-              </div>
               <div>
                 <h3 className="text-lg font-medium">Preferences</h3>
                 <div className="mt-2 space-y-2">

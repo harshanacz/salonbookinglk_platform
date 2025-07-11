@@ -54,7 +54,7 @@ export async function GET(
       }).sort({ date: -1 });
       
       if (lastAppointment) {
-        lastVisit = lastAppointment.date;
+        lastVisit = new Date(lastAppointment.date).toISOString().split('T')[0];
       }
       
       // Calculate total spent
