@@ -8,9 +8,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -28,10 +29,11 @@ import {
   MapPin,
   Calendar,
   Clock,
-  FileText,
   Scissors,
   DollarSign,
-  User,
+  Search,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 type Salon = {
@@ -53,106 +55,14 @@ type Service = {
   price: number;
   duration: string;
   description: string;
+  type?: string;
+  status?: string;
+  images?: string[];
+  bookings?: number;
+  views?: number;
+  averageRating?: number;
+  reviewCount?: number;
 };
-
-type Booking = {
-  id: string;
-  customerName: string;
-  customerEmail: string;
-  date: string;
-  time: string;
-  service: string;
-  status: string;
-};
-
-// Sample data
-const sampleSalon: Salon = {
-  id: "1",
-  name: "Elegance Hair Studio",
-  image: "https://placehold.co/400x400",
-  email: "contact@elegancehair.com",
-  contactNumber: "+1 (123) 456-7890",
-  location: "123 Beauty Street, Fashion District",
-  status: "Pending",
-  startedDate: "2023-01-15",
-  updatedDate: "2023-06-22",
-  description:
-    "Elegance Hair Studio offers premium hair styling, coloring, and treatment services in a luxurious environment. Our team of expert stylists is dedicated to helping you look and feel your best.",
-};
-
-const sampleServices: Service[] = [
-  {
-    id: "s1",
-    name: "Haircut & Styling",
-    price: 45,
-    duration: "45 minutes",
-    description:
-      "Professional haircut and styling tailored to your preferences and face shape.",
-  },
-  {
-    id: "s2",
-    name: "Hair Coloring",
-    price: 85,
-    duration: "2 hours",
-    description:
-      "Full hair coloring with premium products for vibrant, long-lasting results.",
-  },
-  {
-    id: "s3",
-    name: "Hair Treatment",
-    price: 65,
-    duration: "1 hour",
-    description:
-      "Nourishing hair treatment to repair damaged hair and add shine.",
-  },
-  {
-    id: "s4",
-    name: "Bridal Package",
-    price: 150,
-    duration: "3 hours",
-    description:
-      "Complete bridal styling including hair, makeup, and accessories.",
-  },
-];
-
-const sampleBookings: Booking[] = [
-  {
-    id: "b1",
-    customerName: "Jane Smith",
-    customerEmail: "jane.smith@example.com",
-    date: "2023-08-10",
-    time: "10:30 AM",
-    service: "Haircut & Styling",
-    status: "Completed",
-  },
-  {
-    id: "b2",
-    customerName: "John Davis",
-    customerEmail: "john.davis@example.com",
-    date: "2023-08-15",
-    time: "2:00 PM",
-    service: "Hair Coloring",
-    status: "Upcoming",
-  },
-  {
-    id: "b3",
-    customerName: "Emily Johnson",
-    customerEmail: "emily.j@example.com",
-    date: "2023-08-12",
-    time: "11:15 AM",
-    service: "Hair Treatment",
-    status: "Cancelled",
-  },
-  {
-    id: "b4",
-    customerName: "Michael Brown",
-    customerEmail: "michael.b@example.com",
-    date: "2023-08-18",
-    time: "4:30 PM",
-    service: "Haircut & Styling",
-    status: "Pending",
-  },
-];
 
 const SalonDetailPage = () => {
   const params = useParams();
@@ -161,48 +71,76 @@ const SalonDetailPage = () => {
 
   const [salon, setSalon] = useState<Salon | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Search and pagination states for services
+  const [servicesSearchTerm, setServicesSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [servicesCurrentPage, setServicesCurrentPage] = useState(1);
+  const [servicesPagination, setServicesPagination] = useState({
+    total: 0,
+    pages: 0,
+    limit: 10,
+  });
+  const [servicesLoading, setServicesLoading] = useState(false);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(servicesSearchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [servicesSearchTerm]);
 
   useEffect(() => {
     const fetchSalonDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/admin/users?id=${salonId}`);
-        
-        if (!response.ok) {
-          if (response.status === 404) {
+
+        // Fetch salon details
+        const salonResponse = await fetch(`/api/admin/salons/${salonId}`);
+
+        if (!salonResponse.ok) {
+          if (salonResponse.status === 404) {
             throw new Error("Salon not found");
           }
           throw new Error("Failed to fetch salon details");
         }
-        
-        const data = await response.json();
-        
+
+        const salonData = await salonResponse.json();
+
         // Map the API data to the Salon type
         const formattedSalon: Salon = {
-          id: data._id,
-          name: data.name || 'Unnamed Salon',
-          image: data.image || 'https://placehold.co/400x400',
-          email: data.email || '',
-          contactNumber: data.phoneNumber || data.contactNumber || '',
-          location: data.address || data.location || '',
-          status: data.status || 'Pending',
-          startedDate: data.createdAt ? new Date(data.createdAt).toISOString().split('T')[0] : '',
-          updatedDate: data.updatedAt ? new Date(data.updatedAt).toISOString().split('T')[0] : '',
-          description: data.description || '',
+          id: salonData._id,
+          name: salonData.userName || "Unnamed Salon",
+          image: salonData.profileImage || "https://placehold.co/400x400",
+          email: salonData.email || "",
+          contactNumber: salonData.mobileNumber || "",
+          location: salonData.country || "",
+          status: salonData.status || "Pending",
+          startedDate:
+            salonData.createdAt &&
+            new Date(salonData.createdAt).toString() !== "Invalid Date"
+              ? new Date(salonData.createdAt).toISOString().split("T")[0]
+              : "",
+          updatedDate:
+            salonData.updatedAt &&
+            new Date(salonData.updatedAt).toString() !== "Invalid Date"
+              ? new Date(salonData.updatedAt).toISOString().split("T")[0]
+              : "",
+          description: salonData.description || "",
         };
-        
+
         setSalon(formattedSalon);
-        
-        // For now, we'll keep using sample data for services and bookings
-        // In a real implementation, you would fetch these from their respective endpoints
-        setServices(sampleServices);
-        setBookings(sampleBookings);
       } catch (error) {
-        console.error('Error fetching salon details:', error);
-        setError(`Failed to load salon details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error("Error fetching salon details:", error);
+        setError(
+          `Failed to load salon details: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       } finally {
         setLoading(false);
       }
@@ -210,6 +148,72 @@ const SalonDetailPage = () => {
 
     fetchSalonDetails();
   }, [salonId]);
+
+  // Separate function to fetch services with pagination
+  const fetchServices = async (page: number = 1, search: string = "") => {
+    try {
+      setServicesLoading(true);
+
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: servicesPagination.limit.toString(),
+        ...(search && { search }),
+      });
+
+      const servicesResponse = await fetch(
+        `/api/admin/salons/${salonId}/services?${queryParams}`
+      );
+
+      if (servicesResponse.ok) {
+        const servicesData = await servicesResponse.json();
+        setServices(servicesData.services || []);
+        setServicesPagination({
+          total: servicesData.pagination.total,
+          pages: servicesData.pagination.pages,
+          limit: servicesData.pagination.limit,
+        });
+      } else {
+        console.warn("Failed to fetch services, using empty array");
+        setServices([]);
+        setServicesPagination({
+          total: 0,
+          pages: 0,
+          limit: 10,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      setServices([]);
+    } finally {
+      setServicesLoading(false);
+    }
+  };
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(servicesSearchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [servicesSearchTerm]);
+
+  // Fetch services when salon ID, current page, or debounced search term changes
+  useEffect(() => {
+    if (salonId) {
+      fetchServices(servicesCurrentPage, debouncedSearchTerm);
+    }
+  }, [salonId, servicesCurrentPage, debouncedSearchTerm]);
+
+  // Reset pagination when search terms change
+  useEffect(() => {
+    setServicesCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
+  // Pagination handlers
+  const handleServicesPageChange = (page: number) => {
+    setServicesCurrentPage(page);
+  };
 
   if (loading) {
     return <div className="text-center p-12">Loading salon details...</div>;
@@ -219,7 +223,7 @@ const SalonDetailPage = () => {
     return (
       <div className="text-center p-12">
         <div className="text-red-500 mb-4">{error}</div>
-        <Button variant="outline" onClick={() => router.push('/admin/salons')}>
+        <Button variant="outline" onClick={() => router.push("/admin/salons")}>
           Back to Salons
         </Button>
       </div>
@@ -307,35 +311,60 @@ const SalonDetailPage = () => {
               </p>
             </div>
           )}
+          <div className="mt-8 flex items-center gap-2">
+            <Scissors className="h-4 w-4" />
+            <div className="font-semibold text-lg">Services</div>
+          </div>
 
-          <Tabs defaultValue="services" className="mt-6">
-            <TabsList className="mb-6">
-              <TabsTrigger value="services" className="flex items-center gap-2">
-                <Scissors className="h-4 w-4" />
-                Services
-              </TabsTrigger>
-              <TabsTrigger value="bookings" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Bookings
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="services">
+          <Card className="mt-6">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search services..."
+                    className="pl-8"
+                    value={servicesSearchTerm}
+                    onChange={(e) => setServicesSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Service</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Duration</TableHead>
-                    <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Bookings</TableHead>
+                    <TableHead>Rating</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {services.length > 0 ? (
+                  {servicesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center">
+                        Loading services...
+                      </TableCell>
+                    </TableRow>
+                  ) : services.length > 0 ? (
                     services.map((service) => (
                       <TableRow key={service.id}>
-                        <TableCell className="font-medium">
-                          {service.name}
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{service.name}</span>
+                            {service.description && (
+                              <span className="text-sm text-muted-foreground line-clamp-2">
+                                {service.description}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {service.type?.replace("_", " ") || "N/A"}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <span className="inline-flex items-center gap-1">
@@ -349,92 +378,85 @@ const SalonDetailPage = () => {
                             {service.duration}
                           </span>
                         </TableCell>
-                        <TableCell>{service.description}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              service.status === "ACTIVE"
+                                ? "default"
+                                : service.status === "PENDING"
+                                ? "pending"
+                                : service.status === "REJECTED"
+                                ? "destructive"
+                                : "outline"
+                            }
+                          >
+                            {service.status || "N/A"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{service.bookings || 0}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <span>
+                              {service.averageRating?.toFixed(1) || "0.0"}
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              ({service.reviewCount || 0})
+                            </span>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">
+                      <TableCell colSpan={7} className="text-center">
                         No services found
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
-            </TabsContent>
-
-            <TabsContent value="bookings">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bookings.length > 0 ? (
-                    bookings.map((booking) => (
-                      <TableRow key={booking.id}>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1">
-                              <User className="h-3 w-3 text-muted-foreground" />
-                              <p className="font-medium">
-                                {booking.customerName}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Mail className="h-3 w-3 text-muted-foreground" />
-                              <p className="text-sm text-muted-foreground">
-                                {booking.customerEmail}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Scissors className="h-3 w-3 text-muted-foreground" />
-                            {booking.service}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            {booking.date} at {booking.time}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              booking.status === "Completed"
-                                ? "default"
-                                : booking.status === "Upcoming"
-                                ? "secondary"
-                                : booking.status === "Pending"
-                                ? "pending"
-                                : booking.status === "Cancelled"
-                                ? "destructive"
-                                : "outline"
-                            }
-                          >
-                            {booking.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center">
-                        No bookings found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TabsContent>
-          </Tabs>
+            </CardContent>
+            {servicesPagination.pages > 1 && (
+              <CardFooter className="flex justify-between items-center">
+                <div className="text-sm text-muted-foreground">
+                  Showing{" "}
+                  {(servicesCurrentPage - 1) * servicesPagination.limit + 1}-
+                  {Math.min(
+                    servicesCurrentPage * servicesPagination.limit,
+                    servicesPagination.total
+                  )}{" "}
+                  of {servicesPagination.total} services
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleServicesPageChange(servicesCurrentPage - 1)
+                    }
+                    disabled={servicesCurrentPage <= 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="sr-only">Previous Page</span>
+                  </Button>
+                  <div className="text-sm font-medium">
+                    Page {servicesCurrentPage} of {servicesPagination.pages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      handleServicesPageChange(servicesCurrentPage + 1)
+                    }
+                    disabled={servicesCurrentPage >= servicesPagination.pages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                    <span className="sr-only">Next Page</span>
+                  </Button>
+                </div>
+              </CardFooter>
+            )}
+          </Card>
         </CardContent>
       </Card>
     </div>
