@@ -58,11 +58,7 @@ interface Booking {
   status: string;
 }
 
-export default function ClientDetailsPage(
-  props: {
-    params: { id: string };
-  }
-) {
+export default function ClientDetailsPage(props: { params: { id: string } }) {
   const { params } = props;
   const clientId = params.id;
   const [client, setClient] = useState<Client | null>(null);
@@ -76,7 +72,7 @@ export default function ClientDetailsPage(
     const minutes = totalMinutes % 60;
     const period = hours >= 12 ? "PM" : "AM";
     const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
   };
   useEffect(() => {
     async function fetchData() {
@@ -86,57 +82,75 @@ export default function ClientDetailsPage(
         const response = await fetch(`/api/admin/users/${clientId}`);
         if (!response.ok) {
           throw new Error(`Failed to fetch client: ${response.statusText}`);
-        }        const data = await response.json();
+        }
+        const data = await response.json();
         console.log("Client data:", data); // Log client data for debugging
-        
+
         setClient({
           _id: data._id,
-          name: data.userName || 'N/A',
-          email: data.email || 'N/A',
-          phone: data.mobileNumber || 'N/A',
+          name: data.userName || "N/A",
+          email: data.email || "N/A",
+          phone: data.mobileNumber || "N/A",
           totalBookings: data.totalBookings || 0,
           totalSpent: data.totalSpent || 0,
-          lastVisit: data.lastVisit,          avatar: data.profileImage,
+          lastVisit: data.lastVisit,
+          avatar: data.profileImage,
           // Extract additional client details
-          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString() : undefined,
+          joinDate: data.createdAt
+            ? new Date(data.createdAt).toLocaleDateString()
+            : undefined,
           membershipStatus: data.userType || "",
           favoriteServices: data.favoriteServices || data.preferredServices,
           preferredSalon: data.preferredSalon || data.favoriteSalon,
-        });// Fetch bookings for this client
+        }); // Fetch bookings for this client
         try {
           // Change clientId to userId in the API query parameter
-          const bookingsResponse = await fetch(`/api/admin/appointments?userId=${clientId}`);
+          const bookingsResponse = await fetch(
+            `/api/admin/appointments?userId=${clientId}`
+          );
           if (bookingsResponse.ok) {
             const bookingsData = await bookingsResponse.json();
             console.log("API Response:", bookingsData); // Log the actual response for debugging
-            
+
             // Check if we have appointments data and log it for debugging
-            if (bookingsData.appointments && bookingsData.appointments.length > 0) {
-              console.log("First appointment structure:", bookingsData.appointments[0]);
+            if (
+              bookingsData.appointments &&
+              bookingsData.appointments.length > 0
+            ) {
+              console.log(
+                "First appointment structure:",
+                bookingsData.appointments[0]
+              );
             }
-            
+
             // Transform appointments data to match the Booking interface
-            const formattedBookings = bookingsData.appointments?.map((appointment: any) => ({
-              id: appointment._id,
-              date: new Date(appointment.date).toLocaleDateString(),
-              time: formatTimeFromMinutes(appointment.time),
-              salon: appointment.salonId?.userName || 'Unknown Salon',
-              service: appointment.serviceId?.title || 'Unknown Service',
-              price: appointment.serviceId?.price || 0,
-              status: appointment.status,
-            })) || [];
-            
+            const formattedBookings =
+              bookingsData.appointments?.map((appointment: any) => ({
+                id: appointment._id,
+                date: new Date(appointment.date).toLocaleDateString(),
+                time: formatTimeFromMinutes(appointment.time),
+                salon: appointment.salonId?.userName || "Unknown Salon",
+                service: appointment.serviceId?.title || "Unknown Service",
+                price: appointment.serviceId?.price || 0,
+                status: appointment.status,
+              })) || [];
+
             console.log("Formatted bookings:", formattedBookings);
             setBookings(formattedBookings);
           } else {
-            console.log("API Error:", bookingsResponse.status, bookingsResponse.statusText);            setBookings([]);
+            console.log(
+              "API Error:",
+              bookingsResponse.status,
+              bookingsResponse.statusText
+            );
+            setBookings([]);
           }
         } catch (bookingError) {
           // If no booking endpoint exists yet, we'll just show empty bookings
           console.error("Could not fetch bookings:", bookingError);
           setBookings([]);
         }
-        
+
         setError(null);
       } catch (err) {
         console.error("Error fetching client data:", err);
@@ -181,11 +195,11 @@ export default function ClientDetailsPage(
         </Button>
       </div>
     );
-  }  // Calculate client stats based on the fetched bookings data
+  } // Calculate client stats based on the fetched bookings data
   const totalBookings = client.totalBookings;
   const totalSpent = client.totalSpent;
   const lastVisit = client.lastVisit;
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -198,11 +212,12 @@ export default function ClientDetailsPage(
           <h1 className="text-3xl font-bold">Client Details</h1>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1 h-full p-4 flex flex-col justify-center items-center">
           <Avatar className="h-20 w-20 mb-4">
-            <AvatarImage src={client.avatar || "/placeholder.svg?height=40&width=40"} />
+            <AvatarImage
+              src={client.avatar || "/placeholder.svg?height=40&width=40"}
+            />
             <AvatarFallback>
               <User className="h-10 w-10" />
             </AvatarFallback>
@@ -238,13 +253,12 @@ export default function ClientDetailsPage(
             <div className="bg-muted p-6 rounded-lg text-center">
               <Clock className="h-6 w-6 text-muted-foreground mb-2 mx-auto" />
               <p className="text-sm text-muted-foreground">Last Active</p>
-              <p className="text-2xl font-bold">
-                {lastVisit}
-              </p>
+              <p className="text-2xl font-bold">{lastVisit}</p>
             </div>
           </CardContent>
         </Card>
-      </div>      {/* Client Additional Details */}
+      </div>{" "}
+      {/* Client Additional Details */}
       <Card>
         <CardHeader>
           <CardTitle>Client Additional Information</CardTitle>
@@ -273,9 +287,13 @@ export default function ClientDetailsPage(
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-medium">Membership Information</h3>                <div className="mt-2 space-y-2">                  <div className="flex items-center gap-2">
+                <h3 className="text-lg font-medium">Membership Information</h3>{" "}
+                <div className="mt-2 space-y-2">
+                  {" "}
+                  <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Member Since:</span> {client.joinDate || "Not available"}
+                    <span className="font-medium">Member Since:</span>{" "}
+                    {client.joinDate || "Not available"}
                   </div>
                   {client.membershipStatus && (
                     <div className="flex items-center gap-2">
@@ -290,10 +308,12 @@ export default function ClientDetailsPage(
                 <h3 className="text-lg font-medium">Preferences</h3>
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Favorite Services:</span> {client.favoriteServices || "Not specified"}
+                    <span className="font-medium">Favorite Services:</span>{" "}
+                    {client.favoriteServices || "Not specified"}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Preferred Salon:</span> {client.preferredSalon || "Not specified"}
+                    <span className="font-medium">Preferred Salon:</span>{" "}
+                    {client.preferredSalon || "Not specified"}
                   </div>
                 </div>
               </div>
