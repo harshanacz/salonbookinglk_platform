@@ -36,7 +36,8 @@ const PROFILE_CHECK_EXCLUDED_ROUTES = [
   "/user/complete-profile",
   "/api/",
   "/sign-in",
-  "/sign-up"
+  "/sign-up",
+  "/assistant-demo"
 ];
 
 // Get the designated route for a user type
@@ -105,8 +106,8 @@ const checkCustomerProfile = async (req: Request): Promise<boolean> => {
 };
 
 export default clerkMiddleware(async (auth, req) => {
-  // Skip user-type-based redirects for API routes
-  if (req.nextUrl.pathname.startsWith("/api/")) {
+  // Skip user-type-based redirects for API routes and demo page
+  if (req.nextUrl.pathname.startsWith("/api/") || req.nextUrl.pathname.startsWith("/assistant-demo")) {
     return NextResponse.next();
   }
 

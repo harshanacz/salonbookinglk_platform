@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { SalonAssistant } from "@/components/salon-assistant";
+import { SalonAssistantDemo } from "@/components/salon-assistant-demo";
 
 // Define service interface
 interface Service {
@@ -220,8 +220,8 @@ function HomeContent() {
         <StylesGallery />
       </section>
 
-      {/* Salon Assistant */}
-      <SalonAssistant />
+      {/* Salon Assistant Demo */}
+      <SalonAssistantDemo />
     </div>
   );
 }

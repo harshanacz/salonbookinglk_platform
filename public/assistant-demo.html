@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Assistant Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            color: #1f2937;
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+        }
+        .header p {
+            color: #6b7280;
+            font-size: 1.25rem;
+        }
+        .demo-area {
+            background: #f9fafb;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .chat-button {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            animation: pulse 2s infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .feature-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+        .feature-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+        .feature-desc {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        .examples {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        .examples h3 {
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+        .example-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .example-list li {
+            background: white;
+            margin-bottom: 8px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: #374151;
+            border-left: 4px solid #7c3aed;
+        }
+        .tech-details {
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        .tech-details h3 {
+            color: #1e40af;
+            margin-bottom: 16px;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+        .tech-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+        .checkmark {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .api-test {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+        .api-test h3 {
+            color: #166534;
+            margin-bottom: 16px;
+        }
+        .test-button {
+            background: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            cursor: pointer;
+            margin-right: 12px;
+            margin-bottom: 8px;
+        }
+        .test-result {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Salon Assistant Demo</h1>
+            <p>Interactive AI-powered salon booking assistant</p>
+        </div>
+
+        <div class="demo-area">
+            <button class="chat-button">💬</button>
+            <h3>Try the Assistant!</h3>
+            <p>Click the chat button to start a conversation with our salon booking assistant.</p>
+            <p><em>Note: This is a demo representation. The actual assistant is integrated into the Next.js application.</em></p>
+        </div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <div class="feature-title">Smart Understanding</div>
+                <div class="feature-desc">Uses Google Gemini API to understand natural language queries about salon services</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-title">Personalized Suggestions</div>
+                <div class="feature-desc">Provides curated service recommendations with ratings, prices, and salon details</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Instant Response</div>
+                <div class="feature-desc">Gets immediate suggestions without browsing through hundreds of services</div>
+            </div>
+        </div>
+
+        <div class="examples">
+            <h3>Example Queries You Can Try:</h3>
+            <ul class="example-list">
+                <li>"I want to get a haircut"</li>
+                <li>"I need a relaxing massage"</li>
+                <li>"Can you help me find facial treatments?"</li>
+                <li>"I want to dye my hair blonde"</li>
+                <li>"Looking for nail art services"</li>
+                <li>"I need a blowout and styling"</li>
+            </ul>
+        </div>
+
+        <div class="api-test">
+            <h3>🧪 Test the API Functionality</h3>
+            <p>Click the buttons below to test the assistant's API responses:</p>
+            <button class="test-button" onclick="testAPI('I want a haircut')">Test: Haircut</button>
+            <button class="test-button" onclick="testAPI('I need a massage')">Test: Massage</button>
+            <button class="test-button" onclick="testAPI('Looking for facial treatments')">Test: Facial</button>
+            <button class="test-button" onclick="testAPI('I want to dye my hair')">Test: Hair Color</button>
+            <div id="testResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <div class="tech-details">
+            <h3>🔧 Technical Implementation</h3>
+            <div class="tech-grid">
+                <div>
+                    <h4>Features Implemented:</h4>
+                    <div class="tech-item"><span class="checkmark">✅</span> Chat interface component</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Google Gemini API integration</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Service type detection</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Real-time service matching</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Mobile-responsive design</div>
+                </div>
+                <div>
+                    <h4>Production Ready:</h4>
+                    <div class="tech-item"><span class="checkmark">✅</span> Database integration</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Error handling & fallbacks</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> No explicit AI mentions</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> Scalable architecture</div>
+                    <div class="tech-item"><span class="checkmark">✅</span> TypeScript implementation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI(message) {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div style="color: #6b7280;">Loading...</div>';
+            
+            try {
+                const response = await fetch('/api/assistant/demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <strong>Query:</strong> "${message}"<br><br>
+                    <strong>Assistant Response:</strong><br>
+                    ${data.message}<br><br>
+                    <strong>Service Types Detected:</strong> ${data.serviceTypes?.join(', ') || 'None'}<br><br>
+                    <strong>Suggestions Found:</strong> ${data.suggestions?.length || 0} services<br><br>
+                    ${data.suggestions?.length > 0 ? `
+                        <strong>Sample Service:</strong><br>
+                        • ${data.suggestions[0].title} - $${data.suggestions[0].price} at ${data.suggestions[0].salon}
+                    ` : ''}
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div style="color: #dc2626;">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
