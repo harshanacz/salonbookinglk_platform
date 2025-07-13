@@ -1,10 +1,24 @@
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import Salon from "@/models/User";
+import User from "@/models/User";
 
 export async function GET(request: Request) {
   try {
+    // Check if user is authenticated
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
     await dbConnect();
+
+    // Check if admin user
+    const adminUser = await User.findOne({ clerkUserId: userId });
+    if (!adminUser || !["ADMIN", "SUPER_ADMIN"].includes(adminUser.type)) {
+      return new NextResponse("Forbidden: Admin access required", { status: 403 });
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
@@ -12,11 +26,14 @@ export async function GET(request: Request) {
 
     const skip = (page - 1) * limit;
 
-    const salons = await Salon.find()
+    // Filter to only get SALON_OWNER users
+    const query = { type: "SALON_OWNER" };
+
+    const salons = await User.find(query)
       .skip(skip)
       .limit(limit);
 
-    const total = await Salon.countDocuments();
+    const total = await User.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
     return NextResponse.json({
