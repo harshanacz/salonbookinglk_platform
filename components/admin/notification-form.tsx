@@ -46,6 +46,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
+import { logClientAdminActivity } from "@/utils/clientActivityLogger";
 
 interface User {
   _id: string;
@@ -194,6 +195,34 @@ export default function NotificationForm() {
       }
 
       const data = await response.json();
+
+      // Log the admin activity
+      try {
+        const recipientCount = values.recipientType === "all" 
+          ? "all users"
+          : values.recipientType === "salons"
+          ? values.allSalons 
+            ? "all salons"
+            : values.onlyVerifiedSalons
+            ? "verified salons"
+            : `${values.selectedSalons?.length || 0} selected salons`
+          : values.allClients
+          ? "all clients"
+          : `${values.selectedClients?.length || 0} selected clients`;
+
+        await logClientAdminActivity({
+          action: 'NOTIFICATION_SEND',
+          target: 'system',
+          details: `Sent notification "${values.title}" to ${recipientCount}`,
+          metadata: {
+            notificationTitle: values.title,
+            recipientType: values.recipientType,
+            recipientCount: recipientCount
+          }
+        });
+      } catch (error) {
+        console.error('Failed to log admin activity:', error);
+      }
 
       toast({
         title: "Notification Sent",

@@ -2,6 +2,8 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function GET() {
   try {
@@ -69,11 +71,33 @@ export async function PATCH(req: Request) {
     await clerk.users.updateUser(clerkUserId, clerkUpdateData);
     
     // --- MongoDB Update Logic - Only update userName ---
-    await User.findOneAndUpdate(
+    const updatedUser = await User.findOneAndUpdate(
       { clerkUserId },
       { userName: fullName },
       { new: true }
     );
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: AdminActionType.ADMIN_NAME_CHANGE,
+          target: 'system',
+          details: `Changed admin name from "${adminUser.userName}" to "${fullName}"`,
+          metadata: {
+            previousName: adminUser.userName,
+            newName: fullName,
+            updateField: 'fullName'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
+    }
 
     return NextResponse.json({ 
       success: true, 

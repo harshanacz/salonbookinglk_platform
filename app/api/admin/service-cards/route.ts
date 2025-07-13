@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Service, { ServiceStatus } from "@/models/Service";
 import { auth } from "@clerk/nextjs/server";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function GET() {
   try {
@@ -90,6 +92,35 @@ export async function PATCH(request: Request) {
         { error: "Service not found" },
         { status: 404 }
       );
+    }
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        const actionType = AdminActionType.SERVICE_STATUS_TOGGLE;
+        const details = approved 
+          ? `Approved service "${updatedService.title}" (ID: ${serviceId})`
+          : `Rejected service "${updatedService.title}" (ID: ${serviceId})`;
+
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: actionType,
+          target: serviceId,
+          details,
+          metadata: {
+            serviceId,
+            serviceName: updatedService.title,
+            action: approved ? 'approved' : 'rejected',
+            previousStatus: 'PENDING',
+            newStatus: approved ? 'ACTIVE' : 'REJECTED'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
     }
 
     return NextResponse.json({ 

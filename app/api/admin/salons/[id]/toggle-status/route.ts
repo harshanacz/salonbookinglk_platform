@@ -4,6 +4,8 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Service, { ServiceStatus } from "@/models/Service";
 import mongoose from "mongoose";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function PATCH(
   req: Request,
@@ -69,6 +71,29 @@ export async function PATCH(
         { userId: salon._id, status: ServiceStatus.INACTIVE },
         { status: ServiceStatus.ACTIVE }
       );
+    }
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: AdminActionType.SALON_STATUS_TOGGLE,
+          target: salon._id.toString(),
+          details: `${newActiveStatus ? 'Activated' : 'Deactivated'} salon "${salon.userName || salon.email}"`,
+          metadata: {
+            salonId: salon._id.toString(),
+            salonName: salon.userName || salon.email,
+            newStatus: newActiveStatus ? 'active' : 'inactive',
+            previousStatus: !newActiveStatus ? 'active' : 'inactive'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
     }
 
     return NextResponse.json({ 
