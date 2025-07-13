@@ -133,23 +133,67 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { status, ...updateData } = body;
+    const { status, isActive, toggleStatus, ...updateData } = body;
 
-    // Find and update the salon
-    const updatedSalon = await User.findByIdAndUpdate(
-      id,
-      { ...updateData, ...(status && { status }) },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedSalon) {
+    // Find the salon first
+    const salon = await User.findById(id);
+    if (!salon) {
       return new NextResponse("Salon not found", { status: 404 });
     }
 
     // Verify that this user is actually a salon owner
-    if (updatedSalon.type !== UserType.SALON_OWNER) {
+    if (salon.type !== UserType.SALON_OWNER) {
       return new NextResponse("User is not a salon owner", { status: 400 });
     }
+
+    let updateFields = { ...updateData };
+    
+    // Handle status updates
+    if (status) {
+      updateFields.status = status;
+    }
+
+    // Handle activation/deactivation
+    if (toggleStatus !== undefined) {
+      updateFields.isActive = toggleStatus;
+      
+      // If deactivating the salon, also deactivate all its services
+      if (!toggleStatus) {
+        await Service.updateMany(
+          { userId: salon._id },
+          { status: "INACTIVE" }
+        );
+      }
+      // If activating the salon, reactivate services that were previously active
+      else {
+        await Service.updateMany(
+          { userId: salon._id, status: "INACTIVE" },
+          { status: "ACTIVE" }
+        );
+      }
+    } else if (isActive !== undefined) {
+      updateFields.isActive = isActive;
+      
+      // Handle service status changes based on salon activation
+      if (!isActive) {
+        await Service.updateMany(
+          { userId: salon._id },
+          { status: "INACTIVE" }
+        );
+      } else {
+        await Service.updateMany(
+          { userId: salon._id, status: "INACTIVE" },
+          { status: "ACTIVE" }
+        );
+      }
+    }
+
+    // Find and update the salon
+    const updatedSalon = await User.findByIdAndUpdate(
+      id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
 
     return NextResponse.json(updatedSalon);
   } catch (error) {
