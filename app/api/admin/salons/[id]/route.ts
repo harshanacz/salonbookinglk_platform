@@ -79,8 +79,8 @@ export async function GET(
 
       // Count active services for this salon
       activeServices = await Service.countDocuments({
-        salonId: salon._id,
-        isActive: true
+        userId: salon._id,
+        status: "ACTIVE"
       });
     } catch (statsError) {
       console.error("Error calculating salon statistics:", statsError);
@@ -157,14 +157,14 @@ export async function PUT(
     if (toggleStatus !== undefined) {
       updateFields.isActive = toggleStatus;
       
-      // If deactivating the salon, also deactivate all its services
+      // If deactivating the salon, only deactivate ACTIVE services (keep PENDING as PENDING)
       if (!toggleStatus) {
         await Service.updateMany(
-          { userId: salon._id },
+          { userId: salon._id, status: "ACTIVE" },
           { status: "INACTIVE" }
         );
       }
-      // If activating the salon, reactivate services that were previously active
+      // If activating the salon, only reactivate INACTIVE services (keep PENDING as PENDING)
       else {
         await Service.updateMany(
           { userId: salon._id, status: "INACTIVE" },
@@ -176,11 +176,13 @@ export async function PUT(
       
       // Handle service status changes based on salon activation
       if (!isActive) {
+        // Only deactivate ACTIVE services, keep PENDING unchanged
         await Service.updateMany(
-          { userId: salon._id },
+          { userId: salon._id, status: "ACTIVE" },
           { status: "INACTIVE" }
         );
       } else {
+        // Only reactivate INACTIVE services, keep PENDING unchanged
         await Service.updateMany(
           { userId: salon._id, status: "INACTIVE" },
           { status: "ACTIVE" }
@@ -247,6 +249,12 @@ export async function DELETE(
       id,
       { isActive: false },
       { new: true }
+    );
+
+    // Only deactivate ACTIVE services, keep PENDING services unchanged
+    await Service.updateMany(
+      { userId: salon._id, status: "ACTIVE" },
+      { status: "INACTIVE" }
     );
 
     return NextResponse.json({ 

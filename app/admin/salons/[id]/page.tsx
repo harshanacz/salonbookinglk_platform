@@ -265,6 +265,16 @@ const SalonDetailPage = () => {
 
   // Toggle individual service status
   const handleToggleServiceStatus = async (serviceId: string, currentStatus: string) => {
+    // Check if salon is active before allowing service status change
+    if (!salon?.isActive) {
+      toast({
+        title: "Action Not Allowed",
+        description: "Cannot change service status when salon is deactivated.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
       
@@ -522,9 +532,10 @@ const SalonDetailPage = () => {
                         <TableCell>
                           {(service.status === "ACTIVE" || service.status === "INACTIVE") && (
                             <Button
-                              variant={service.status === "ACTIVE" ? "cancel" : "success"}
+                              variant={service.status === "ACTIVE" ? "cancel" : "default"}
                               size="sm"
                               onClick={() => handleToggleServiceStatus(service.id, service.status || "")}
+                              disabled={!salon.isActive}
                               className="flex items-center gap-1"
                             >
                               {service.status === "ACTIVE" ? (
@@ -539,6 +550,11 @@ const SalonDetailPage = () => {
                                 </>
                               )}
                             </Button>
+                          )}
+                          {!salon.isActive && (service.status === "ACTIVE" || service.status === "INACTIVE") && (
+                            <span className="text-xs text-muted-foreground">
+                              Salon is deactivated
+                            </span>
                           )}
                         </TableCell>
                       </TableRow>

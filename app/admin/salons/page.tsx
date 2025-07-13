@@ -45,6 +45,7 @@ type Salon = {
   contactNumber: string;
   location: string;
   status: string;
+  isActive: boolean;
 };
 
 interface PaginationInfo {

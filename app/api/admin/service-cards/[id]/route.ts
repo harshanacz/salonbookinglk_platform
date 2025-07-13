@@ -46,7 +46,7 @@ export async function GET(
     const service = await Service.findById(serviceId)
       .populate({
         path: "userId",
-        select: "userName businessName email mobileNumber profileImage clerkUserId type gender country",
+        select: "userName businessName email mobileNumber profileImage clerkUserId type gender country isActive",
       })
       .lean();
 
