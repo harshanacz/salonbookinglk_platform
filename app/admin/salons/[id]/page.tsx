@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -34,6 +35,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Power,
+  PowerOff,
 } from "lucide-react";
 
 type Salon = {
@@ -47,6 +50,7 @@ type Salon = {
   startedDate: string;
   updatedDate: string;
   description?: string;
+  isActive?: boolean;
 };
 
 type Service = {
@@ -67,12 +71,14 @@ type Service = {
 const SalonDetailPage = () => {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const salonId = params.id as string;
 
   const [salon, setSalon] = useState<Salon | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   // Search and pagination states for services
   const [servicesSearchTerm, setServicesSearchTerm] = useState("");
@@ -131,6 +137,7 @@ const SalonDetailPage = () => {
               ? new Date(salonData.updatedAt).toISOString().split("T")[0]
               : "",
           description: salonData.description || "",
+          isActive: salonData.isActive !== undefined ? salonData.isActive : true,
         };
 
         setSalon(formattedSalon);
@@ -215,6 +222,84 @@ const SalonDetailPage = () => {
     setServicesCurrentPage(page);
   };
 
+  // Toggle salon active status
+  const handleToggleSalonStatus = async () => {
+    if (!salon) return;
+    
+    setToggleLoading(true);
+    try {
+      const response = await fetch(`/api/admin/salons/${salonId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          toggleStatus: !salon.isActive,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedSalon = await response.json();
+        setSalon(prev => prev ? { ...prev, isActive: updatedSalon.isActive } : null);
+        // Refresh services to show updated statuses
+        fetchServices(servicesCurrentPage, debouncedSearchTerm);
+        
+        toast({
+          title: "Success",
+          description: `Salon ${updatedSalon.isActive ? 'activated' : 'deactivated'} successfully.`,
+        });
+      } else {
+        throw new Error("Failed to update salon status");
+      }
+    } catch (error) {
+      console.error("Error toggling salon status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update salon status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setToggleLoading(false);
+    }
+  };
+
+  // Toggle individual service status
+  const handleToggleServiceStatus = async (serviceId: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      
+      const response = await fetch(`/api/admin/salons/${salonId}/services`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          serviceId: serviceId,
+          status: newStatus,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh services to show updated status
+        fetchServices(servicesCurrentPage, debouncedSearchTerm);
+        
+        toast({
+          title: "Success",
+          description: `Service ${newStatus.toLowerCase()} successfully.`,
+        });
+      } else {
+        throw new Error("Failed to update service status");
+      }
+    } catch (error) {
+      console.error("Error toggling service status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update service status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return <div className="text-center p-12">Loading salon details...</div>;
   }
@@ -245,6 +330,26 @@ const SalonDetailPage = () => {
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">Salon Details</h1>
         </div>
+        {salon && (
+          <Button
+            variant={salon.isActive ? "cancel" : "success"}
+            onClick={handleToggleSalonStatus}
+            disabled={toggleLoading}
+            className="flex items-center gap-2"
+          >
+            {salon.isActive ? (
+              <>
+                <PowerOff className="h-4 w-4" />
+                {toggleLoading ? "Deactivating..." : "Deactivate Salon"}
+              </>
+            ) : (
+              <>
+                <Power className="h-4 w-4" />
+                {toggleLoading ? "Activating..." : "Activate Salon"}
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       <Card className="border-none shadow-md">
@@ -261,19 +366,26 @@ const SalonDetailPage = () => {
             <div className="space-y-2">
               <CardTitle className="text-2xl font-bold">{salon.name}</CardTitle>
               <CardDescription>
-                <Badge
-                  variant={
-                    salon.status === "Approved"
-                      ? "default"
-                      : salon.status === "Pending"
-                      ? "pending"
-                      : salon.status === "Rejected"
-                      ? "destructive"
-                      : "outline"
-                  }
-                >
-                  {salon.status === "Approved" ? "Verified" : salon.status}
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge
+                    variant={
+                      salon.status === "Approved"
+                        ? "default"
+                        : salon.status === "Pending"
+                        ? "pending"
+                        : salon.status === "Rejected"
+                        ? "destructive"
+                        : "outline"
+                    }
+                  >
+                    {salon.status === "Approved" ? "Verified" : salon.status}
+                  </Badge>
+                  <Badge
+                    variant={salon.isActive ? "default" : "destructive"}
+                  >
+                    {salon.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
               </CardDescription>
             </div>
           </div>
@@ -339,12 +451,13 @@ const SalonDetailPage = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Bookings</TableHead>
                     <TableHead>Rating</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {servicesLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={8} className="text-center">
                         Loading services...
                       </TableCell>
                     </TableRow>
@@ -387,6 +500,8 @@ const SalonDetailPage = () => {
                                 ? "pending"
                                 : service.status === "REJECTED"
                                 ? "destructive"
+                                : service.status === "INACTIVE"
+                                ? "secondary"
                                 : "outline"
                             }
                           >
@@ -404,11 +519,33 @@ const SalonDetailPage = () => {
                             </span>
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {(service.status === "ACTIVE" || service.status === "INACTIVE") && (
+                            <Button
+                              variant={service.status === "ACTIVE" ? "cancel" : "success"}
+                              size="sm"
+                              onClick={() => handleToggleServiceStatus(service.id, service.status || "")}
+                              className="flex items-center gap-1"
+                            >
+                              {service.status === "ACTIVE" ? (
+                                <>
+                                  <PowerOff className="h-3 w-3" />
+                                  Deactivate
+                                </>
+                              ) : (
+                                <>
+                                  <Power className="h-3 w-3" />
+                                  Activate
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                      <TableCell colSpan={8} className="text-center">
                         No services found
                       </TableCell>
                     </TableRow>
