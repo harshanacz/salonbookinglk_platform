@@ -4,6 +4,8 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Service from "@/models/Service";
 import mongoose from "mongoose";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function GET(
   req: Request,
@@ -143,7 +145,15 @@ export async function PATCH(
       return new NextResponse("Invalid service ID format", { status: 400 });
     }
 
-    // Find and update the service
+    // Find the service first to get the previous status
+    const service = await Service.findOne({ _id: serviceId, userId: salon._id });
+    if (!service) {
+      return new NextResponse("Service not found", { status: 404 });
+    }
+
+    const previousStatus = service.status;
+
+    // Update the service
     const updatedService = await Service.findOneAndUpdate(
       { _id: serviceId, userId: salon._id },
       { status: status },
@@ -152,6 +162,35 @@ export async function PATCH(
 
     if (!updatedService) {
       return new NextResponse("Service not found", { status: 404 });
+    }
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        // Use salon owner's email as target
+        const target = salon.email || `salon: ${salon.userName || salon.businessName || 'Unknown'}`;
+        
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: AdminActionType.SERVICE_STATUS_TOGGLE,
+          target: target,
+          details: `Changed service "${updatedService.title}" status from ${previousStatus} to ${status}`,
+          metadata: {
+            serviceId: updatedService._id.toString(),
+            serviceName: updatedService.title,
+            salonId: salon._id.toString(),
+            salonName: salon.userName || salon.businessName,
+            salonEmail: salon.email,
+            previousStatus,
+            newStatus: status
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
     }
 
     return NextResponse.json({

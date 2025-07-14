@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, RefreshCw, Download, Database } from "lucide-react";
+import { Search, Calendar, RefreshCw, Download, Database, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 
@@ -61,7 +61,7 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
   const [dateFilter, setDateFilter] = useState("all");
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 50,
+    limit: 10,
     total: 0,
     pages: 0
   });
@@ -331,36 +331,37 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
       {pagination.pages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+            Showing {((pagination.page - 1) * pagination.limit) + 1}-
             {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
             {pagination.total} activities
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-              disabled={pagination.page === 1}
+              disabled={pagination.page <= 1}
             >
-              Previous
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous Page</span>
             </Button>
+            <div className="text-sm font-medium">
+              Page {pagination.page} of {pagination.pages}
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-              disabled={pagination.page === pagination.pages}
+              disabled={pagination.page >= pagination.pages}
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next Page</span>
             </Button>
           </div>
         </div>
       )}
 
-      {/* Source indicator */}
-      <div className="text-xs text-muted-foreground">
-        Data source: MongoDB (All admin activities) | 
-        Total: {pagination.total} activities
-      </div>
+      
     </div>
   );
 }

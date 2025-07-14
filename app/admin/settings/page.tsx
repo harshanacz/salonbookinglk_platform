@@ -149,10 +149,6 @@ export default function AdminSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Admin Settings</h1>
-        <Button onClick={handleSave} disabled={isLoading}>
-          <Save className="mr-2 h-4 w-4" /> 
-          {isLoading ? "Saving..." : "Save Changes"}
-        </Button>
       </div>
 
       <Tabs defaultValue="general">
@@ -189,6 +185,10 @@ export default function AdminSettingsPage() {
                 />
                 {/* <p className="text-sm text-gray-500">Email cannot be changed for security reasons</p> */}
               </div>
+              <Button onClick={handleSave} disabled={isLoading}>
+                <Save className="mr-2 h-4 w-4" /> 
+                {isLoading ? "Saving..." : "Save Changes"}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

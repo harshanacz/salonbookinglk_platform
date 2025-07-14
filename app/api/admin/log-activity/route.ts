@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     await dbConnect();
     const user = await User.findOne({ clerkUserId: userId });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.type)) {
+    if (!user || user.type !== "ADMIN") {
       return NextResponse.json({ error: "Not an admin user" }, { status: 403 });
     }
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Action and details are required" }, { status: 400 });
     }
 
-    // Validate that the action is a valid AdminActionType
+    // Validate that the action is a valid AdminActionType (excluding login/logout)
     const validActions = Object.values(AdminActionType);
     if (!validActions.includes(action as AdminActionType)) {
       return NextResponse.json({ error: "Invalid action type" }, { status: 400 });

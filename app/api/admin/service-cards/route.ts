@@ -85,7 +85,10 @@ export async function PATCH(request: Request) {
         status: approved ? ServiceStatus.ACTIVE : ServiceStatus.REJECTED 
       },
       { new: true }
-    );
+    ).populate({
+      path: "userId",
+      select: "email businessName"
+    });
 
     if (!updatedService) {
       return NextResponse.json(
@@ -98,21 +101,27 @@ export async function PATCH(request: Request) {
     try {
       const adminInfo = await getAdminInfo();
       if (adminInfo) {
-        const actionType = AdminActionType.SERVICE_STATUS_TOGGLE;
+        const actionType = AdminActionType.SERVICE_VERIFICATION;
         const details = approved 
-          ? `Approved service "${updatedService.title}" (ID: ${serviceId})`
-          : `Rejected service "${updatedService.title}" (ID: ${serviceId})`;
+          ? `Approved service "${updatedService.title}"`
+          : `Rejected service "${updatedService.title}"`;
+
+        // Use salon owner's email as target, fallback to service name if email not available
+        const salonOwner = updatedService.userId as any;
+        const target = salonOwner?.email || `service: ${updatedService.title}`;
 
         logAdminActivity({
           adminId: adminInfo.adminId,
           adminName: adminInfo.adminName,
           adminEmail: adminInfo.adminEmail,
           action: actionType,
-          target: serviceId,
+          target: target,
           details,
           metadata: {
             serviceId,
             serviceName: updatedService.title,
+            salonOwnerEmail: salonOwner?.email,
+            salonBusinessName: salonOwner?.businessName,
             action: approved ? 'approved' : 'rejected',
             previousStatus: 'PENDING',
             newStatus: approved ? 'ACTIVE' : 'REJECTED'
