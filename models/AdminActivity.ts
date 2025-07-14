@@ -12,6 +12,8 @@ export interface IAdminActivity extends Document {
 }
 
 export enum AdminActionType {
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
   NOTIFICATION_SEND = 'NOTIFICATION_SEND',
   SALON_VERIFICATION = 'SALON_VERIFICATION',
   SERVICE_VERIFICATION = 'SERVICE_VERIFICATION',
