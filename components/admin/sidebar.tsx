@@ -107,9 +107,10 @@ export function AdminSidebar() {
         console.error('Failed to log logout activity:', error);
       });
 
-      // Clear login session tracking before signing out
+      // Clear login tracking timestamp when user logs out
+      // This allows immediate login tracking if they sign in again
       if (user?.id) {
-        sessionStorage.removeItem(`admin_login_logged_${user.id}`);
+        localStorage.removeItem(`admin_login_logged_${user.id}`);
       }
 
       await signOut();

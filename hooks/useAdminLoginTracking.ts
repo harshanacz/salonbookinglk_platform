@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 /**
  * Hook to track admin login activity
  * Should be used in admin layout components to track when admins access the system
- * Uses sessionStorage to track login per browser session (not per page refresh)
+ * Uses localStorage with timestamp to track login once per day (24 hours)
  */
 export const useAdminLoginTracking = () => {
   const { user, isLoaded } = useUser();
@@ -12,7 +12,7 @@ export const useAdminLoginTracking = () => {
 
   useEffect(() => {
     const logLoginActivity = async () => {
-      // Only log once per browser session and only for loaded admin users
+      // Only log once per component mount and only for loaded admin users
       if (!isLoaded || !user || hasLoggedActivity.current) {
         return;
       }
@@ -23,14 +23,21 @@ export const useAdminLoginTracking = () => {
         return;
       }
 
-      // Check if we've already logged this browser session
+      // Check if we've already logged within the last 24 hours
       const sessionKey = `admin_login_logged_${user.id}`;
-      const hasLoggedThisSession = sessionStorage.getItem(sessionKey);
-
-      // If already logged in this browser session, don't log again
-      if (hasLoggedThisSession) {
-        hasLoggedActivity.current = true;
-        return;
+      const lastLoginTimestamp = localStorage.getItem(sessionKey);
+      
+      if (lastLoginTimestamp) {
+        const lastLoginTime = new Date(parseInt(lastLoginTimestamp));
+        const currentTime = new Date();
+        const timeDifference = currentTime.getTime() - lastLoginTime.getTime();
+        const hoursElapsed = timeDifference / (1000 * 60 * 60); // Convert to hours
+        
+        // If less than 24 hours have passed, don't log again
+        if (hoursElapsed < 24) {
+          hasLoggedActivity.current = true;
+          return;
+        }
       }
 
       try {
@@ -42,8 +49,9 @@ export const useAdminLoginTracking = () => {
         });
 
         if (response.ok) {
-          // Mark as logged for this browser session
-          sessionStorage.setItem(sessionKey, 'true');
+          // Store current timestamp for this login
+          const currentTimestamp = new Date().getTime().toString();
+          localStorage.setItem(sessionKey, currentTimestamp);
           hasLoggedActivity.current = true;
         }
       } catch (error) {
