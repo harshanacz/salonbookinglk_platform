@@ -77,16 +77,20 @@ export async function PATCH(
     try {
       const adminInfo = await getAdminInfo();
       if (adminInfo) {
+        // Use salon owner's email as target
+        const target = salon.email || `salon: ${salon.userName || salon.businessName || 'Unknown'}`;
+        
         logAdminActivity({
           adminId: adminInfo.adminId,
           adminName: adminInfo.adminName,
           adminEmail: adminInfo.adminEmail,
           action: AdminActionType.SALON_STATUS_TOGGLE,
-          target: salon._id.toString(),
-          details: `${newActiveStatus ? 'Activated' : 'Deactivated'} salon "${salon.userName || salon.email}"`,
+          target: target,
+          details: `${newActiveStatus ? 'Activated' : 'Deactivated'} salon "${salon.userName || salon.businessName || salon.email}"`,
           metadata: {
             salonId: salon._id.toString(),
-            salonName: salon.userName || salon.email,
+            salonName: salon.userName || salon.businessName,
+            salonEmail: salon.email,
             newStatus: newActiveStatus ? 'active' : 'inactive',
             previousStatus: !newActiveStatus ? 'active' : 'inactive'
           }

@@ -101,18 +101,23 @@ export async function PATCH(
       const adminInfo = await getAdminInfo();
       if (adminInfo) {
         const clientName = (appointment.clientId as any)?.userName || 'Unknown Client';
+        const clientEmail = (appointment.clientId as any)?.email;
         const serviceName = (appointment.serviceId as any)?.title || 'Unknown Service';
+        
+        // Use client email as target, fallback to appointment description
+        const target = clientEmail || `appointment: ${clientName} - ${serviceName}`;
         
         logAdminActivity({
           adminId: adminInfo.adminId,
           adminName: adminInfo.adminName,
           adminEmail: adminInfo.adminEmail,
           action: AdminActionType.APPOINTMENT_APPROVAL,
-          target: id,
+          target: target,
           details: `Changed appointment status from ${previousStatus} to ${status} for client ${clientName} (Service: ${serviceName})`,
           metadata: {
             appointmentId: id,
             clientName,
+            clientEmail,
             serviceName,
             previousStatus,
             newStatus: status,

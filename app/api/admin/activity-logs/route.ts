@@ -41,6 +41,7 @@ export async function GET(request: Request) {
     const queryOptions: any = {
       page,
       limit
+      // Remove userType filter so super admins can see all admin activities
     };
 
     if (adminId) queryOptions.adminId = adminId;

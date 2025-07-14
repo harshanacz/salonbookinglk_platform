@@ -21,7 +21,7 @@ export async function getAdminInfo(): Promise<AdminInfo | null> {
     await dbConnect();
     const user = await User.findOne({ clerkUserId: userId });
 
-    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.type)) {
+    if (!user || user.type !== "ADMIN") {
       return null;
     }
 

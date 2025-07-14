@@ -198,26 +198,44 @@ export default function NotificationForm() {
 
       // Log the admin activity
       try {
-        const recipientCount = values.recipientType === "all" 
-          ? "all users"
-          : values.recipientType === "salons"
-          ? values.allSalons 
-            ? "all salons"
-            : values.onlyVerifiedSalons
-            ? "verified salons"
-            : `${values.selectedSalons?.length || 0} selected salons`
-          : values.allClients
-          ? "all clients"
-          : `${values.selectedClients?.length || 0} selected clients`;
+        // Determine the target based on recipient selection
+        let target = "";
+        let recipientCount = "";
+
+        if (values.recipientType === "all") {
+          target = "clients, salons";
+          recipientCount = "all users";
+        } else if (values.recipientType === "salons") {
+          target = "salons";
+          if (values.allSalons) {
+            recipientCount = "all salons";
+          } else if (values.onlyVerifiedSalons) {
+            recipientCount = "verified salons";
+          } else {
+            recipientCount = `${values.selectedSalons?.length || 0} selected salons`;
+          }
+        } else if (values.recipientType === "clients") {
+          target = "clients";
+          if (values.allClients) {
+            recipientCount = "all clients";
+          } else {
+            recipientCount = `${values.selectedClients?.length || 0} selected clients`;
+          }
+        }
 
         await logClientAdminActivity({
           action: 'NOTIFICATION_SEND',
-          target: 'system',
+          target: target,
           details: `Sent notification "${values.title}" to ${recipientCount}`,
           metadata: {
             notificationTitle: values.title,
             recipientType: values.recipientType,
-            recipientCount: recipientCount
+            recipientCount: recipientCount,
+            allSalons: values.allSalons,
+            allClients: values.allClients,
+            onlyVerifiedSalons: values.onlyVerifiedSalons,
+            selectedSalonsCount: values.selectedSalons?.length || 0,
+            selectedClientsCount: values.selectedClients?.length || 0
           }
         });
       } catch (error) {

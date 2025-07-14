@@ -48,6 +48,7 @@ class AdminActivityLogger {
     search?: string;
     page?: number;
     limit?: number;
+    userType?: string; // Filter by user type
   } = {}) {
     try {
       await dbConnect();
@@ -59,7 +60,8 @@ class AdminActivityLogger {
         endDate,
         search,
         page = 1,
-        limit = 50
+        limit = 50,
+        userType
       } = options;
 
       // Build query
@@ -67,6 +69,11 @@ class AdminActivityLogger {
 
       if (adminId) query.adminId = adminId;
       if (action) query.action = action;
+      
+      // Filter by user type if specified
+      if (userType) {
+        query['metadata.userType'] = userType;
+      }
       
       if (startDate || endDate) {
         query.timestamp = {};

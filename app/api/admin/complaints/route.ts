@@ -76,7 +76,7 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const validStatuses = ['PENDING', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED'];
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'UNDER_REVIEW', 'RESOLVED', 'REJECTED', 'CLOSED'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { error: "Invalid status" },
@@ -92,12 +92,15 @@ export async function PATCH(request: NextRequest) {
     try {
       const adminInfo = await getAdminInfo();
       if (adminInfo) {
+        // Use complaint title as target instead of ID
+        const target = `complaint: ${complaintTitle}`;
+        
         logAdminActivity({
           adminId: adminInfo.adminId,
           adminName: adminInfo.adminName,
           adminEmail: adminInfo.adminEmail,
           action: AdminActionType.COMPLAINT_MANAGEMENT,
-          target: complaintId,
+          target: target,
           details: `Changed complaint "${complaintTitle}" status from ${previousStatus} to ${status}`,
           metadata: {
             complaintId,
