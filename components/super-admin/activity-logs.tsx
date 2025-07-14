@@ -109,7 +109,7 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
         params.append('endDate', today.toISOString());
       }
 
-      const response = await fetch(`/api/admin/activity-logs?${params}`);
+      const response = await fetch(`/api/super-admin/activity-logs?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch activities');
       }
@@ -142,7 +142,7 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
   const handleSyncActivities = async () => {
     setSyncing(true);
     try {
-      const response = await fetch('/api/admin/activity-logs', {
+      const response = await fetch('/api/super-admin/activity-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'sync' })
