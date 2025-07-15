@@ -28,49 +28,34 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { action, details, target, metadata } = body;
 
-    // Determine activity type and prepare activity data
-    let activityData;
-    let successMessage;
+    // Handle empty body as LOGIN action (from useAdminLoginTracking)
+    const activityAction = action || AdminActionType.LOGIN;
+    const activityDetails = details || `Admin logged into the system`;
+    const activityTarget = target || 'system';
 
-    if (!action && !details) {
-      // Handle LOGIN action (from useAdminLoginTracking)
-      activityData = {
-        action: AdminActionType.LOGIN,
-        target: 'system',
-        details: `Admin logged into the system`,
-        metadata: {
-          clerkUserId: userId,
-          timestamp: new Date().toISOString(),
-          userType: user.type,
-          loginTime: new Date().toISOString()
-        }
-      };
-      successMessage = "Login activity logged successfully";
-    } else {
-      // Handle general activities (logout, etc.)
-      if (!action || !details) {
-        return NextResponse.json({ error: "Action and details are required" }, { status: 400 });
-      }
-
-      // Validate that the action is a valid AdminActionType
-      const validActions = Object.values(AdminActionType);
-      if (!validActions.includes(action as AdminActionType)) {
-        return NextResponse.json({ error: "Invalid action type" }, { status: 400 });
-      }
-
-      activityData = {
-        action: action as AdminActionType,
-        target: target || 'system',
-        details,
-        metadata: {
-          clerkUserId: userId,
-          timestamp: new Date().toISOString(),
-          userType: user.type,
-          ...metadata
-        }
-      };
-      successMessage = "Activity logged successfully";
+    // Validate that the action is a valid AdminActionType
+    const validActions = Object.values(AdminActionType);
+    if (!validActions.includes(activityAction as AdminActionType)) {
+      return NextResponse.json({ error: "Invalid action type" }, { status: 400 });
     }
+
+    // Prepare unified activity data
+    const activityData = {
+      action: activityAction as AdminActionType,
+      target: activityTarget,
+      details: activityDetails,
+      metadata: {
+        clerkUserId: userId,
+        timestamp: new Date().toISOString(),
+        userType: user.type,
+        ...(activityAction === AdminActionType.LOGIN && { loginTime: new Date().toISOString() }),
+        ...metadata
+      }
+    };
+
+    const successMessage = activityAction === AdminActionType.LOGIN 
+      ? "Login activity logged successfully" 
+      : "Activity logged successfully";
 
     // Log the activity using shared logic
     try {

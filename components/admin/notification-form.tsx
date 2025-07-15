@@ -46,7 +46,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
-import { logClientAdminActivity } from "@/utils/clientActivityLogger";
 
 interface User {
   _id: string;
@@ -223,20 +222,26 @@ export default function NotificationForm() {
           }
         }
 
-        await logClientAdminActivity({
-          action: 'NOTIFICATION_SEND',
-          target: target,
-          details: `Sent notification "${values.title}" to ${recipientCount}`,
-          metadata: {
-            notificationTitle: values.title,
-            recipientType: values.recipientType,
-            recipientCount: recipientCount,
-            allSalons: values.allSalons,
-            allClients: values.allClients,
-            onlyVerifiedSalons: values.onlyVerifiedSalons,
-            selectedSalonsCount: values.selectedSalons?.length || 0,
-            selectedClientsCount: values.selectedClients?.length || 0
-          }
+        await fetch('/api/admin/log-activity', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'NOTIFICATION_SEND',
+            target: target,
+            details: `Sent notification "${values.title}" to ${recipientCount}`,
+            metadata: {
+              notificationTitle: values.title,
+              recipientType: values.recipientType,
+              recipientCount: recipientCount,
+              allSalons: values.allSalons,
+              allClients: values.allClients,
+              onlyVerifiedSalons: values.onlyVerifiedSalons,
+              selectedSalonsCount: values.selectedSalons?.length || 0,
+              selectedClientsCount: values.selectedClients?.length || 0
+            }
+          }),
         });
       } catch (error) {
         console.error('Failed to log admin activity:', error);
@@ -429,7 +434,7 @@ export default function NotificationForm() {
                                   <PopoverTrigger asChild>
                                     <FormControl>
                                       <Button
-                                        variant="outline"
+                                        variant="outlineDate"
                                         role="combobox"
                                         aria-expanded={open}
                                         className="w-full justify-between"

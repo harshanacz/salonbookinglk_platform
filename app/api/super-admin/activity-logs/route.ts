@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import { activityLogger } from "@/lib/adminActivityLogger";
-import AdminActivity, { AdminActionType } from "@/models/AdminActivity";
+import { AdminActionType } from "@/models/AdminActivity";
 
 export const dynamic = "force-dynamic";
 
@@ -70,29 +70,6 @@ export async function GET(request: Request) {
   }
 }
 
-/**
- * POST: Manual operations for activity logs management (Super Admin only)
- * 
- * This endpoint handles various administrative operations on activity logs:
- * 
- * 1. 'sync' action:
- *    - Purpose: Originally designed for syncing between Redis cache and MongoDB
- *    - Current implementation: Since we're using MongoDB-only, it returns current stats
- *    - Returns: Activity statistics for the last 30 days
- *    - Use case: Refresh button in the UI to get latest data
- * 
- * 2. 'cleanup' action:
- *    - Purpose: Remove old activity logs to maintain database performance
- *    - Parameters: daysToKeep (default: 365 days)
- *    - Returns: Number of deleted records
- *    - Use case: Scheduled cleanup or manual database maintenance
- * 
- * 3. 'stats' action:
- *    - Purpose: Get detailed statistics about admin activities
- *    - Parameters: days (default: 30 days)
- *    - Returns: Activity breakdown by action type, admin, etc.
- *    - Use case: Dashboard analytics and reporting
- */
 export async function POST(request: Request) {
   try {
     const { userId } = await auth();
@@ -107,7 +84,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only super admins can perform manual operations
+    // Only super admins can refresh activity logs
     if (user.type !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Access denied: Super Admin required" }, { status: 403 });
     }
@@ -115,58 +92,34 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { action } = body;
 
-    switch (action) {
-      case 'sync':
-        /**
-         * SYNC Operation:
-         * - Originally designed for Redis-to-MongoDB synchronization
-         * - Current behavior: Returns activity statistics as "sync status"
-         * - Fetches stats for the last 30 days to show data freshness
-         * - Used when user clicks "Refresh" button in the UI
-         */
-        const stats = await activityLogger.getActivityStats(30);
-        return NextResponse.json({
-          message: "Activity logs are up to date",
-          stats
-        });
-
-      case 'cleanup':
-        /**
-         * CLEANUP Operation:
-         * - Removes activity logs older than specified days
-         * - Default: Keep 365 days (1 year) of activity logs
-         * - Helps maintain database performance and storage
-         * - Returns count of deleted records for confirmation
-         */
-        const daysToKeep = body.daysToKeep || 365;
-        const deletedCount = await activityLogger.cleanupOldActivities(daysToKeep);
-        return NextResponse.json({
-          message: `Cleaned up ${deletedCount} old activity logs`,
-          deletedCount
-        });
-
-      case 'stats':
-        /**
-         * STATS Operation:
-         * - Provides detailed analytics about admin activities
-         * - Default: Last 30 days, can be customized with 'days' parameter
-         * - Returns breakdown by action types, most active admins, etc.
-         * - Used for dashboard analytics and activity monitoring
-         */
-        const activityStats = await activityLogger.getActivityStats(body.days || 30);
-        return NextResponse.json({ stats: activityStats });
-
-      default:
-        return NextResponse.json(
-          { error: "Invalid action. Supported actions: 'sync', 'cleanup', 'stats'" },
-          { status: 400 }
-        );
+    if (action === 'refresh') {
+      
+      // Automatic cleanup of logs older than 90 days
+      const deletedCount = await activityLogger.cleanupOldActivities(90);
+      
+      // Get current statistics
+      const stats = await activityLogger.getActivityStats(30);
+      
+      return NextResponse.json({
+        message: "Activity logs refreshed successfully",
+        stats,
+        cleanup: {
+          deletedCount,
+          daysKept: 90,
+          message: `Automatically cleaned up ${deletedCount} logs older than 90 days`
+        }
+      });
+    } else {
+      return NextResponse.json(
+        { error: "Invalid action. Only 'refresh' action is supported" },
+        { status: 400 }
+      );
     }
 
   } catch (error) {
     console.error("[SUPER_ADMIN_ACTIVITY_LOGS_POST]", error);
     return NextResponse.json(
-      { error: "Failed to process request" },
+      { error: "Failed to refresh activity logs" },
       { status: 500 }
     );
   }
