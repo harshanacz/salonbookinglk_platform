@@ -79,8 +79,8 @@ export async function GET(
 
       // Count active services for this salon
       activeServices = await Service.countDocuments({
-        salonId: salon._id,
-        isActive: true
+        userId: salon._id,
+        status: "ACTIVE"
       });
     } catch (statsError) {
       console.error("Error calculating salon statistics:", statsError);
@@ -133,23 +133,69 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { status, ...updateData } = body;
+    const { status, isActive, toggleStatus, ...updateData } = body;
 
-    // Find and update the salon
-    const updatedSalon = await User.findByIdAndUpdate(
-      id,
-      { ...updateData, ...(status && { status }) },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedSalon) {
+    // Find the salon first
+    const salon = await User.findById(id);
+    if (!salon) {
       return new NextResponse("Salon not found", { status: 404 });
     }
 
     // Verify that this user is actually a salon owner
-    if (updatedSalon.type !== UserType.SALON_OWNER) {
+    if (salon.type !== UserType.SALON_OWNER) {
       return new NextResponse("User is not a salon owner", { status: 400 });
     }
+
+    let updateFields = { ...updateData };
+    
+    // Handle status updates
+    if (status) {
+      updateFields.status = status;
+    }
+
+    // Handle activation/deactivation
+    if (toggleStatus !== undefined) {
+      updateFields.isActive = toggleStatus;
+      
+      // If deactivating the salon, only deactivate ACTIVE services (keep PENDING as PENDING)
+      if (!toggleStatus) {
+        await Service.updateMany(
+          { userId: salon._id, status: "ACTIVE" },
+          { status: "INACTIVE" }
+        );
+      }
+      // If activating the salon, only reactivate INACTIVE services (keep PENDING as PENDING)
+      else {
+        await Service.updateMany(
+          { userId: salon._id, status: "INACTIVE" },
+          { status: "ACTIVE" }
+        );
+      }
+    } else if (isActive !== undefined) {
+      updateFields.isActive = isActive;
+      
+      // Handle service status changes based on salon activation
+      if (!isActive) {
+        // Only deactivate ACTIVE services, keep PENDING unchanged
+        await Service.updateMany(
+          { userId: salon._id, status: "ACTIVE" },
+          { status: "INACTIVE" }
+        );
+      } else {
+        // Only reactivate INACTIVE services, keep PENDING unchanged
+        await Service.updateMany(
+          { userId: salon._id, status: "INACTIVE" },
+          { status: "ACTIVE" }
+        );
+      }
+    }
+
+    // Find and update the salon
+    const updatedSalon = await User.findByIdAndUpdate(
+      id,
+      updateFields,
+      { new: true, runValidators: true }
+    );
 
     return NextResponse.json(updatedSalon);
   } catch (error) {
@@ -203,6 +249,12 @@ export async function DELETE(
       id,
       { isActive: false },
       { new: true }
+    );
+
+    // Only deactivate ACTIVE services, keep PENDING services unchanged
+    await Service.updateMany(
+      { userId: salon._id, status: "ACTIVE" },
+      { status: "INACTIVE" }
     );
 
     return NextResponse.json({ 

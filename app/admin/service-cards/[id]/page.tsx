@@ -38,6 +38,7 @@ interface SalonUser {
   type: string;
   gender: string;
   country: string;
+  isActive?: boolean;
 }
 
 interface WorkingHour {
@@ -113,6 +114,8 @@ export default function ServiceDetail() {
         }
         
         const data = await response.json();
+        console.log("Service data received:", data);
+        console.log("User status (isActive):", data.userId?.isActive);
         setService(data);
       } catch (err) {
         console.error("Failed to fetch service details:", err);
@@ -389,9 +392,26 @@ export default function ServiceDetail() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
+              {/* Add debugging info to see actual value */}
+              <div className="mr-auto">
+                {service.userId?.isActive === false ? (
+                  <>
+                    <Badge variant="destructive">User Account Inactive</Badge>
+                    <p className="text-sm text-muted-foreground mt-1">Service actions are disabled for inactive users.</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">User status: {service.userId?.isActive === undefined ? "Unknown" : service.userId?.isActive ? "Active" : "Inactive"}</p>
+                )}
+              </div>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="bg-red-50">
+                  <Button 
+                    variant="outline" 
+                    className="bg-red-50"
+                    disabled={service.userId?.isActive === false}
+                    title={service.userId?.isActive === false ? "Cannot reject services from inactive users" : ""}
+                  >
                     <X className="mr-2 h-4 w-4" /> Reject
                   </Button>
                 </AlertDialogTrigger>
@@ -416,7 +436,11 @@ export default function ServiceDetail() {
                 </AlertDialogContent>
               </AlertDialog>
 
-              <Button onClick={handleApprove} disabled={approving}>
+              <Button 
+                onClick={handleApprove} 
+                disabled={approving || service.userId?.isActive === false}
+                title={service.userId?.isActive === false ? "Cannot approve services from inactive users" : ""}
+              >
                 {approving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
