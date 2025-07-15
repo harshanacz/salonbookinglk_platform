@@ -2,6 +2,8 @@ import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function POST(req: Request) {
   try {
@@ -37,6 +39,27 @@ export async function POST(req: Request) {
       await clerk.users.updateUser(clerkUserId, {
         password: newPassword,
       });
+
+      // Log admin activity
+      try {
+        const adminInfo = await getAdminInfo();
+        if (adminInfo) {
+          logAdminActivity({
+            adminId: adminInfo.adminId,
+            adminName: adminInfo.adminName,
+            adminEmail: adminInfo.adminEmail,
+            action: AdminActionType.PASSWORD_CHANGE,
+            target: adminInfo.adminEmail,
+            details: `Admin changed their password`,
+            metadata: {
+              timestamp: new Date().toISOString(),
+              action: 'password_change'
+            }
+          });
+        }
+      } catch (activityError) {
+        console.error('Failed to log admin activity:', activityError);
+      }
 
       return NextResponse.json({ 
         success: true, 

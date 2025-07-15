@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const complaints = [
   {
@@ -92,11 +93,13 @@ const complaints = [
 ];
 
 export default function ComplaintsPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
   const [newStatus, setNewStatus] = useState<string>("");
   const [complaintsData, setComplaintsData] = useState(complaints);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const filteredComplaints = complaintsData.filter(
     (complaint) =>
@@ -105,20 +108,64 @@ export default function ComplaintsPage() {
       complaint.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleStatusUpdate = () => {
+  const handleStatusUpdate = async () => {
     if (!selectedComplaint) return;
-
-    setComplaintsData((prevComplaints) =>
-      prevComplaints.map((complaint) =>
-        complaint.id === selectedComplaint.id
-          ? { ...complaint, status: newStatus }
-          : complaint
-      )
-    );
     
-    // You would typically make an API call here to update the status
-    console.log(`Updated complaint ${selectedComplaint.id} status to ${newStatus}`);
-    setIsStatusDialogOpen(false);
+    setIsUpdating(true);
+    try {
+      // Map UI status to API status
+      const statusMapping: { [key: string]: string } = {
+        'Open': 'PENDING',
+        'In Progress': 'IN_PROGRESS',
+        'Resolved': 'RESOLVED',
+        'Closed': 'CLOSED'
+      };
+
+      const apiStatus = statusMapping[newStatus] || newStatus.toUpperCase().replace(' ', '_');
+
+      const response = await fetch('/api/admin/complaints', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          complaintId: selectedComplaint.id.toString(),
+          status: apiStatus,
+          adminNotes: `Status updated via admin panel`
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update complaint status');
+      }
+
+      const result = await response.json();
+
+      // Update local state
+      setComplaintsData((prevComplaints) =>
+        prevComplaints.map((complaint) =>
+          complaint.id === selectedComplaint.id
+            ? { ...complaint, status: newStatus }
+            : complaint
+        )
+      );
+
+      toast({
+        title: "Success",
+        description: result.message || `Complaint status updated to ${newStatus}`,
+      });
+
+      setIsStatusDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating complaint status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update complaint status. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getStatusStyle = (status: string) => {
@@ -279,10 +326,13 @@ export default function ComplaintsPage() {
             <Button
               variant="outline"
               onClick={() => setIsStatusDialogOpen(false)}
+              disabled={isUpdating}
             >
               Cancel
             </Button>
-            <Button onClick={handleStatusUpdate}>Update Status</Button>
+            <Button onClick={handleStatusUpdate} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Update Status"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
