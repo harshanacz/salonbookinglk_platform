@@ -145,26 +145,26 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
       const response = await fetch('/api/super-admin/activity-logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'sync' })
+        body: JSON.stringify({ action: 'refresh' })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sync activities');
+        throw new Error('Failed to refresh activities');
       }
 
       const result = await response.json();
       toast({
         title: "Success",
-        description: result.message,
+        description: result.message + (result.cleanup?.message ? ` (${result.cleanup.message})` : ''),
       });
 
       // Refresh the activities list
       fetchActivities();
     } catch (error) {
-      console.error('Error syncing activities:', error);
+      console.error('Error refreshing activities:', error);
       toast({
         title: "Error",
-        description: "Failed to sync activities",
+        description: "Failed to refresh activities",
         variant: "destructive",
       });
     } finally {
