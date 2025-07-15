@@ -11,35 +11,45 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  console.log("[ADMIN_SALON_SERVICES_GET] called");
+  console.log("[ADMIN_SALON_SERVICES_GET] called with salon ID:", params.id);
   try {
     // Check if user is authenticated
     const { userId } = await auth();
     if (!userId) {
+      console.log("[ADMIN_SALON_SERVICES_GET] Unauthorized - no userId");
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
     // Connect to database
+    console.log("[ADMIN_SALON_SERVICES_GET] Connecting to database...");
     await dbConnect();
+    console.log("[ADMIN_SALON_SERVICES_GET] Database connected");
 
     // Check if admin user
+    console.log("[ADMIN_SALON_SERVICES_GET] Checking admin user for clerkUserId:", userId);
     const adminUser = await User.findOne({ clerkUserId: userId });
     if (!adminUser || !["ADMIN", "SUPER_ADMIN"].includes(adminUser.type)) {
+      console.log("[ADMIN_SALON_SERVICES_GET] Forbidden - user type:", adminUser?.type);
       return new NextResponse("Forbidden: Admin access required", { status: 403 });
     }
+    console.log("[ADMIN_SALON_SERVICES_GET] Admin user verified:", adminUser.type);
 
     const { id } = params;
     
     // Validate if id is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log("[ADMIN_SALON_SERVICES_GET] Invalid salon ID format:", id);
       return new NextResponse("Invalid salon ID format", { status: 400 });
     }
 
     // Verify the salon exists
+    console.log("[ADMIN_SALON_SERVICES_GET] Looking for salon with ID:", id);
     const salon = await User.findById(id);
     if (!salon || salon.type !== UserType.SALON_OWNER) {
+      console.log("[ADMIN_SALON_SERVICES_GET] Salon not found or wrong type. Found:", salon?.type);
       return new NextResponse("Salon not found", { status: 404 });
     }
+    console.log("[ADMIN_SALON_SERVICES_GET] Salon found:", salon.userName || salon.businessName);
 
     // Get query parameters for pagination and search
     const url = new URL(req.url);
@@ -47,6 +57,8 @@ export async function GET(
     const limit = parseInt(url.searchParams.get("limit") || "10");
     const search = url.searchParams.get("search") || "";
     const skip = (page - 1) * limit;
+
+    console.log("[ADMIN_SALON_SERVICES_GET] Query params - page:", page, "limit:", limit, "search:", search);
 
     // Build query for services
     let query: any = { userId: salon._id };
@@ -60,34 +72,64 @@ export async function GET(
       ];
     }
 
-    // Fetch services for this salon
-    const services = await Service.find(query)
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 })
-      .populate('salonContextId', 'name');
+    console.log("[ADMIN_SALON_SERVICES_GET] Service query:", JSON.stringify(query));
+
+    // Fetch services for this salon with error handling for populate
+    let services;
+    try {
+      console.log("[ADMIN_SALON_SERVICES_GET] Fetching services with populate...");
+      services = await Service.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .populate('salonContextId', 'name')
+        .lean(); // Use lean() for better performance
+      console.log("[ADMIN_SALON_SERVICES_GET] Services fetched successfully, count:", services.length);
+    } catch (populateError) {
+      console.error("[ADMIN_SALON_SERVICES_GET] Populate failed, fetching without populate:", populateError);
+      // Fallback: fetch without populate if populate fails
+      services = await Service.find(query)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean();
+      console.log("[ADMIN_SALON_SERVICES_GET] Services fetched without populate, count:", services.length);
+    }
 
     // Count total services for pagination
+    console.log("[ADMIN_SALON_SERVICES_GET] Counting total services...");
     const total = await Service.countDocuments(query);
+    console.log("[ADMIN_SALON_SERVICES_GET] Total services found:", total);
 
     // Transform services to match the expected format
-    const formattedServices = services.map(service => ({
-      id: service._id.toString(),
-      name: service.title,
-      price: service.price,
-      duration: `${service.duration} minutes`,
-      description: service.description || '',
-      type: service.type,
-      status: service.status,
-      images: service.images,
-      bookings: service.bookings,
-      views: service.views,
-      averageRating: service.averageRating,
-      reviewCount: service.reviewCount,
-      createdAt: service.createdAt,
-      updatedAt: service.updatedAt
-    }));
+    const formattedServices = services.map(service => {
+      // Handle populated salonContextId safely
+      const salonContextName = service.salonContextId && 
+        typeof service.salonContextId === 'object' && 
+        'name' in service.salonContextId 
+          ? (service.salonContextId as any).name 
+          : 'Unknown';
 
+      return {
+        id: service._id.toString(),
+        name: service.title,
+        price: service.price,
+        duration: `${service.duration} minutes`,
+        description: service.description || '',
+        type: service.type,
+        status: service.status,
+        images: service.images || [],
+        bookings: service.bookings || 0,
+        views: service.views || 0,
+        averageRating: service.averageRating || 0,
+        reviewCount: service.reviewCount || 0,
+        salonContext: salonContextName,
+        createdAt: service.createdAt,
+        updatedAt: service.updatedAt
+      };
+    });
+
+    console.log("[ADMIN_SALON_SERVICES_GET] Returning response with", formattedServices.length, "services");
     return NextResponse.json({
       services: formattedServices,
       pagination: {
@@ -98,7 +140,11 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("[ADMIN_SALON_SERVICES_GET]", error);
+    console.error("[ADMIN_SALON_SERVICES_GET] Error details:", {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      salonId: params?.id
+    });
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

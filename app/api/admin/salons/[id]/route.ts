@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Appointment from "@/models/Appointment";
 import Service from "@/models/Service";
+import SalonContext from "@/models/SalonContext";
 import mongoose from "mongoose";
 
 export async function GET(
@@ -35,7 +36,7 @@ export async function GET(
     }
 
     // Find the salon owner by ID
-    const salon = await User.findById(id);
+    const salon: any = await User.findById(id).lean();
     
     if (!salon) {
       return new NextResponse("Salon not found", { status: 404 });
@@ -44,6 +45,14 @@ export async function GET(
     // Verify that this user is actually a salon owner
     if (salon.type !== UserType.SALON_OWNER) {
       return new NextResponse("User is not a salon owner", { status: 400 });
+    }
+
+    // Get the salon context data
+    let salonContext: any = null;
+    try {
+      salonContext = await SalonContext.findOne({ userId: salon._id }).lean();
+    } catch (contextError) {
+      console.error("Error fetching salon context:", contextError);
     }
 
     // Get salon statistics
@@ -87,9 +96,21 @@ export async function GET(
       // Continue without stats if there's an error
     }
 
-    // Return salon data with statistics
+    // Return salon data with statistics and context
     const salonData = {
-      ...salon.toObject(),
+      ...salon,
+      salonContext: salonContext || null,
+      // Add convenient access fields
+      businessName: salonContext?.businessName || salon.userName || 'Unnamed Salon',
+      phoneNumber: salonContext?.phoneNumber || salon.mobileNumber || '',
+      location: salonContext?.location || null,
+      isVerified: salonContext?.isVerified || false,
+      profilePictureUrl: salonContext?.profilePictureUrl || salon.profileImage || '',
+      address: salonContext?.location ? `${salonContext.location.lat}, ${salonContext.location.lng}` : '',
+      description: salonContext?.description || '',
+      website: salonContext?.website || '',
+      ownerName: salonContext?.ownerName || salon.userName || '',
+      businessHours: salonContext?.businessHours || [],
       statistics: {
         totalBookings,
         totalRevenue,

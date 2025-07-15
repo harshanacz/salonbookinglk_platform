@@ -87,11 +87,9 @@ const Page = () => {
         image: salon.profilePictureUrl || salon.profileImage || "",
         email: salon.email || "",
         contactNumber: salon.phoneNumber || salon.mobileNumber || "",
-        location: salon.location
-          ? typeof salon.location === "string"
-            ? salon.location
-            : `${salon.location.lat}, ${salon.location.lng}`
-          : salon.address || "",
+        location: salon.address || 
+          (salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "") ||
+          salon.country || "",
         status: salon.isVerified ? "Approved" : "Pending",
       }));
 
@@ -222,7 +220,7 @@ const Page = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={5} className="text-center py-4">
                       No salons found
                     </TableCell>
                   </TableRow>
