@@ -20,12 +20,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Only log for admin users
-    if (!["ADMIN", "SUPER_ADMIN"].includes(user.type)) {
-      return NextResponse.json({ error: "Not an admin user" }, { status: 403 });
-    }
-
-    // Only track ADMIN user logins (not SUPER_ADMIN)
     if (user.type === "ADMIN") {
       try {
         const adminInfo = await getAdminInfo();
