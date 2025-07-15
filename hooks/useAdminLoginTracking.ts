@@ -41,11 +41,12 @@ export const useAdminLoginTracking = () => {
       }
 
       try {
-        const response = await fetch('/api/admin/login-activity', {
+        const response = await fetch('/api/admin/log-activity', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({}), // Empty body signals login tracking
         });
 
         if (response.ok) {
