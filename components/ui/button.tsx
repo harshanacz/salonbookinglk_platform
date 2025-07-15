@@ -11,7 +11,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-gradient-to-r from-secondary to-primary text-primary-foreground hover:from-secondary/90 hover:to-primary/90 hover:text-white",
         destructive:
-          "bg-red-600 text-white hover:bg-red-500 hover:text-white",
+          "bg-red-700 text-white hover:bg-red-500 hover:text-white",
         outline:
           "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 ",
         success:
