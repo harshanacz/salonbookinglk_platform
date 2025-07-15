@@ -106,7 +106,9 @@ export async function POST(request: Request) {
         cleanup: {
           deletedCount,
           daysKept: 90,
-          message: `Automatically cleaned up ${deletedCount} logs older than 90 days`
+          message: deletedCount > 0 
+            ? `Automatically cleaned up ${deletedCount} logs older than 90 days`
+            : null
         }
       });
     } else {
