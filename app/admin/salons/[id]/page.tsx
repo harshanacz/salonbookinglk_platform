@@ -228,25 +228,22 @@ const SalonDetailPage = () => {
     
     setToggleLoading(true);
     try {
-      const response = await fetch(`/api/admin/salons/${salonId}`, {
-        method: "PUT",
+      const response = await fetch(`/api/admin/salons/${salonId}/toggle-status`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          toggleStatus: !salon.isActive,
-        }),
       });
 
       if (response.ok) {
-        const updatedSalon = await response.json();
-        setSalon(prev => prev ? { ...prev, isActive: updatedSalon.isActive } : null);
+        const result = await response.json();
+        setSalon(prev => prev ? { ...prev, isActive: result.isActive } : null);
         // Refresh services to show updated statuses
         fetchServices(servicesCurrentPage, debouncedSearchTerm);
         
         toast({
           title: "Success",
-          description: `Salon ${updatedSalon.isActive ? 'activated' : 'deactivated'} successfully.`,
+          description: result.message,
         });
       } else {
         throw new Error("Failed to update salon status");
