@@ -120,12 +120,14 @@ const SalonDetailPage = () => {
         // Map the API data to the Salon type
         const formattedSalon: Salon = {
           id: salonData._id,
-          name: salonData.userName || "Unnamed Salon",
-          image: salonData.profileImage || "https://placehold.co/400x400",
+          name: salonData.businessName || salonData.userName || "Unnamed Salon",
+          image: salonData.profilePictureUrl || salonData.profileImage || "https://placehold.co/400x400",
           email: salonData.email || "",
-          contactNumber: salonData.mobileNumber || "",
-          location: salonData.country || "",
-          status: salonData.status || "Pending",
+          contactNumber: salonData.phoneNumber || salonData.mobileNumber || "",
+          location: salonData.address || 
+            (salonData.location ? `${salonData.location.lat}, ${salonData.location.lng}` : "") ||
+            salonData.country || "",
+          status: salonData.isVerified ? "Approved" : "Pending",
           startedDate:
             salonData.createdAt &&
             new Date(salonData.createdAt).toString() !== "Invalid Date"
@@ -403,21 +405,26 @@ const SalonDetailPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Email:</span> {salon.email}
+                <span className="font-medium">Email:</span> {salon.email || "Not provided"}
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Contact:</span>{" "}
-                {salon.contactNumber}
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Location:</span> {salon.location}
+                {salon.contactNumber || "Not provided"}
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">Started:</span>{" "}
-                {salon.startedDate}
+                {salon.startedDate || "Not available"}
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Updated:</span>{" "}
+                {salon.updatedDate || "Not available"}
+              </div>
+              <div className="flex items-center gap-2 md:col-span-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">Location:</span> {salon.location || "Not provided"}
               </div>
             </div>
           </div>
