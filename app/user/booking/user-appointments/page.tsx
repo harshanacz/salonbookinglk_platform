@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ManageAppointmentPopup } from "@/components/user-appointments/manage-appointments";
 import { RescheduleAppointmentPopup } from "@/components/user-appointments/reschedule-appointments";
@@ -47,7 +47,6 @@ const AppointmentSummary = () => {
   const [selectedCard, setSelectedCard] = useState<any>(null);
   
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { moveAppointmentToPast, checkAndMovePastAppointments, loadBookingData } = useAppointmentDataManager();
 
   // Add this function to handle appointment selection
