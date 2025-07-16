@@ -72,9 +72,9 @@ export async function GET() {
       }
     })
     .populate({
-      path: 'clientId',
-      select: 'userName', // Added userName
-      model: 'User'  // Explicitly specify the model
+      path: 'clientId',//field to populate
+      select: 'userName', // Added userName -Fields to select from the referenced document
+      model: 'User'  // Explicitly specify the model-Model to use for population
     })
     .populate({
       path: 'serviceId',
