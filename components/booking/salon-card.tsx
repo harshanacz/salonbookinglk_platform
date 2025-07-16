@@ -70,12 +70,42 @@ const SalonCard = ({
   const formatSelectedDate = () => {
     if (!selectedDate) return "";
     
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth();
-    const day = parseInt(selectedDate);
-    const date = new Date(currentYear, currentMonth, day);
-    
-    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+    try {
+      // Handle both string date formats and day numbers
+      let dateObj;
+      
+      if (typeof selectedDate === 'string') {
+        // If it's a full date string (like "2025-07-15" or an ISO string)
+        if (selectedDate.includes('-') || selectedDate.includes('/')) {
+          dateObj = new Date(selectedDate);
+        } else {
+          // If it's just a day number as before
+          const currentYear = new Date().getFullYear();
+          const currentMonth = new Date().getMonth();
+          const day = parseInt(selectedDate);
+          dateObj = new Date(currentYear, currentMonth, day);
+        }
+      } else {
+        // If it's already a Date object or timestamp
+        dateObj = new Date(selectedDate);
+      }
+      
+      // Check if date is valid
+      if (isNaN(dateObj.getTime())) {
+        console.error("Invalid date:", selectedDate);
+        return "Invalid date";
+      }
+      
+      return dateObj.toLocaleDateString('en-US', { 
+        weekday: 'long',
+        month: 'long', 
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Date error";
+    }
   };
 
   return (
