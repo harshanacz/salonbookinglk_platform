@@ -157,14 +157,13 @@ export default function SalonOwnerProfile() {
     try {
       if (!editingField) return;
       // Determine which table to update
-      if (["ownerName", "email", "phone"].includes(editingField)) {
+      if (["ownerName", "phone"].includes(editingField)) {
         const patch: Partial<UserData> & {
           userName?: string;
           mobileNumber?: string;
         } = {};
         if (editingField === "ownerName") patch.userName = tempValue;
         else if (editingField === "phone") patch.mobileNumber = tempValue;
-        else patch[editingField as keyof UserData] = tempValue;
         const res = await fetch("/api/user", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -388,22 +387,7 @@ export default function SalonOwnerProfile() {
 
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-gray-500" />
-                  {editingField === "email" ? (
-                    <Input
-                      value={tempValue}
-                      onChange={(e) => setTempValue(e.target.value)}
-                      className="flex-1"
-                    />
-                  ) : (
-                    <span>{userData.email}</span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditClick("email")}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <span>{userData.email}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
