@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, MapPin, Share2, Star, Phone, Clock } from "lucide-react";
+import { Heart, MapPin, Share2, Star, Phone, Clock, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
@@ -89,6 +89,7 @@ export default function ServicePage(props: ServicePageProps) {
   const [selectedSalon, setSelectedSalon] = useState<any>(null);
   const [formattedAddress, setFormattedAddress] = useState<string>("");
   const [coordinates, setCoordinates] = useState<{lat: number, lng: number} | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Function to clean up address by removing plus codes
   const cleanAddress = (address: string) => {
@@ -256,6 +257,33 @@ export default function ServicePage(props: ServicePageProps) {
       );
 
       router.push(`/service/${params.id}/time`);
+    }
+  };
+
+  // Handle share functionality
+  const handleShare = async () => {
+    try {
+      const currentUrl = window.location.href;
+      await navigator.clipboard.writeText(currentUrl);
+      setCopied(true);
+      
+      // Reset the copied state after 2 seconds
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     }
   };
 
@@ -486,8 +514,22 @@ export default function ServicePage(props: ServicePageProps) {
                     /> 
                     {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                   </Button>
-                  <Button variant="outline" className="flex-1">
-                    <Share2 className="h-4 w-4 mr-2" /> Share
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={handleShare}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2 text-green-600" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -612,9 +654,22 @@ export default function ServicePage(props: ServicePageProps) {
                   />
                   {isCurrentServiceFavorite ? "Favorited" : "Favorite"}
                 </Button>
-                <Button variant="outline" className="flex-1">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={handleShare}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2 text-green-600" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

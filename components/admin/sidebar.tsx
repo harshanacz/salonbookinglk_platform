@@ -23,6 +23,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { useToast } from "@/hooks/use-toast";
 
 const sidebarItems = [
   {
@@ -83,6 +84,7 @@ export function AdminSidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { toast } = useToast();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -90,10 +92,36 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
+      // Log the logout activity before signing out
+      await fetch('/api/admin/log-activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'LOGOUT',
+          target: 'system',
+          details: 'Admin logged out from the system'
+        }),
+      }).catch(error => {
+        console.error('Failed to log logout activity:', error);
+      });
+
+      // Clear login tracking timestamp when user logs out
+      // This allows immediate login tracking if they sign in again
+      if (user?.id) {
+        localStorage.removeItem(`admin_login_logged_${user.id}`);
+      }
+
       await signOut();
       router.push("/sign-in");
     } catch (err) {
       console.error("Error during logout:", err);
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

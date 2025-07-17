@@ -2,12 +2,14 @@ import mongoose from 'mongoose';
 import User from './User';
 import Service from './Service';
 import Appointment from './Appointment';
+import AdminActivity from './AdminActivity';
 
 // Export all models
 export {
   User,
   Service,
-  Appointment
+  Appointment,
+  AdminActivity
 };
 
 // Helper function to check if a model is registered
@@ -22,7 +24,7 @@ export const getRegisteredModels = (): string[] => {
 
 // Optional: Add a function to ensure models are registered
 export const ensureModelsRegistered = () => {
-  const requiredModels = ['User', 'Service', 'Appointment'];
+  const requiredModels = ['User', 'Service', 'Appointment', 'AdminActivity'];
   const missingModels = requiredModels.filter(model => !isModelRegistered(model));
   
   if (missingModels.length > 0) {
