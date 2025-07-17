@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import TabNavigation from "./components/TabNavigation";
 import BasicDetailsForm from "./components/BasicDetailsForm";
 import PricingForm from "./components/PricingForm";
@@ -11,12 +12,22 @@ import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import ServiceImages from "./components/ServiceImages";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function CreateServicePage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<any>({});
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const { toast } = useToast();
 
   const totalSteps = 4;
@@ -34,7 +45,7 @@ export default function CreateServicePage() {
       return formData.staffAssigned && formData.staffAssigned.length > 0;
     }
     if (currentStep === 4) {
-      return imageUrls.length > 0; // Require at least one image
+      return imageUrls.length > 0; 
     }
     return false;
   };
@@ -66,7 +77,7 @@ export default function CreateServicePage() {
   };
 
   const handleFinalSubmit = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     const finalData = { ...formData, images: imageUrls };
 
     try {
@@ -79,25 +90,19 @@ export default function CreateServicePage() {
       });
 
       if (!response.ok) {
-        // Check content type to handle non-JSON responses
         const contentType = response.headers.get("content-type");
         
         if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
           throw new Error(errorData.message || "Failed to create service");
         } else {
-          // Handle non-JSON responses (like HTML error pages)
           const errorText = await response.text();
           console.error("Server responded with non-JSON content:", errorText);
           throw new Error(`Server error (${response.status}): Please try again later`);
         }
       }
 
-      toast({
-        title: "Success!",
-        description: "Service created successfully and is now pending review.",
-        variant: "default",
-      });
+      setShowSuccessDialog(true);
       setCurrentStep(1);
       setFormData({});
       setImageUrls([]);
@@ -109,8 +114,13 @@ export default function CreateServicePage() {
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false); // Stop loading regardless of outcome
+      setIsLoading(false);
     }
+  };
+
+  const handleDialogClose = () => {
+    setShowSuccessDialog(false);
+    router.push("/salon-owner/services?tab=pending");
   };
 
   const renderStep = () => {
@@ -148,31 +158,42 @@ export default function CreateServicePage() {
     <div className="space-y-8">
       <TabNavigation currentStep={currentStep} setCurrentStep={setCurrentStep} />
 
-      {/* Adjusted container for full-width desktop and centered mobile */}
-      <div
-        className="w-full bg-purple-100 border border-purple-100 rounded-3xl md:rounded-2xl shadow-lg p-4 md:p-8 transition-all duration-200 mx-auto md:mx-0"
-      >
+      <div className="w-full bg-purple-100 border border-purple-100 rounded-3xl md:rounded-2xl shadow-lg p-4 md:p-8 transition-all duration-200 mx-auto md:mx-0">
         {renderStep()}
       </div>
 
       <div className="flex justify-between mt-10">
         <Button
           onClick={handlePrevious}
-          disabled={currentStep === 1 || isLoading} // Disable when loading
+          disabled={currentStep === 1 || isLoading}
           variant="outline"
         >
           Previous
         </Button>
         <Button
           onClick={isLastStep ? handleFinalSubmit : handleNext}
-          disabled={!isStepValid() || isLoading} // Disable when loading
+          disabled={!isStepValid() || isLoading}
         >
           {isLoading && isLastStep ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> // Show loader icon
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : null}
           {isLastStep ? "Save & Submit for Review" : "Next"}
         </Button>
       </div>
+
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Service Submitted Successfully!</DialogTitle>
+            <DialogDescription>
+              Your service has been submitted for review. It will take 1-3 days to be reviewed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleDialogClose}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

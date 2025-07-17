@@ -1,21 +1,24 @@
-import React from 'react';
-import { X, Check, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Check, Clock, Loader2 } from 'lucide-react';
 
 // Define Service interface
 interface Service {
-  id: string;
-  name: string;
+  _id: string;
+  title: string;
   price: number;
   duration: number;
-  timeSlot?: string;
-  professional?: string;
+  type: string;
+  description?: string;
+  images?: string[];
+   salonContextId: string;  
+  status: string;
 }
 
 interface ExtraServicesPopupProps {
   isOpen: boolean;
   onClose: () => void;
   onContinue: () => void;
-  extraServices: Service[];
+  salonId: string;
   selectedExtraServices: Service[];
   onSelectExtraService: (service: Service) => void;
 }
@@ -24,10 +27,49 @@ const ExtraServicesPopup: React.FC<ExtraServicesPopupProps> = ({
   isOpen,
   onClose,
   onContinue,
-  extraServices,
+  salonId,
   selectedExtraServices,
   onSelectExtraService,
 }) => {
+  const [availableServices, setAvailableServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!salonId) {
+        console.error('No salonId provided');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        console.log('Fetching services for salon:', salonId);
+        const response = await fetch(`/api/services/salon/${salonId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load services');
+        }
+
+        const services = data.services || [];
+        console.log('Received services:', services);
+
+        setAvailableServices(services);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError('Failed to load services');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchServices();
+    }
+  }, [isOpen, salonId]);
+
   if (!isOpen) return null;
 
   return (
@@ -45,93 +87,76 @@ const ExtraServicesPopup: React.FC<ExtraServicesPopupProps> = ({
           </button>
         </div>
 
-        {/* Info Section */}
-        <div className="p-4 border-b">
-          <div className="flex items-start mb-4">
-            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center flex-shrink-0 mr-3">
-              <Check size={18} />
-            </div>
-            <div>
-              <p className="text-gray-800 font-medium mb-1">Almost Done!</p>
-              <p className="text-sm text-gray-600">
-                Would you like to add any extra services to your booking? This is optional.
-              </p>
-            </div>
-          </div>
-
-          {/* Selected Services Summary */}
-          {selectedExtraServices.length > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
-              <p className="text-sm text-green-800 font-medium mb-1">
-                {selectedExtraServices.length} extra service{selectedExtraServices.length !== 1 ? 's' : ''} selected
-              </p>
-              <p className="text-xs text-green-700">
-                Total additional: {selectedExtraServices.reduce((sum, service) => sum + service.price, 0).toLocaleString()} LKR
-              </p>
-            </div>
-          )}
-        </div>
-
         {/* Services List */}
         <div className="max-h-60 overflow-y-auto p-4 space-y-3">
-          <p className="font-medium text-gray-700 mb-2">Available Extra Services:</p>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-600 mb-2" />
+              <p className="text-sm text-gray-600">Loading available services...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-red-600">
+              <p>{error}</p>
+            </div>
+          ) : availableServices.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-600">No additional services available</p>
+            </div>
+          ) : (
+            <>
+              <p className="font-medium text-gray-700 mb-2">Available Extra Services:</p>
+              
+              {availableServices.map((service) => {
+                const isSelected = selectedExtraServices.some(s => s._id === service._id);
 
-          {extraServices.map((service) => {
-            const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
-
-            return (
-              <div
-                key={service.id}
-                className={`p-4 rounded-lg border ${
-                  isAlreadySelected
-                    ? "bg-green-50 border-green-200"
-                    : "bg-white border-gray-200 hover:bg-purple-50 hover:border-purple-300 cursor-pointer"
-                } transition-colors`}
-                onClick={() => !isAlreadySelected && onSelectExtraService(service)}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{service.name}</p>
-                    <div className="flex items-center mt-1">
-                      <Clock size={14} className="text-gray-400 mr-1" />
-                      <p className="text-sm text-gray-600 mr-3">{service.duration} mins</p>
-                      <p className="text-sm font-semibold text-purple-700">
-                        LKR {service.price.toLocaleString()}
-                      </p>
+                return (
+                  <div
+                    key={service._id}
+                    className={`p-4 rounded-lg border ${
+                      isSelected
+                        ? "bg-green-50 border-green-200"
+                        : "bg-white border-gray-200 hover:bg-purple-50 hover:border-purple-300 cursor-pointer"
+                    }`}
+                    onClick={() => !isSelected && onSelectExtraService(service)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{service.title}</p>
+                        <div className="flex items-center mt-1">
+                          <Clock size={14} className="text-gray-400 mr-1" />
+                          <p className="text-sm text-gray-600 mr-3">{service.duration} mins</p>
+                          <p className="text-sm font-semibold text-purple-700">
+                            LKR {service.price.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                      {isSelected ? (
+                        <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
+                          <Check size={14} strokeWidth={3} />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
+                      )}
                     </div>
                   </div>
-                  {isAlreadySelected ? (
-                    <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center">
-                      <Check size={14} strokeWidth={3} />
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-300"></div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </>
+          )}
         </div>
 
         {/* Footer Actions */}
         <div className="p-4 border-t bg-gray-50">
-          <div className="flex flex-col space-y-3">
-            <button
-              className="w-full bg-purple-600 text-white py-3 rounded-lg text-base font-medium hover:bg-purple-700 transition-colors"
-              onClick={onContinue}
-            >
-              {selectedExtraServices.length > 0
-                ? "Continue with Selected Extra Services"
-                : "Skip Extra Services"
-              }
-            </button>
-            <button
-              className="text-gray-600 text-sm hover:underline"
-              onClick={onClose}
-            >
-              Go back to time selection
-            </button>
-          </div>
+          <button
+            className="w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50"
+            onClick={onContinue}
+            disabled={loading}
+          >
+            {selectedExtraServices.length > 0
+              ? `Continue with ${selectedExtraServices.length} Extra Services`
+              : "Skip Extra Services"
+            }
+          </button>
         </div>
       </div>
     </div>

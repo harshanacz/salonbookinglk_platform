@@ -2,6 +2,8 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
+import Appointment from "@/models/Appointment";
+import Service from "@/models/Service";
 
 export const dynamic = 'force-dynamic';
 
@@ -46,15 +48,61 @@ export async function GET(req: Request) {
     
     // Count total users for pagination
     const total = await User.countDocuments(query);
-    
-    // Fetch users based on query with pagination
+      // Fetch users based on query with pagination
     const users = await User.find(query)
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
     
+    // For customer users, fetch additional booking information
+    const enhancedUsers = await Promise.all(
+      users.map(async (user) => {
+        // Only calculate booking info for customers
+        if (user.type === UserType.CUSTOMER) {
+          // Count total bookings
+          const totalBookings = await Appointment.countDocuments({
+            clientId: user._id
+          });
+          
+          // Calculate total spent by aggregating service prices from appointments
+          const spending = await Appointment.aggregate([
+            { $match: { clientId: user._id } },
+            { $lookup: {
+                from: "services",
+                localField: "serviceId",
+                foreignField: "_id",
+                as: "service"
+              }
+            },
+            { $unwind: "$service" },
+            { $group: {
+                _id: "$clientId",
+                totalSpent: { $sum: "$service.price" }
+              }
+            }
+          ]);
+          
+          const totalSpent = spending.length > 0 ? spending[0].totalSpent : 0;
+          
+          // Return user with added stats
+          return {
+            ...user.toObject(),
+            totalBookings,
+            totalSpent
+          };
+        }
+        
+        // For non-customers, just return the user without stats
+        return {
+          ...user.toObject(),
+          totalBookings: 0,
+          totalSpent: 0
+        };
+      })
+    );
+    
     return NextResponse.json({
-      users,
+      users: enhancedUsers,
       pagination: {
         total,
         page,

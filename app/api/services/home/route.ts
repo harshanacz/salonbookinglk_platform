@@ -48,22 +48,22 @@ export async function GET() {
       };
     });
 
-    // Sort by popularity (views + bookings)
+    // popularity
     const popularServices = [...transformedServices]
       .sort((a, b) => b.popularityScore - a.popularityScore)
-      .slice(0, 8); // Get top 8 popular services
+      .slice(0, 8); // limit to 8
 
-    // Sort by rating (highest rated first)
+    // Sort by rating
     const topRatedServices = [...transformedServices]
       .sort((a, b) => {
-        // First sort by rating
-        if (b.rating !== a.rating) {
-          return b.rating - a.rating;
-        }
-        // If ratings are the same, sort by number of reviews
-        return b.reviews - a.reviews;
+        // Create a combined score using both rating and review count
+        const scoreA = a.rating + (a.reviews / 100); // Normalize reviews with division
+        const scoreB = b.rating + (b.reviews / 100);
+        
+        // Sort by the combined score (highest first)
+        return scoreB - scoreA;
       })
-      .slice(0, 8); // Get top 8 rated services
+      .slice(0, 8); // Get top 8 
 
     return NextResponse.json({
       popularServices,

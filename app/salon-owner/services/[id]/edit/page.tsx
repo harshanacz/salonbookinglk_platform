@@ -8,16 +8,24 @@ import PricingForm from "../../create/components/PricingForm";
 import StaffForm from "../../create/components/StaffForm";
 import MoreInfoForm from "../../create/components/MoreInfoForm";
 import { Button } from "@/components/ui/button";
-import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import ServiceImages from "../../create/components/ServiceImages";
 
-export default function EditServicePage() {
+export default function EditServicePage() { 
   const { id } = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({
+    title: "",
+    type: "",
+    duration: "",
+    price: "",
+    description: "",
+    staffAssigned: [],
+    images: []
+  });
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -27,45 +35,107 @@ export default function EditServicePage() {
 
   useEffect(() => {
     async function fetchService() {
-      setIsLoading(true);
-      const res = await fetch("/api/salon-owner/services");
-      const data = await res.json();
-      const found = data.find((svc: any) => svc.id === id);
-      if (found) {
+      if (!id) {
+        toast({
+          title: "Error",
+          description: "Service ID is missing",
+          variant: "destructive",
+        });
+        router.push("/salon-owner/services");
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/salon-owner/services/${id}`);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          throw new Error(errorData?.message || `Failed to fetch service (Status: ${res.status})`);
+        }
+
+        const found = await res.json();
+        
+        if (!found) {
+          throw new Error("Service not found");
+        }
+
+        // Ensure staffAssigned is always an array
+        const staffAssigned = Array.isArray(found.staffAssigned) 
+          ? found.staffAssigned 
+          : found.staffAssigned 
+            ? [found.staffAssigned] 
+            : [];
+
+        // Ensure images is always an array
+        const images = Array.isArray(found.images) 
+          ? found.images 
+          : found.image 
+            ? [found.image] 
+            : [];
+
         setFormData({
           ...found,
-          staffAssigned: Array.isArray(found.staffAssigned)
-            ? found.staffAssigned
-            : found.staffAssigned
-            ? [found.staffAssigned]
-            : [],
+          staffAssigned,
+          images
         });
-        setImageUrls(found.images || (found.image ? [found.image] : []));
+        setImageUrls(images);
+      } catch (error: any) {
+        console.error("Error fetching service:", error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load service details",
+          variant: "destructive",
+        });
+        // Only redirect if it's a critical error
+        if (error.message === "Service not found" || error.message.includes("Failed to fetch")) {
+          router.push("/salon-owner/services");
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
-    fetchService();
-  }, [id]);
 
-  // Validation for each step
+    fetchService();
+  }, [id, router, toast]);
+
+  // Enhanced validation for each step
   const isStepValid = () => {
-    if (currentStep === 1) {
-      return formData.title && formData.type;
+    switch (currentStep) {
+      case 1:
+        return Boolean(formData.title?.trim() && formData.type?.trim());
+      case 2:
+        return Boolean(
+          formData.duration && 
+          formData.price && 
+          !isNaN(Number(formData.duration)) && 
+          !isNaN(Number(formData.price))
+        );
+      case 3:
+        return Array.isArray(formData.staffAssigned) && formData.staffAssigned.length > 0;
+      case 4:
+        return Array.isArray(imageUrls) && imageUrls.length > 0;
+      default:
+        return false;
     }
-    if (currentStep === 2) {
-      return formData.duration && formData.price;
-    }
-    if (currentStep === 3) {
-      return formData.staffAssigned && formData.staffAssigned.length > 0;
-    }
-    if (currentStep === 4) {
-      return true;
-    }
-    return false;
   };
 
   const handleNext = () => {
-    if (!isStepValid()) return;
+    if (!isStepValid()) {
+      const errorMessages = {
+        1: "Please fill in all required basic details",
+        2: "Please fill in all required pricing details",
+        3: "Please assign at least one staff member",
+        4: "Please upload at least one image for your service"
+      };
+      
+      toast({
+        title: "Validation Error",
+        description: errorMessages[currentStep as keyof typeof errorMessages],
+        variant: "destructive",
+      });
+      return;
+    }
     if (currentStep < totalSteps) {
       setCurrentStep((prev) => prev + 1);
     }
@@ -78,24 +148,61 @@ export default function EditServicePage() {
   };
 
   const updateFormData = (data: any) => {
-    setFormData((prev: any) => ({ ...prev, ...data }));
+    setFormData((prev: any) => {
+      const updated = { ...prev, ...data };
+      // Ensure staffAssigned is always an array
+      if (data.staffAssigned) {
+        updated.staffAssigned = Array.isArray(data.staffAssigned) 
+          ? data.staffAssigned 
+          : [data.staffAssigned];
+      }
+      return updated;
+    });
   };
 
   const handleFinalSubmit = async () => {
+    if (!isStepValid()) {
+      toast({
+        title: "Validation Error",
+        description: "Please complete all required fields before saving",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSaving(true);
-    const finalData = { ...formData, images: imageUrls, id };
+    const finalData = {
+      ...formData,
+      images: imageUrls,
+      id,
+      // Ensure all required fields are present and properly formatted
+      title: formData.title?.trim(),
+      type: formData.type?.trim(),
+      duration: Number(formData.duration),
+      price: Number(formData.price),
+      description: formData.description?.trim(),
+      staffAssigned: Array.isArray(formData.staffAssigned) ? formData.staffAssigned : []
+    };
+
     try {
-      const response = await fetch("/api/salon-owner/services", {
+      const response = await fetch(`/api/salon-owner/services/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(finalData),
       });
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update service");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to update service");
+        } else {
+          throw new Error(`Server error (${response.status}): Please try again later`);
+        }
       }
+
       toast({
         title: "Success!",
         description: "Service updated successfully.",
@@ -103,6 +210,7 @@ export default function EditServicePage() {
       });
       router.push("/salon-owner/services");
     } catch (error: any) {
+      console.error("[SERVICE_UPDATE]", error);
       toast({
         title: "Error Updating Service",
         description: error.message || "An unexpected error occurred.",
@@ -126,47 +234,16 @@ export default function EditServicePage() {
           <MoreInfoForm formData={formData} updateFormData={updateFormData}>
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-2">Service Images (Max 3)</h3>
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => {
-                  if (res) {
-                    const newUrls = res.map((file) => file.url);
-                    setImageUrls(newUrls.slice(0, 3));
-                    updateFormData({ images: newUrls.slice(0, 3) });
-                    toast({ description: "Image(s) uploaded." });
-                  }
-                }}
-                onUploadError={(error: Error) => {
-                  toast({
-                    title: "Image Upload Error",
-                    description: error.message,
-                    variant: "destructive",
-                  });
+              <ServiceImages
+                images={imageUrls}
+                onImagesChange={(newImages) => {
+                  setImageUrls(newImages);
+                  updateFormData({ images: newImages });
                 }}
               />
-              <div className="mt-4 flex gap-2 flex-wrap">
-                {imageUrls.map((url, index) => (
-                  <div key={index} className="relative w-20 h-20 border rounded overflow-hidden">
-                    <img src={url} alt={`Service Image ${index + 1}`} className="object-cover w-full h-full" />
-                    <span className="absolute top-0 left-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                      {index === 0 ? "Header" : `Image ${index + 1}`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newUrls = imageUrls.filter((_, i) => i !== index);
-                        setImageUrls(newUrls);
-                        updateFormData({ images: newUrls });
-                      }}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-0.5 text-xs"
-                      aria-label="Remove image"
-                    >
-                      X
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">First image will be used as the header image.</p>
+              <p className="text-xs text-gray-500 mt-2">
+                First image is used as the main image. Images up to 4MB, max 3.
+              </p>
             </div>
           </MoreInfoForm>
         );
@@ -175,7 +252,13 @@ export default function EditServicePage() {
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
