@@ -103,7 +103,6 @@ function arrayLimit(val: string[]) {
 
 // Calculate popularity score before saving
 serviceSchema.pre('save', function(next) {
-  // Simple popularity algorithm: (views * 0.3) + (bookings * 0.7)
   this.popularityScore = (this.views * 0.3) + (this.bookings * 0.7);
   next();
 });

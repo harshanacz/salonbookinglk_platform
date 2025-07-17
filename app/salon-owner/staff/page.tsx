@@ -44,7 +44,7 @@ interface StaffMember {
   _id: string;
   name: string;
   profileImage?: string;
-  role: 'senior-stylist' | 'junior-stylist' | 'nail-technician' | 'beautician' | 'massage-therapist';
+  role: string;
   status: 'Active' | 'Inactive';
   availability: 'full-time' | 'part-time' | 'weekends-only';
   createdAt: string;
@@ -183,6 +183,50 @@ export default function StaffManagement() {
                           </Link>
                         </Button>
                       </div>
+                    </TableCell>
+                    <TableCell>{staff.role}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={staff.status === "Active" ? "default" : "secondary"}
+                        className={staff.status === "Active" 
+
+                          ? "bg-green-100 text-green-800 hover:bg-green-100" 
+                          : "bg-red-100 text-red-800 hover:bg-red-100"
+                        }
+                      >
+                        {staff.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{staff.availability}</TableCell>
+                    <TableCell>
+                      {new Date(staff.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/salon-owner/staff/update-attendance?id=${staff._id}`}>
+                              Update Attendance
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/salon-owner/staff/edit/${staff._id}`}>
+                              <Edit className="mr-2 h-4 w-4" /> Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-red-600 cursor-pointer"
+                            onClick={() => handleDelete(staff._id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -1,69 +1,242 @@
 "use client";
 
-import { useState } from "react";
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
-export default function UpdateAttendanceForm() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string>("All Day");
+const attendanceSchema = z.object({
+  date: z.string().min(1, "Please select a date."),
+  timeSlot: z.string().min(1, "Please select a time duration."),
+  status: z.string().min(1, "Please select a status"),
+});
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+type AttendanceFormValues = z.infer<typeof attendanceSchema>;
 
-    if (!selectedDate) {
-      alert("Please select a date.");
-      return;
+interface StaffMember {
+  _id: string;
+  name: string;
+  status: string;
+  attendance?: {
+    date: string;
+    status: string;
+    timeSlot: string;
+  }[];
+}
+
+function UpdateAttendancePage() {
+  const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const staffId = searchParams.get("id");
+  const [staffName, setStaffName] = useState("");
+  const [currentStatus, setCurrentStatus] = useState("Active");
+  const [staff, setStaff] = useState<StaffMember | null>(null);
+
+  const form = useForm<AttendanceFormValues>({
+    resolver: zodResolver(attendanceSchema),
+    defaultValues: {
+      date: new Date().toISOString().split("T")[0],
+      timeSlot: "All Day",
+      status: "Active",
+    },
+  });
+
+  useEffect(() => {
+    const fetchStaffMember = async () => {
+      if (!staffId) return;
+      try {
+        const response = await fetch(`/api/salon-owner/staff/${staffId}`);
+        const data = await response.json();
+        setStaffName(data.name);
+        setStaff(data);
+        setCurrentStatus(data.status);
+
+        const today = new Date().toISOString().split("T")[0];
+        const todayAttendance = data.attendance?.find(
+          (a: any) => a.date === today
+        );
+        if (todayAttendance) {
+          form.setValue("status", todayAttendance.status);
+        } else {
+          form.setValue("status", data.status);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch staff member details",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchStaffMember();
+  }, [staffId, form]);
+
+  const handleDateChange = (date: string) => {
+    if (!staff) return;
+    const attendanceForDate = staff.attendance?.find((a) => a.date === date);
+    form.setValue("status", attendanceForDate?.status || staff.status);
+  };
+
+  const onSubmit = async (data: AttendanceFormValues) => {
+    if (!staffId) return;
+
+    try {
+      const response = await fetch(
+        `/api/salon-owner/staff/${staffId}/attendance`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...data,
+            previousStatus: currentStatus,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update attendance");
+      }
+
+      toast({
+        title: "Success",
+        description: `Attendance status updated for ${data.date}`,
+      });
+
+      router.push("/salon-owner/staff");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update attendance",
+        variant: "destructive",
+      });
     }
-
-    console.log({
-      date: selectedDate.toISOString().split("T")[0],
-      time: selectedTime,
-    });
-
-    alert("Attendance updated successfully!");
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-xl font-semibold text-gray-700 text-center">Update the Attendance</h2>
+    <div className="space-y-6 p-6">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/salon-owner/staff">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <h1 className="text-3xl font-bold">Update Attendance</h1>
+      </div>
 
-        <p className="mt-2 text-gray-600 text-center">Member: <span className="font-bold">Danushka Perera</span></p>
+      <div className="max-w-md mx-auto">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-xl font-semibold">Staff Member</h2>
+              <p className="text-gray-600">{staffName}</p>
+            </div>
 
-        {/* Date Picker */}
-        <label className="block mt-4 text-sm font-medium text-gray-700">Select the Date:</label>
-        <div className="relative mt-1">
-            <input
-                type="date"
-                value={selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
-                onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        handleDateChange(e.target.value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-        </div>
 
-        {/* Time Selection */}
-        <label className="block mt-4 text-sm font-medium text-gray-700">Select the Time Duration:</label>
-        <select
-          value={selectedTime}
-          onChange={(e) => setSelectedTime(e.target.value)}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-        >
-          <option value="All Day">All Day</option>
-          <option value="Morning">Morning</option>
-          <option value="Afternoon">Afternoon</option>
-          <option value="Evening">Evening</option>
-          <option value="Custom">Custom (Specify in notes)</option>
-        </select>
+            <FormField
+              control={form.control}
+              name="timeSlot"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Time Slot</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select time slot" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="All Day">All Day</SelectItem>
+                      <SelectItem value="Morning">Morning</SelectItem>
+                      <SelectItem value="Afternoon">Afternoon</SelectItem>
+                      <SelectItem value="Evening">Evening</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          className="mt-4 w-full bg-purple-500 text-white py-2 rounded-md hover:bg-purple-600 transition"
-        >
-          Update
-        </button>
-      </form>
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Availability Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full">
+              Update Attendance
+            </Button>
+          </form>
+        </Form>
+      </div>
     </div>
+  );
+}
+
+export default function UpdateAttendanceWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UpdateAttendancePage />
+    </Suspense>
   );
 }

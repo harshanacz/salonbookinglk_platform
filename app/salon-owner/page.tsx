@@ -66,8 +66,10 @@ export default function SalonOwnerDashboard() {
       lastMonth: 0,
       today: [] as any[],
     },
+    revenue: { total: 0, percentageChange: 0 },
     popularServices: [] as any[],
     weeklyData: { labels: [], counts: [] },
+    weeklyRevenue: { labels: [], data: [] },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,12 +101,13 @@ export default function SalonOwnerDashboard() {
     router.push("/");
   };
 
+  // Replace the static revenueData with dynamic data
   const revenueData = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: dashboardData.weeklyRevenue.labels,
     datasets: [
       {
         label: "Revenue",
-        data: [1200, 1900, 1500, 2500, 2200, 3000, 2800],
+        data: dashboardData.weeklyRevenue.data,
         backgroundColor: "rgba(75, 192, 192, 0.6)",
       },
     ],
@@ -215,10 +218,15 @@ export default function SalonOwnerDashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">LKR 45,231</div>
+            <div className="text-2xl font-bold">
+              {isLoading ? "Loading..." : `LKR ${dashboardData.revenue?.total.toLocaleString()}`}
+            </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {isLoading ? "Loading..." : 
+                `${dashboardData.revenue?.percentageChange >= 0 ? '+' : ''}${dashboardData.revenue?.percentageChange}% from last month`
+              }
             </p>
+            {error && <p className="text-xs text-red-500">{error}</p>}
           </CardContent>
         </Card>
       </div>
@@ -227,10 +235,16 @@ export default function SalonOwnerDashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Weekly Revenue</CardTitle>
-            <CardDescription>Revenue trend for the past week</CardDescription>
+            <CardDescription>Revenue trend for the current week</CardDescription>
           </CardHeader>
           <CardContent>
-            <Bar data={revenueData} />
+            {!isLoading && dashboardData.weeklyRevenue.data.length > 0 ? (
+              <Bar data={revenueData} />
+            ) : (
+              <div className="text-center text-muted-foreground py-6">
+                No revenue data available
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card>

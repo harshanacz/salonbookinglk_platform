@@ -31,12 +31,17 @@ interface StaffMember {
 }
 
 interface Service {
-  id: string;
-  name: string;
+  _id: string;
+  id?: string;
+  title: string;
+  name?: string;
   price: number;
   duration: number;
+  type: string;
   timeSlot?: string;
   professional?: string;
+  salonContextId: string; // Make this always a string
+  status: string;
 }
 
 interface Salon {
@@ -49,6 +54,8 @@ interface Salon {
   address: string;
   mapLink: string;
   bestSeller?: boolean;
+  _id?: string; // Add salon ID for API calls
+  salonContextId?: string; // Add salonContextId for compatibility
 }
 
 export default function SelectTime() {
@@ -67,8 +74,10 @@ export default function SelectTime() {
   const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>("Any Professional");
   const [mainServices, setMainServices] = useState<Service[]>([]);
   const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
-  const [selectedExtraServices, setSelectedExtraServices] = useState<Service[]>([]);
   const [showPopup, setShowPopup] = useState<boolean>(false);
+  const [selectedExtraServices, setSelectedExtraServices] = useState<Service[]>([]);
+  const [extraServices, setExtraServices] = useState<Service[]>([]);
+  const [loadingExtraServices, setLoadingExtraServices] = useState<boolean>(false);
 
   // Load services and salon info from sessionStorage
   useEffect(() => {
@@ -131,6 +140,46 @@ export default function SelectTime() {
     fetchTimeSlots();
   }, [serviceId, selectedDate, selectedStaff]);
 
+  // Fetch extra services when popup opens
+  const fetchExtraServices = async () => {
+    const salonId = selectedSalon?.salonContextId || params.id;
+    
+    console.log('Fetching extra services for salon:', salonId);
+    
+    if (!salonId) {
+      console.error("No salon ID available");
+      return;
+    }
+
+    setLoadingExtraServices(true);
+    try {
+      const response = await fetch(`/api/services/salon/${salonId}`);
+      const data = await response.json();
+      
+      console.log('Extra services response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load services');
+      }
+      
+      // Filter out the currently selected main service
+      const filteredServices = data.services.filter((service: Service) => 
+        service.salonContextId === salonId && 
+        service.status === "ACTIVE" &&
+        !mainServices.some(main => main._id === service._id)
+      );
+      
+      console.log('Filtered extra services:', filteredServices);
+      setExtraServices(filteredServices);
+      
+    } catch (err) {
+      console.error("Error fetching extra services:", err);
+      setExtraServices([]);
+    } finally {
+      setLoadingExtraServices(false);
+    }
+  };
+
   // Handle date selection
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -173,11 +222,14 @@ export default function SelectTime() {
   };
 
   // Handle booking continue
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedTimeSlot) {
       alert("Please select a time slot before continuing");
       return;
     }
+    
+    // Fetch extra services before showing popup
+    await fetchExtraServices();
     setShowPopup(true);
   };
 
@@ -222,25 +274,8 @@ export default function SelectTime() {
 
   // Handle selecting an extra service
   const handleSelectExtraService = (service: Service) => {
-    const isAlreadySelected = selectedExtraServices.some(s => s.id === service.id);
-
-    if (!isAlreadySelected) {
-      const updatedService = {
-        ...service,
-        timeSlot: format(new Date(), "h:mm a"),
-        professional: selectedProfessionalName
-      };
-
-      setSelectedExtraServices(prev => [...prev, updatedService]);
-    }
+    setSelectedExtraServices(prev => [...prev, service]);
   };
-
-  // Extra services available to add
-  const extraServices: Service[] = [
-    { id: "extra-1", name: "Facial Treatment", duration: 30, price: 2000 },
-    { id: "extra-2", name: "Manicure", duration: 15, price: 1000 },
-    { id: "extra-3", name: "Pedicure", duration: 20, price: 1500 },
-  ];
 
   // Loading state
   if (loading && !availableTimeSlots.length) {
@@ -256,6 +291,28 @@ export default function SelectTime() {
       </div>
     );
   }
+
+  // Debugging info
+  console.log('Current salonId:', {
+    fromParams: params.id,
+    fromSelectedSalon: selectedSalon?.salonContextId,
+    finalId: selectedSalon?.salonContextId || params.id
+  });
+  console.log('Salon details:', {
+    selectedSalon,
+    paramsId: params.id,
+    salonIdUsed: selectedSalon?.salonContextId || params.id
+  });
+  console.log('Debug Salon Info:', {
+    selectedSalon,
+    salonContextId: selectedSalon?.salonContextId,
+    paramsId: params.id,
+    mainServices,
+    extraServices
+  });
+
+  const rawSalonId = selectedSalon?.salonContextId || params.id;
+  const currentSalonId = Array.isArray(rawSalonId) ? rawSalonId[0] : rawSalonId as string;
 
   return (
     <div className="p-4 md:p-8 w-full min-h-screen bg-purple-50 overflow-y-auto pb-24">
@@ -298,8 +355,8 @@ export default function SelectTime() {
             <Card className="p-4 shadow-sm">
               <div className="mb-4">
                 <h3 className="font-medium text-lg flex items-center">
-                  <CalendarIcon className="h-5 w-5 mr-2" /> {/* Change this line */}
-  Select Date
+                  <CalendarIcon className="h-5 w-5 mr-2" />
+                  Select Date
                 </h3>
               </div>
               <Calendar
@@ -387,14 +444,16 @@ export default function SelectTime() {
       </div>
 
       {/* Extra Services Popup Component */}
-      <ExtraServicesPopup
-        isOpen={showPopup}
-        onClose={() => setShowPopup(false)}
-        onContinue={navigateToConfirm}
-        extraServices={extraServices}
-        selectedExtraServices={selectedExtraServices}
-        onSelectExtraService={handleSelectExtraService}
-      />
+      {showPopup && currentSalonId && (
+        <ExtraServicesPopup
+          isOpen={showPopup}
+          onClose={() => setShowPopup(false)}
+          onContinue={navigateToConfirm}
+          salonId={currentSalonId}
+          selectedExtraServices={selectedExtraServices}
+          onSelectExtraService={handleSelectExtraService}
+        />
+      )}
     </div>
   );
 }
