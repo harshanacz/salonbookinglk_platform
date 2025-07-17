@@ -253,7 +253,9 @@ const ConfirmPage = () => {
         staffId: staffMember ? staffMember._id : null,
         paymentMethod: paymentMethod,
         paymentIntentId: paymentIntentId || null,
-        amount: calculateTotal(),
+        amount: calculateTotal(), // Make sure this is passed
+        totalAmount: calculateTotal(), // Add this field specifically
+        paymentStatus: paymentIntentId ? 'completed' : 'pending', // Set proper status
         note: bookingNotes,
         date: selectedDate,
         time: selectedTime

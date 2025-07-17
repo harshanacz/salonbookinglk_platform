@@ -1,5 +1,6 @@
 import { stripe } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
+import Appointment from '@/models/Appointment';
 
 export async function POST(request: NextRequest) {
   const body = await request.text();
@@ -20,13 +21,27 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object as { id: string };
         console.log('Payment succeeded:', paymentIntent.id);
-        // Update booking status in database
+        await Appointment.findOneAndUpdate(
+    { paymentIntentId: paymentIntent.id },
+    { 
+      paymentStatus: 'COMPLETED',
+      appointmentStatus: 'CONFIRMED',
+      updatedAt: new Date()
+    }
+  );
         break;
       
       case 'payment_intent.payment_failed':
         const failedPayment = event.data.object as { id: string };
         console.log('Payment failed:', failedPayment.id);
-        // Handle failed payment
+        await Appointment.findOneAndUpdate(
+    { paymentIntentId: failedPayment.id },
+    { 
+      paymentStatus: 'FAILED',
+      appointmentStatus: 'CANCELLED',
+      updatedAt: new Date()
+    }
+  );
         break;
         
       default:

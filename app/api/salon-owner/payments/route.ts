@@ -1,178 +1,132 @@
 import { NextRequest, NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
-import { auth } from "@clerk/nextjs/server";
-import Appointment from "@/models/Appointment";
+import AppointmentModel from "@/models/Appointment";
+import SalonContext from "@/models/SalonContext";
+import User from "@/models/User";
 import mongoose from "mongoose";
 
-// Define types for better type safety
-interface PaymentRecord {
-  id: string;
-  client: string;
-  service: string;
-  amount: number;
-  date: Date;
-  status: 'Pending' | 'Completed' | 'Failed';
-  method: string;
-  appointmentId: string;
-  createdAt: Date;
-}
 
-// Define appointment interface for better type safety
-interface AppointmentDocument {
-  _id: mongoose.Types.ObjectId;
-  userId?: {
-    name?: string;
-    email?: string;
-  };
-  services?: Array<{
-    title?: string;
-    price?: number;
-    duration?: number;
-  }>;
-  appointmentDate?: Date;
-  paymentStatus?: 'Pending' | 'Completed' | 'Failed';
-  paymentMethod?: string;
-  createdAt?: Date;
-  salonContextId?: string;
-  status?: string;
-}
-
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const { userId } = await auth();
+    await dbConnect();
     
-    if (!userId) {
+    const clerkUser = await currentUser();
+    if (!clerkUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    console.log("[Salon Payments] Current user:", clerkUser.id);
 
-    // Fetch appointments with payment details
-    const appointments = await Appointment.find({ 
-      salonContextId: userId,
-      status: { $ne: 'CANCELLED' }
+    // Find the current user in the database
+    const currentDbUser = await User.findOne({ clerkUserId: clerkUser.id });
+    if (!currentDbUser) {
+      console.log("[Salon Payments] User not found in database");
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    console.log("[Salon Payments] Found DB user:", currentDbUser._id);
+
+    // Get all appointments where this user is the salon owner
+    // Note: appointments have salonId pointing to the salon owner's user ID
+    const appointments = await AppointmentModel.find({
+      salonId: currentDbUser._id
     })
-    .populate('userId', 'name email')
     .populate({
-      path: 'services',
-      select: 'title price duration'
+      path: 'clientId',
+      select: 'userName email'
+    })
+    .populate({
+      path: 'serviceId', 
+      select: 'name price'
     })
     .sort({ createdAt: -1 });
 
-    // Transform appointments into payment records with proper error handling
-    const payments: PaymentRecord[] = appointments.map((apt: any) => {
-      try {
-        // Safely handle services array
-        const services = Array.isArray(apt.services) ? apt.services : [];
-        
-        // Calculate total amount with proper type checking
-        const totalAmount = services.reduce((sum: number, service: any) => {
-          const price = service && typeof service.price === 'number' ? service.price : 0;
-          return sum + price;
-        }, 0);
+    console.log("[Salon Payments] Found appointments:", appointments.length);
 
-        // Safely extract service names
-        const serviceNames = services
-          .map((service: any) => service && service.title ? service.title : 'Unknown Service')
-          .join(', ') || 'No Services';
-
-        return {
-          id: apt._id ? apt._id.toString() : '',
-          client: apt.userId?.name || 'Unknown Client',
-          service: serviceNames,
-          amount: totalAmount,
-          date: apt.appointmentDate || new Date(),
-          status: apt.paymentStatus || 'Pending',
-          method: apt.paymentMethod || 'Venue',
-          appointmentId: apt._id ? apt._id.toString() : '',
-          createdAt: apt.createdAt || new Date()
-        };
-      } catch (mappingError) {
-        console.error('Error mapping appointment:', apt._id, mappingError);
-        // Return a safe fallback object
-        return {
-          id: apt._id ? apt._id.toString() : '',
-          client: 'Unknown Client',
-          service: 'Error loading services',
-          amount: 0,
-          date: new Date(),
-          status: 'Failed' as const,
-          method: 'Unknown',
-          appointmentId: apt._id ? apt._id.toString() : '',
-          createdAt: new Date()
-        };
-      }
+    // Transform appointments to payment format
+    const payments = appointments.map(appointment => {
+      const clientData = appointment.clientId as any;
+      const serviceData = appointment.serviceId as any;
+      
+    return {
+      id: (appointment._id as mongoose.Types.ObjectId).toString(),
+      appointmentId: (appointment._id as mongoose.Types.ObjectId).toString(),
+      client: clientData?.userName || 'Unknown Client',
+      clientEmail: clientData?.email || 'No email',
+      service: serviceData?.name || 'Unknown Service',
+      amount: serviceData?.price || 0,
+      date: appointment.date ? appointment.date.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      status: getPaymentStatus((appointment as any).paymentStatus, (appointment as any).paymentMethod),
+      method: getPaymentMethodDisplay((appointment as any).paymentMethod),
+      paymentIntentId: (appointment as any).paymentIntentId || null,
+      note: (appointment as any).note || '',
+      createdAt: appointment.createdAt ? appointment.createdAt.toISOString() : new Date().toISOString()
+    };
     });
 
-    const stats = calculatePaymentStats(payments);
+    console.log("[Salon Payments] Transformed payments:", payments.length);
 
-    return NextResponse.json({
-      success: true,
+    return NextResponse.json({ 
       payments,
-      stats
+      total: payments.length 
     });
 
   } catch (error) {
-    console.error("Error fetching payments:", error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch payments"
-    }, { status: 500 });
+    console.error("[Salon Payments] Error fetching payments:", error);
+    return NextResponse.json(
+      { 
+        error: "Failed to fetch payments", 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
 
-function calculatePaymentStats(payments: PaymentRecord[]) {
-  const today = new Date();
-  const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+function getPaymentStatus(paymentStatus?: string, paymentMethod?: string): string {
+  // Handle undefined/null values
+  if (!paymentStatus && !paymentMethod) {
+    return 'Pending';
+  }
 
-  const completedPayments = payments.filter(p => p.status === 'Completed');
-  const pendingPayments = payments.filter(p => p.status === 'Pending');
-  const failedPayments = payments.filter(p => p.status === 'Failed');
-
-  return {
-    totalRevenue: completedPayments.reduce((sum, p) => sum + p.amount, 0),
-    pendingPayments: pendingPayments.reduce((sum, p) => sum + p.amount, 0),
-    completedPayments: completedPayments.length,
-    failedPayments: failedPayments.length,
-    pendingCount: pendingPayments.length,
-    revenueChange: calculateRevenueChange(payments, lastMonth),
-    completedChange: calculateCompletedChange(payments, lastMonth),
-    failedChange: calculateFailedChange(payments, lastMonth)
-  };
+  // If payment method is venue (cash), always pending until confirmed
+  if (paymentMethod === 'VENUE' || paymentMethod === 'venue') {
+    return 'Pending';
+  }
+  
+  // Check payment status
+  switch (paymentStatus?.toLowerCase()) {
+    case 'completed':
+    case 'success':
+    case 'succeeded':
+      return 'Completed';
+    case 'pending':
+      return 'Pending';
+    case 'failed':
+    case 'canceled':
+      return 'Failed';
+    default:
+      return 'Pending';
+  }
 }
 
-function calculateRevenueChange(payments: PaymentRecord[], lastMonth: Date): string {
-  const currentMonthPayments = payments.filter(p => 
-    new Date(p.date) > lastMonth && p.status === 'Completed');
-  const lastMonthPayments = payments.filter(p => 
-    new Date(p.date) <= lastMonth && p.status === 'Completed');
+function getPaymentMethodDisplay(paymentMethod?: string): string {
+  if (!paymentMethod) {
+    return 'Unknown';
+  }
 
-  const currentRevenue = currentMonthPayments.reduce((sum, p) => sum + p.amount, 0);
-  const lastRevenue = lastMonthPayments.reduce((sum, p) => sum + p.amount, 0);
-
-  return calculatePercentageChange(currentRevenue, lastRevenue);
-}
-
-function calculateCompletedChange(payments: PaymentRecord[], lastMonth: Date): string {
-  const currentCompleted = payments.filter(p => 
-    new Date(p.date) > lastMonth && p.status === 'Completed').length;
-  const lastCompleted = payments.filter(p => 
-    new Date(p.date) <= lastMonth && p.status === 'Completed').length;
-
-  return calculatePercentageChange(currentCompleted, lastCompleted);
-}
-
-function calculateFailedChange(payments: PaymentRecord[], lastMonth: Date): string {
-  const currentFailed = payments.filter(p => 
-    new Date(p.date) > lastMonth && p.status === 'Failed').length;
-  const lastFailed = payments.filter(p => 
-    new Date(p.date) <= lastMonth && p.status === 'Failed').length;
-
-  return calculatePercentageChange(currentFailed, lastFailed);
-}
-
-function calculatePercentageChange(current: number, previous: number): string {
-  if (previous === 0) return current > 0 ? "+100%" : "0%";
-  const change = ((current - previous) / previous) * 100;
-  return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  switch (paymentMethod.toUpperCase()) {
+    case 'VENUE':
+      return 'Cash at Venue';
+    case 'CARD_PAYMENT':
+    case 'CARD':
+      return 'Credit Card';
+    case 'CASH':
+      return 'Cash';
+    case 'STRIPE':
+      return 'Credit Card (Stripe)';
+    default:
+      return paymentMethod;
+  }
 }

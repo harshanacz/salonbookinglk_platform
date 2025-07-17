@@ -180,16 +180,16 @@ export async function POST(req: NextRequest) {
 
     // Build appointment data with valid ObjectIds
     const appointmentData = {
-      salonId: new mongoose.Types.ObjectId(salonId),
+       salonId: new mongoose.Types.ObjectId(salonId),
       salonContextId: salonContext._id,
-      clientId: currentDbUser._id, // Use the authenticated user's ID instead of passed clientId
+      clientId: currentDbUser._id,
       serviceId: new mongoose.Types.ObjectId(serviceId),
       date: new Date(date),
       time: timeAsNumber,
       paymentIntentId,
-      totalAmount,
-      paymentStatus: paymentStatus || 'pending',
-      paymentMethod: paymentMethod, // Use the PaymentMethod value directly
+      totalAmount: totalAmount || data.amount, // Add total amount
+      paymentStatus: paymentStatus || (paymentMethod === PaymentMethod.VENUE ? 'pending' : 'completed'),
+      paymentMethod: paymentMethod,
       note: note || "",
       status: AppointmentStatus.CONFIRMED,
     };
