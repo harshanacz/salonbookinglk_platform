@@ -19,7 +19,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Eye, User, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Eye,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import {
   Select,
@@ -38,6 +45,7 @@ type Salon = {
   contactNumber: string;
   location: string;
   status: string;
+  isActive: boolean;
 };
 
 interface PaginationInfo {
@@ -57,12 +65,14 @@ const Page = () => {
     total: 0,
     page: 1,
     limit: 10,
-    pages: 0
+    pages: 0,
   });
   const fetchSalons = async (page = 1) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/admin/salons?page=${page}&limit=${pagination.limit}`);
+      const response = await fetch(
+        `/api/admin/salons?page=${page}&limit=${pagination.limit}`
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch salons");
@@ -77,9 +87,9 @@ const Page = () => {
         image: salon.profilePictureUrl || salon.profileImage || "",
         email: salon.email || "",
         contactNumber: salon.phoneNumber || salon.mobileNumber || "",
-        location: salon.location ? 
-          (typeof salon.location === 'string' ? salon.location : `${salon.location.lat}, ${salon.location.lng}`) : 
-          salon.address || "",
+        location: salon.address || 
+          (salon.location ? `${salon.location.lat}, ${salon.location.lng}` : "") ||
+          salon.country || "",
         status: salon.isVerified ? "Approved" : "Pending",
       }));
 
@@ -210,7 +220,7 @@ const Page = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={5} className="text-center py-4">
                       No salons found
                     </TableCell>
                   </TableRow>
@@ -222,7 +232,9 @@ const Page = () => {
         {!isLoading && !error && pagination.pages > 1 && (
           <CardFooter className="flex justify-between items-center">
             <div className="text-sm text-muted-foreground">
-              Showing {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} salons
+              Showing {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} salons
             </div>
             <div className="flex items-center space-x-2">
               <Button

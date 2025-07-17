@@ -195,6 +195,58 @@ export default function NotificationForm() {
 
       const data = await response.json();
 
+      // Log the admin activity
+      try {
+        // Determine the target based on recipient selection
+        let target = "";
+        let recipientCount = "";
+
+        if (values.recipientType === "all") {
+          target = "clients, salons";
+          recipientCount = "all users";
+        } else if (values.recipientType === "salons") {
+          target = "salons";
+          if (values.allSalons) {
+            recipientCount = "all salons";
+          } else if (values.onlyVerifiedSalons) {
+            recipientCount = "verified salons";
+          } else {
+            recipientCount = `${values.selectedSalons?.length || 0} selected salons`;
+          }
+        } else if (values.recipientType === "clients") {
+          target = "clients";
+          if (values.allClients) {
+            recipientCount = "all clients";
+          } else {
+            recipientCount = `${values.selectedClients?.length || 0} selected clients`;
+          }
+        }
+
+        await fetch('/api/admin/log-activity', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'NOTIFICATION_SEND',
+            target: target,
+            details: `Sent notification "${values.title}" to ${recipientCount}`,
+            metadata: {
+              notificationTitle: values.title,
+              recipientType: values.recipientType,
+              recipientCount: recipientCount,
+              allSalons: values.allSalons,
+              allClients: values.allClients,
+              onlyVerifiedSalons: values.onlyVerifiedSalons,
+              selectedSalonsCount: values.selectedSalons?.length || 0,
+              selectedClientsCount: values.selectedClients?.length || 0
+            }
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to log admin activity:', error);
+      }
+
       toast({
         title: "Notification Sent",
         description: "Your notification has been sent successfully.",
@@ -382,7 +434,7 @@ export default function NotificationForm() {
                                   <PopoverTrigger asChild>
                                     <FormControl>
                                       <Button
-                                        variant="outline"
+                                        variant="outlineDate"
                                         role="combobox"
                                         aria-expanded={open}
                                         className="w-full justify-between"
