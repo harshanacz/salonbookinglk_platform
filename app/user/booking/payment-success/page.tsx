@@ -1,12 +1,12 @@
 // app/payment-success/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
 
-const PaymentSuccessPage = () => {
+const PaymentSuccessContent = () => {
   const [paymentIntentId, setPaymentIntentId] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,6 +58,27 @@ const PaymentSuccessPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const PaymentSuccessPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center">
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="flex justify-center mb-6">
+              <CheckCircle className="h-16 w-16 text-green-500" />
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Loading...
+            </h1>
+          </div>
+        </div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 };
 

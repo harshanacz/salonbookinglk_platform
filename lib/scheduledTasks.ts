@@ -9,14 +9,16 @@ async function cleanupTimeSlots() {
     // Clean up staff time slots
     const staffMembers = await Staff.find({});
     for (const staff of staffMembers) {
-      await staff.cleanupTimeSlots();
+      staff.cleanupTimeSlots();
+      await staff.save();
     }
     console.log(`[Scheduled Task] Cleaned up time slots for ${staffMembers.length} staff members`);
 
     // Clean up salon time slots
     const salons = await SalonContext.find({});
     for (const salon of salons) {
-      await salon.cleanupTimeSlots();
+      salon.cleanupTimeSlots();
+      await salon.save();
     }
     console.log(`[Scheduled Task] Cleaned up time slots for ${salons.length} salons`);
 
