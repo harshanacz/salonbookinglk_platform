@@ -54,22 +54,58 @@ const AppointmentSummary = () => {
     setLatestAppointment(appointment);
   };
 
-  // Load data from storage when component mounts
-  useEffect(() => {
+  // Fetch real past appointments from database
+  const fetchPastAppointments = async () => {
     try {
-      // Load past appointments from localStorage
+      const response = await fetch('/api/user/past-appointments');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched past appointments:', data);
+        
+        // Transform API response to match the expected format
+        const transformedAppointments: PastAppointment[] = data.pastAppointments.map((appointment: any) => ({
+          id: appointment.appointmentId,
+          appointmentId: appointment.appointmentId,
+          serviceId: appointment.serviceId,
+          salonId: appointment.salonId,
+          name: appointment.name,
+          salonName: appointment.salonName,
+          price: appointment.price,
+          date: appointment.date,
+          image: appointment.image,
+          status: appointment.status,
+          time: appointment.time,
+          currentRating: appointment.currentRating
+        }));
+        
+        setPastAppointments(transformedAppointments);
+      } else {
+        console.error('Failed to fetch past appointments');
+        // Fallback to localStorage as backup
+        const savedPastAppointments = localStorage.getItem("pastAppointments");
+        if (savedPastAppointments) {
+          const pastApps = JSON.parse(savedPastAppointments);
+          const uniquePastApps = removeDuplicatePastAppointments(pastApps);
+          setPastAppointments(uniquePastApps);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching past appointments:', error);
+      // Fallback to localStorage as backup
       const savedPastAppointments = localStorage.getItem("pastAppointments");
       if (savedPastAppointments) {
         const pastApps = JSON.parse(savedPastAppointments);
-        // Remove duplicates before setting state
         const uniquePastApps = removeDuplicatePastAppointments(pastApps);
         setPastAppointments(uniquePastApps);
-        
-        // Update localStorage with cleaned data
-        if (uniquePastApps.length !== pastApps.length) {
-          localStorage.setItem("pastAppointments", JSON.stringify(uniquePastApps));
-        }
       }
+    }
+  };
+
+  // Load data from storage when component mounts
+  useEffect(() => {
+    try {
+      // Fetch real past appointments from API
+      fetchPastAppointments();
 
       // Load upcoming appointments from localStorage
       const savedUpcomingAppointments = localStorage.getItem("upcomingAppointments");
@@ -140,6 +176,7 @@ const AppointmentSummary = () => {
           const newAppointment: Appointment = {
             id: Date.now().toString(),
             salon: bookingData.salon.name,
+            salonId: bookingData.salon.id || bookingData.salon._id, // Include salon ID
             date: appointmentDate,
             price: totalPrice,
             image: bookingData.salon.image,
