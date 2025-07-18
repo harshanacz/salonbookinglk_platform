@@ -299,6 +299,71 @@ const ConfirmPage = () => {
       }
       
       console.log("Booking successful:", result);
+
+       if (paymentMethod === PaymentMethod.VENUE) {
+      try {
+        console.log('Creating bill for venue payment...');
+        // Get customer name from session storage or use a default
+        const customerData = sessionStorage.getItem("customerData");
+        let customerName = "Guest Customer";
+        
+        if (customerData) {
+      try {
+        const customer = JSON.parse(customerData);
+        customerName = customer.name || customer.firstName || customer.email || "Guest Customer";
+      } catch (e) {
+        console.error('Error parsing customer data:', e);
+      }
+    }
+    if (!customerName || customerName === "Guest Customer") {
+      // You might have user data in a different location, check your app's user management
+      const userData = sessionStorage.getItem("user");
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          customerName = user.name || user.firstName || customerName;
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
+      }
+    }
+    if (!customerName || customerName === "Guest Customer") {
+      customerName = "Test Customer " + Date.now();
+    }
+        
+        const billData = {
+          customerName: customerName,
+          services: selectedServices.map(service => service.name),
+          date: selectedDate,
+          time: selectedTime,
+          amount: calculateTotal(),
+          paymentMethod: "Cash/Venue",
+          status: "pending",
+          salonId: salonUserId.toString(),
+          appointmentId: result.appointmentId,
+        };
+        console.log('Bill data to be sent:', billData);
+         const billResponse = await fetch('/api/bills', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(billData),
+        });
+        const billResult = await billResponse.json();
+    console.log('Bill response:', billResult);
+        
+       if (billResponse.ok) {
+      console.log("✅ Bill created successfully for salon owner");
+      alert("Booking confirmed! A bill has been created for the salon owner.");
+    } else {
+      console.error("❌ Failed to create bill for salon owner:", billResult);
+    }
+  } catch (billError) {
+    console.error("Error creating bill:", billError);
+    // Don't block the appointment creation if bill creation fails
+  }
+    }
       
       // Store final booking data for access on appointment/payment pages
       const finalBookingData = {
