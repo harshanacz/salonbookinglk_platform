@@ -82,6 +82,12 @@ export async function GET(request: NextRequest) {
           options: { strictPopulate: false },
         }
       })
+      .populate({
+        path: "salonContextId",
+        select: "businessName",
+        model: SalonContext,
+        options: { strictPopulate: false },
+      })
       .sort({ date: 1, time: 1 })
       .skip(skip)
       .limit(limit)
