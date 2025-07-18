@@ -25,7 +25,6 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch staff members
         const staffResponse = await fetch('/api/salon-owner/staff');
         if (!staffResponse.ok) {
           throw new Error('Failed to fetch staff members');
@@ -33,7 +32,6 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
         const staffData = await staffResponse.json();
         setStaff(staffData);
 
-        // Fetch salon context
         const salonResponse = await fetch('/api/salon-owner/salon-profile');
         if (!salonResponse.ok) {
           throw new Error('Failed to fetch salon context');
@@ -51,7 +49,6 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
   }, []);
 
   const handleAnyStaffSelect = () => {
-    // If "Any" is selected, clear all other selections
     updateFormData({ staffAssigned: ['any'] });
     setShowValidation(false);
   };
@@ -61,10 +58,8 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
     let newSelection: string[];
 
     if (currentSelection.includes(id)) {
-      // Remove the staff member if already selected
       newSelection = currentSelection.filter((staffId: string) => staffId !== id);
     } else {
-      // Add the staff member to selection
       newSelection = [...currentSelection, id];
     }
 
@@ -113,7 +108,6 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
         <p className="text-sm text-red-500 mt-1">* Required - Please select at least one option to proceed</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full justify-items-center">
-        {/* "Any" option */}
         <label className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
           isAnySelected ? 'border-purple-600' : 'border-gray-200'
         } ${hasStaffSelected ? 'opacity-50 cursor-not-allowed' : ''}`}>
@@ -136,7 +130,6 @@ export default function StaffForm({ formData, updateFormData }: StaffFormProps) 
           <span className="text-xs">Select</span>
         </label>
 
-        {/* Staff members */}
         {staff.map((person) => (
           <label key={person._id} className={`flex flex-col items-center gap-2 p-2 border rounded cursor-pointer w-full max-w-[150px] ${
             formData.staffAssigned?.includes(person._id) ? 'border-purple-600' : 'border-gray-200'

@@ -49,6 +49,7 @@
     "cmdk": "1.0.4",
     "date-fns": "latest",
     "embla-carousel-react": "8.5.1",
+    "html2canvas": "^1.4.1",
     "immer": "latest",
     "input-otp": "1.4.1",
     "install": "^0.13.0",

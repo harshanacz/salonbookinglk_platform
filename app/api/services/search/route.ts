@@ -19,7 +19,6 @@ export async function GET(request: NextRequest) {
     
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q") || "";
-    const location = searchParams.get("location") || "";
     
     // Build query filters
     const filters: any = {
@@ -72,8 +71,6 @@ export async function GET(request: NextRequest) {
           ? user.businessName
           : "Unknown Salon",
         salonContextId: service.salonContextId ? service.salonContextId.toString() : null,
-        location: salonContext?.location || { lat: 0, lng: 0 },
-        address: salonContext?.description || "Location not specified",
         rating: service.averageRating || 4.5,
         reviews: service.reviewCount || 0,
         type: service.type,
@@ -89,4 +86,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

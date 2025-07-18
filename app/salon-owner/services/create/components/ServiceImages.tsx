@@ -4,7 +4,7 @@ import React from "react";
 import { UploadButton } from "@/lib/uploadthing";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Star, Trash2, Upload } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 interface ServiceImagesProps {
@@ -121,4 +121,4 @@ export default function ServiceImages({ images, onImagesChange }: ServiceImagesP
       </div>
     </div>
   );
-} 
+}

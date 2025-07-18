@@ -16,8 +16,10 @@ import { AddAdminForm } from "@/components/super-admin/add-admin-form";
 import { UserCog, Activity, UserPlus, LogOut } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SuperAdminDashboard() {
+  const { toast } = useToast();
   const [selectedAdmin, setSelectedAdmin] = useState<string | null>(null);
   const [selectedAdminName, setSelectedAdminName] = useState<string | null>(
     null
