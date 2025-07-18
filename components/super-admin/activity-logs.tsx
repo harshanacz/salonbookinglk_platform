@@ -43,7 +43,7 @@ interface ActivityLogsResponse {
   page: number;
   limit: number;
   pages: number;
-  source: 'redis' | 'mongodb';
+  source: 'mongodb';
 }
 
 type ActivityLogsProps = {
