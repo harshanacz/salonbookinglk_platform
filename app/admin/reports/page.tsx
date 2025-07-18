@@ -328,7 +328,7 @@ export default function AdminReportsPage() {
             }`;
       await generatePdf(reportContentRef.current, {
         filename,
-        title: "Salon Booking Report", 
+        title: "SalonBooking.lk - Report", 
         subtitle,
         dateRange: {
           from: dateRange.from,
@@ -478,23 +478,16 @@ export default function AdminReportsPage() {
           {showSummaryTable && (
             <div className="mb-2">
               <div className="text-center mb-1 pdf-header">
-                <h2 className="text-sm font-bold">SalonBooking.lk</h2>
-                <p className="text-xs text-muted-foreground">
-                  Website: www.salonbooking.lk
-                </p>
+                <h2 className="text-3xl font-bold">SalonBooking.lk - Report</h2>
               </div>
               <div className="text-center mb-2">
-                <h3 className="text-sm font-bold">Salon Booking Report</h3>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-lg font-medium text-muted-foreground">
                   {selectedSalon === "all"
                     ? "Report for All Salons"
                     : `Report for ${
                         reportData?.salons.find((s) => s.id === selectedSalon)
                           ?.name
-                      }`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Period: {format(dateRange.from, "LLL dd, y")} -{" "}
+                      }`} - Period: {format(dateRange.from, "LLL dd, y")} -{" "}
                   {dateRange.to
                     ? format(dateRange.to, "LLL dd, y")
                     : format(new Date(), "LLL dd, y")}
