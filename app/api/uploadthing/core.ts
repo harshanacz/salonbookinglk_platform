@@ -33,6 +33,22 @@ export const ourFileRouter = {
       // !!! Whatever is returned here is sent to the clientside `onClientUploadComplete` callback
       return { uploadedBy: metadata.userId };
     }),
+  
+  // Document uploader for salon verification
+  documentUploader: f({
+    pdf: { maxFileSize: "8MB", maxFileCount: 1 },
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(async ({ req }) => {
+      const user = await auth(req);
+      if (!user) throw new UploadThingError("Unauthorized");
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log("Document upload complete for userId:", metadata.userId);
+      console.log("Document file url", file.url);
+      return { uploadedBy: metadata.userId, fileUrl: file.url };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter; 
