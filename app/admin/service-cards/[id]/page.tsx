@@ -38,6 +38,7 @@ interface SalonUser {
   type: string;
   gender: string;
   country: string;
+  isActive?: boolean;
 }
 
 interface WorkingHour {
@@ -113,6 +114,8 @@ export default function ServiceDetail() {
         }
         
         const data = await response.json();
+        console.log("Service data received:", data);
+        console.log("User status (isActive):", data.userId?.isActive);
         setService(data);
       } catch (err) {
         console.error("Failed to fetch service details:", err);
@@ -265,9 +268,7 @@ export default function ServiceDetail() {
           <Card>
             <CardHeader>
               <CardTitle>Service Details</CardTitle>
-              <CardDescription>
-                Submitted by {service.userId?.businessName || "Unknown Salon"}
-              </CardDescription>
+             
             </CardHeader>
             <CardContent className="space-y-6">
               {service.images && service.images.length > 0 ? (
@@ -333,6 +334,33 @@ export default function ServiceDetail() {
                   {service.staffAssigned && service.staffAssigned.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {service.staffAssigned.map((staffId, index) => {
+                        if (staffId === 'any') {
+                          return (
+                            <div key={index} className="col-span-full">
+                              <h4 className="text-md font-medium mb-2">All Staff Members</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {service.staffDetails?.map((staffMember, staffIndex) => (
+                                  <div key={staffIndex} className="flex items-center gap-4 p-4 bg-muted rounded-md">
+                                    <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                                      <Image
+                                        src={staffMember.profileImage || "/placeholder-user.jpg"}
+                                        alt={staffMember.name}
+                                        fill
+                                        className="object-cover"
+                                      />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{staffMember.name}</p>
+                                      <p className="text-sm text-muted-foreground">{staffMember.role}</p>
+                                      <p className="text-sm text-muted-foreground">{staffMember.availability}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        
                         const staffMember = service.staffDetails?.find(s => s._id === staffId);
                         return (
                           <div key={index} className="flex items-center gap-4 p-4 bg-muted rounded-md">
@@ -345,7 +373,7 @@ export default function ServiceDetail() {
                               />
                             </div>
                             <div>
-                              <p className="font-medium">{staffMember?.name || (staffId === 'any' ? 'Any Staff Member' : staffId)}</p>
+                              <p className="font-medium">{staffMember?.name || staffId}</p>
                               {staffMember && (
                                 <>
                                   <p className="text-sm text-muted-foreground">{staffMember.role}</p>
@@ -364,9 +392,26 @@ export default function ServiceDetail() {
               </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
+              {/* Add debugging info to see actual value */}
+              <div className="mr-auto">
+                {service.userId?.isActive === false ? (
+                  <>
+                    <Badge variant="destructive">User Account Inactive</Badge>
+                    <p className="text-sm text-muted-foreground mt-1">Service actions are disabled for inactive users.</p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">User status: {service.userId?.isActive === undefined ? "Unknown" : service.userId?.isActive ? "Active" : "Inactive"}</p>
+                )}
+              </div>
+              
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="bg-red-50">
+                  <Button 
+                    variant="outline" 
+                    className="bg-red-50"
+                    disabled={service.userId?.isActive === false}
+                    title={service.userId?.isActive === false ? "Cannot reject services from inactive users" : ""}
+                  >
                     <X className="mr-2 h-4 w-4" /> Reject
                   </Button>
                 </AlertDialogTrigger>
@@ -391,7 +436,11 @@ export default function ServiceDetail() {
                 </AlertDialogContent>
               </AlertDialog>
 
-              <Button onClick={handleApprove} disabled={approving}>
+              <Button 
+                onClick={handleApprove} 
+                disabled={approving || service.userId?.isActive === false}
+                title={service.userId?.isActive === false ? "Cannot approve services from inactive users" : ""}
+              >
                 {approving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -566,13 +615,13 @@ export default function ServiceDetail() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
+            {/* <CardFooter className="flex justify-between">
               <Button variant="outline" asChild>
                 <Link href={`/admin/salons/${service.userId?._id}`}>
                   <Briefcase className="mr-2 h-4 w-4" /> View Complete Salon Profile
                 </Link>
               </Button>
-            </CardFooter>
+            </CardFooter> */}
           </Card>
         </TabsContent>
       </Tabs>

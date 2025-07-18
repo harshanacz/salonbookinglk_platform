@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,9 +23,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Download } from "lucide-react";
+import { CalendarIcon, Download, Loader2 } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { Bar, Line, Pie } from "react-chartjs-2";
+import { generatePdf } from "@/utils/generatePdf"; 
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -51,7 +52,38 @@ ChartJS.register(
   Legend
 );
 
+interface Salon {
+  id: string;
+  name: string;
+}
+
+interface ReportData {
+  stats: {
+    totalRevenue: number;
+    totalAppointments: number;
+    activeSalons: number;
+    newSalonsThisMonth: number;
+    customerSatisfaction: number;
+  };
+  appointmentsData: {
+    confirmed: number;
+    pending: number;
+    completed: number;
+    cancelled: number;
+  };
+  popularServices: Array<{
+    title: string;
+    count: number;
+  }>;
+  revenueData: Array<{
+    month: string;
+    revenue: number;
+  }>;
+  salons: Salon[];
+}
+
 export default function AdminReportsPage() {
+  // States
   const [dateRange, setDateRange] = useState<{
     from: Date;
     to: Date | undefined;
@@ -59,6 +91,14 @@ export default function AdminReportsPage() {
     from: subDays(new Date(), 30),
     to: new Date(),
   });
+  const [selectedSalon, setSelectedSalon] = useState<string>("all");
+  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [showSummaryTable, setShowSummaryTable] = useState(false);
+  const reportContentRef = useRef<HTMLDivElement>(null);
 
   // Replace CSS variables with direct color values
   const siteColors = {
@@ -69,41 +109,106 @@ export default function AdminReportsPage() {
     accent3: "#06B6D4", // Cyan
     danger: "#EF4444", // Red
   };
+  useEffect(() => {
+    fetchReportData();
+    // Only fetch again when salon changes, not on date range changes
+    // Date range changes will be applied when the Apply button is clicked
+  }, [selectedSalon]);
+  const fetchReportData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const from = dateRange.from.toISOString();
+      const to = dateRange.to
+        ? dateRange.to.toISOString()
+        : new Date().toISOString();
 
+      const url = `/api/admin/reports?from=${from}&to=${to}&salonId=${selectedSalon}`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch report data");
+      }
+
+      const data = await response.json();
+      setReportData(data);
+    } catch (err) {
+      console.error("Error fetching report data:", err);
+      setError("Failed to load report data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if the current date range is different from the default (last 30 days)
+  const isCustomDateRange = () => {
+    const defaultStartDate = subDays(new Date(), 30);
+    const defaultEndDate = new Date();
+
+    // Reset time parts for accurate comparison
+    defaultStartDate.setHours(0, 0, 0, 0);
+    defaultEndDate.setHours(0, 0, 0, 0);
+
+    const currentStartDate = new Date(dateRange.from);
+    currentStartDate.setHours(0, 0, 0, 0);
+
+    // If no end date or different start date, it's custom
+    if (!dateRange.to) return true;
+
+    const currentEndDate = new Date(dateRange.to);
+    currentEndDate.setHours(0, 0, 0, 0);
+
+    return (
+      currentStartDate.getTime() !== defaultStartDate.getTime() ||
+      currentEndDate.getTime() !== defaultEndDate.getTime()
+    );
+  };
+
+  // Prepare chart data from API response
   const revenueData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+    labels: reportData?.revenueData.map((item) => item.month) || [],
     datasets: [
       {
         label: "Revenue",
-        data: [12000, 19000, 15000, 25000, 22000, 30000],
+        data: reportData?.revenueData.map((item) => item.revenue) || [],
         backgroundColor: siteColors.secondary.replace("0.8", "0.6"),
         borderColor: siteColors.secondary,
       },
     ],
   };
 
-  const appointmentsData = {
-    labels: ["Confirmed", "Pending", "Completed", "Cancelled"],
-    datasets: [
-      {
-        data: [300, 50, 100, 20],
-        backgroundColor: [
-          siteColors.accent1,
-          siteColors.accent2,
-          siteColors.primary,
-          siteColors.danger,
+  const appointmentsData = reportData
+    ? {
+        labels: ["Confirmed", "Pending", "Completed", "Cancelled"],
+        datasets: [
+          {
+            data: [
+              reportData.appointmentsData.confirmed,
+              reportData.appointmentsData.pending,
+              reportData.appointmentsData.completed,
+              reportData.appointmentsData.cancelled,
+            ],
+            backgroundColor: [
+              siteColors.accent1,
+              siteColors.accent2,
+              siteColors.primary,
+              siteColors.danger,
+            ],
+            borderWidth: 1,
+          },
         ],
-        borderWidth: 1,
-      },
-    ],
-  };
+      }
+    : {
+        labels: ["Confirmed", "Pending", "Completed", "Cancelled"],
+        datasets: [{ data: [0, 0, 0, 0], backgroundColor: [], borderWidth: 1 }],
+      };
 
   const popularServicesData = {
-    labels: ["Haircut", "Coloring", "Manicure", "Pedicure", "Facial"],
+    labels: reportData?.popularServices.map((service) => service.title) || [],
     datasets: [
       {
         label: "Bookings",
-        data: [120, 80, 60, 50, 40],
+        data: reportData?.popularServices.map((service) => service.count) || [],
         borderColor: siteColors.secondary,
         backgroundColor: siteColors.secondary.replace("0.8", "0.2"),
         tension: 0.1,
@@ -114,10 +219,22 @@ export default function AdminReportsPage() {
   // Chart options for controlling size
   const pieChartOptions = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "right" as const,
+        labels: {
+          padding: 20,
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        padding: 10,
+        bodyFont: {
+          size: 12,
+        },
       },
     },
   };
@@ -125,6 +242,34 @@ export default function AdminReportsPage() {
   // Add additional options for better bar chart appearance
   const barChartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      tooltip: {
+        padding: 10,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          display: true,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+    },
+  };
+
+  // Line chart options
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top" as const,
@@ -137,23 +282,96 @@ export default function AdminReportsPage() {
     },
   };
 
+  // Function to handle PDF export
+  const handleExportPdf = async () => {
+    if (!reportContentRef.current || !reportData) return;
+
+    try {
+      setIsPdfLoading(true);
+
+      // Create a summary object with all string values
+      const summary = {
+        "Total Revenue": `LKR ${reportData.stats.totalRevenue.toLocaleString()}`,
+        "Total Appointments": reportData.stats.totalAppointments.toLocaleString(),
+        "Active Salons": reportData.stats.activeSalons.toString(),
+        "New Salons This Month": reportData.stats.newSalonsThisMonth.toString(),
+        "Customer Satisfaction": `${reportData.stats.customerSatisfaction}/5`,
+      };
+
+      // Show summary table before generating PDF
+      setShowSummaryTable(true);
+
+      // Wait a moment for the table to render
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Generate the file name based on date range and salon
+      const fromDate = format(dateRange.from, "yyyy-MM-dd");
+      const toDate = dateRange.to
+        ? format(dateRange.to, "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd");
+
+      const salonName =
+        selectedSalon === "all"
+          ? "All-Salons"
+          : reportData.salons
+              .find((s) => s.id === selectedSalon)
+              ?.name.replace(/\s+/g, "-") || selectedSalon;
+
+      const filename = `SalonBooking-Report-${salonName}-${fromDate}-to-${toDate}.pdf`;
+
+      // Generate the subtitle based on salon selection
+      const subtitle =
+        selectedSalon === "all"
+          ? "Report for All Salons"
+          : `Report for ${
+              reportData.salons.find((s) => s.id === selectedSalon)?.name
+            }`;
+      await generatePdf(reportContentRef.current, {
+        filename,
+        title: "Salon Booking Report", 
+        subtitle,
+        dateRange: {
+          from: dateRange.from,
+          to: dateRange.to,
+        },
+        summary,
+        companyDetails: {
+          name: "SalonBooking.lk",
+          website: "www.salonbooking.lk",
+        },
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    } finally {
+      // Hide summary table after PDF generation
+      setShowSummaryTable(false);
+      setIsPdfLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Reports</h1>
-        <Button>
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
+        <Button
+          onClick={handleExportPdf}
+          disabled={loading || !reportData || isPdfLoading}
+        >
+          {isPdfLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Download className="mr-2 h-4 w-4" />
+          )}
+          {isPdfLoading ? "Generating PDF..." : "Export Report"}
         </Button>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <Popover>
+      </div>{" "}
+      <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline2"
+              variant={isCustomDateRange() ? "default" : "outline"}
               size="lg"
-              className="justify-start text-left font-normal"
+              className="justify-start text-left font-normal w-full md:w-auto"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {dateRange.from ? (
@@ -171,130 +389,372 @@ export default function AdminReportsPage() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange.from}
-              selected={dateRange}
-              onSelect={(range) => {
-                if (range?.from && range?.to) {
-                  setDateRange({ from: range.from, to: range.to });
-                }
-              }}
-              numberOfMonths={2}
-            />
+            <div className="space-y-3">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange.from}
+                selected={dateRange}
+                onSelect={(range) => {
+                  // Handle partial selections too, so users can see the "from" date even before selecting "to"
+                  if (range?.from) {
+                    setDateRange({
+                      from: range.from,
+                      to: range.to || dateRange.to,
+                    });
+                  }
+                }}
+                numberOfMonths={2}
+              />
+              <div className="flex items-center justify-end gap-2 px-3 pb-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDateRange({
+                      from: subDays(new Date(), 30),
+                      to: new Date(),
+                    });
+                    setIsCalendarOpen(false);
+                  }}
+                >
+                  Reset
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCalendarOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    fetchReportData();
+                    setIsCalendarOpen(false);
+                  }}
+                >
+                  Apply
+                </Button>
+              </div>{" "}
+            </div>
           </PopoverContent>
         </Popover>
-        <Select defaultValue="all">
-          <SelectTrigger className="w-[180px]">
+        <Select value={selectedSalon} onValueChange={setSelectedSalon}>
+          <SelectTrigger className="w-full md:w-[220px]">
             <SelectValue placeholder="Select salon" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Salons</SelectItem>
-            <SelectItem value="salon1">Salon Elegance</SelectItem>
-            <SelectItem value="salon2">Beauty Hub</SelectItem>
-            <SelectItem value="salon3">Glamour Studio</SelectItem>
+            {reportData?.salons.map((salon) => (
+              <SelectItem key={salon.id} value={salon.id}>
+                {salon.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">LKR 123,456</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Appointments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">
-              +15% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Active Salons</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">48</div>
-            <p className="text-xs text-muted-foreground">+3 new this month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Customer Satisfaction
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">4.8/5</div>
-            <p className="text-xs text-muted-foreground">
-              Based on 1,023 reviews
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="revenue">
-        <TabsList>
-          <TabsTrigger value="revenue">Revenue</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-          <TabsTrigger value="services">Popular Services</TabsTrigger>
-        </TabsList>
-        <TabsContent value="revenue">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>
-                Monthly revenue across all salons
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Bar data={revenueData} options={barChartOptions} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="appointments">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appointment Statistics</CardTitle>
-              <CardDescription>
-                Distribution of appointments by status
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center items-center">
-                <div className="w-96 h-96">
-                  <Pie data={appointmentsData} options={pieChartOptions} />
-                </div>
+        <Button variant="outline" onClick={fetchReportData} disabled={loading}>
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+          ) : (
+            <span className="mr-2">↻</span>
+          )}
+          Refresh
+        </Button>
+      </div>{" "}
+      {loading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-3">Loading report data...</span>
+        </div>
+      ) : error ? (
+        <div className="bg-destructive/10 p-4 rounded-md text-destructive">
+          {error}
+        </div>
+      ) : (
+        <div ref={reportContentRef} className="space-y-6">
+          {/* Company Header (Only visible when generating PDF) */}{" "}
+          {showSummaryTable && (
+            <div className="mb-2">
+              <div className="text-center mb-1 pdf-header">
+                <h2 className="text-sm font-bold">SalonBooking.lk</h2>
+                <p className="text-xs text-muted-foreground">
+                  Website: www.salonbooking.lk
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="services">
-          <Card>
-            <CardHeader>
-              <CardTitle>Popular Services</CardTitle>
-              <CardDescription>Top 5 most booked services</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Line data={popularServicesData} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="text-center mb-2">
+                <h3 className="text-sm font-bold">Salon Booking Report</h3>
+                <p className="text-xs text-muted-foreground">
+                  {selectedSalon === "all"
+                    ? "Report for All Salons"
+                    : `Report for ${
+                        reportData?.salons.find((s) => s.id === selectedSalon)
+                          ?.name
+                      }`}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Period: {format(dateRange.from, "LLL dd, y")} -{" "}
+                  {dateRange.to
+                    ? format(dateRange.to, "LLL dd, y")
+                    : format(new Date(), "LLL dd, y")}
+                </p>
+              </div>
+              <div className="border rounded-md p-2 mb-3 pdf-section">
+                <h4 className="font-medium mb-2">Summary</h4>
+                <table className="w-full pdf-report-table">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2">Metric</th>
+                      <th className="text-right py-2">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="py-2">Total Revenue</td>
+                      <td className="text-right py-2">
+                        LKR {reportData?.stats.totalRevenue.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2">Total Appointments</td>
+                      <td className="text-right py-2">
+                        {reportData?.stats.totalAppointments.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2">Active Salons</td>
+                      <td className="text-right py-2">
+                        {reportData?.stats.activeSalons}
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2">New Salons This Month</td>
+                      <td className="text-right py-2">
+                        {reportData?.stats.newSalonsThisMonth}
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2">Customer Satisfaction</td>
+                      <td className="text-right py-2">
+                        {reportData?.stats.customerSatisfaction}/5
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              {reportData?.appointmentsData &&
+                Object.values(reportData.appointmentsData).some(
+                  (val) => val > 0
+                ) && (
+                  <div className="border rounded-md p-2 mb-3 pdf-section">
+                    <h4 className="font-medium mb-2">Appointment Statistics</h4>
+                    <table className="w-full pdf-report-table">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2">Status</th>
+                          <th className="text-right py-2">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr className="border-b">
+                          <td className="py-2">Confirmed</td>
+                          <td className="text-right py-2">
+                            {reportData.appointmentsData.confirmed}
+                          </td>
+                        </tr>
+                        <tr className="border-b">
+                          <td className="py-2">Pending</td>
+                          <td className="text-right py-2">
+                            {reportData.appointmentsData.pending}
+                          </td>
+                        </tr>
+                        <tr className="border-b">
+                          <td className="py-2">Completed</td>
+                          <td className="text-right py-2">
+                            {reportData.appointmentsData.completed}
+                          </td>
+                        </tr>
+                        <tr className="border-b">
+                          <td className="py-2">Cancelled</td>
+                          <td className="text-right py-2">
+                            {reportData.appointmentsData.cancelled}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}{" "}
+              {reportData?.popularServices &&
+                reportData.popularServices.length > 0 && (
+                  <div className="border rounded-md p-2 mb-3 pdf-section">
+                    <h4 className="font-medium mb-2">Popular Services</h4>
+                    <table className="w-full pdf-report-table">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2">Service</th>
+                          <th className="text-right py-2">Bookings</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportData.popularServices.map((service, index) => (
+                          <tr key={index} className="border-b">
+                            <td className="py-2">{service.title}</td>
+                            <td className="text-right py-2">{service.count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              <div className="text-center text-xs text-muted-foreground mt-2 pdf-footer">
+                <p>
+                  © {new Date().getFullYear()} SalonBooking.lk | Generated on{" "}
+                  {format(new Date(), "PP")}
+                </p>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  LKR {reportData?.stats.totalRevenue.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For the selected period
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Appointments
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData?.stats.totalAppointments.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  For the selected period
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Salons
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData?.stats.activeSalons}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  +{reportData?.stats.newSalonsThisMonth} new this month
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Customer Satisfaction
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {reportData?.stats.customerSatisfaction}/5
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Based on customer reviews
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          <Tabs defaultValue="revenue">
+            <TabsList>
+              <TabsTrigger value="revenue">Revenue</TabsTrigger>
+              <TabsTrigger value="appointments">Appointments</TabsTrigger>
+              <TabsTrigger value="services">Popular Services</TabsTrigger>
+            </TabsList>
+            <TabsContent value="revenue">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Overview</CardTitle>
+                  <CardDescription>
+                    Monthly revenue{" "}
+                    {selectedSalon === "all"
+                      ? "across all salons"
+                      : "for selected salon"}
+                  </CardDescription>
+                </CardHeader>{" "}
+                <CardContent>
+                  {reportData?.revenueData.length ? (
+                    <div className="w-full h-[400px]">
+                      <Bar data={revenueData} options={barChartOptions} />
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center py-12 text-muted-foreground">
+                      No revenue data available for the selected period
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="appointments">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Appointment Statistics</CardTitle>
+                  <CardDescription>
+                    Distribution of appointments by status
+                  </CardDescription>
+                </CardHeader>{" "}
+                <CardContent>
+                  {Object.values(reportData?.appointmentsData || {}).some(
+                    (val) => val > 0
+                  ) ? (
+                    <div className="w-full h-[400px] flex justify-center items-center">
+                      <Pie data={appointmentsData} options={pieChartOptions} />
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center py-12 text-muted-foreground">
+                      No appointment data available for the selected period
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="services">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Popular Services</CardTitle>
+                  <CardDescription>Top 5 most booked services</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportData?.popularServices.length ? (
+                    <div className="w-full h-[400px]">
+                      <Line
+                        data={popularServicesData}
+                        options={lineChartOptions}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center py-12 text-muted-foreground">
+                      No service data available for the selected period
+                    </div>
+                  )}
+                </CardContent>{" "}
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
     </div>
   );
 }
