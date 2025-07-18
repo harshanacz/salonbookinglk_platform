@@ -87,7 +87,7 @@ interface ISalonContext extends Document {
   }>;
   profilePictureUrl?: string;
   timeSlots: ITimeSlot[];
-  cleanupTimeSlots(): Promise<ISalonContext>;
+  cleanupTimeSlots(): ISalonContext;
 }
 
 const salonContextSchema = new mongoose.Schema(
@@ -166,12 +166,18 @@ salonContextSchema.methods.cleanupTimeSlots = function(this: ISalonContext) {
     const slotDate = new Date(slot.start_time);
     return slotDate >= now;
   });
-  return this.save();
+  // Don't call save() here to prevent recursive save issues
+  return this;
 };
 
 // Pre-save middleware to automatically clean up old time slots
 salonContextSchema.pre('save', function(this: ISalonContext, next) {
-  this.cleanupTimeSlots();
+  // Clean up old time slots without triggering another save
+  const now = new Date();
+  this.timeSlots = this.timeSlots.filter((slot: ITimeSlot) => {
+    const slotDate = new Date(slot.start_time);
+    return slotDate >= now;
+  });
   next();
 });
 
