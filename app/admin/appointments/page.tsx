@@ -48,10 +48,18 @@ interface Appointment {
   serviceId: {
     _id: string;
     title: string;
+    userId?: {
+      _id: string;
+      businessName: string;
+    };
     // price: number;
     // duration: number;
   };
-  salonId: {
+  salonId?: {
+    _id: string;
+    businessName: string;
+  };
+  salonContextId?: {
     _id: string;
     businessName: string;
   };
@@ -111,10 +119,14 @@ export default function AdminAppointmentsPage() {
   const filteredAppointments = appointments.filter((appointment) => {
     const clientName = `${appointment.clientId?.userName }`.toLowerCase();
     const serviceName = (appointment.serviceId?.title || '').toLowerCase();
+    const salonName = (appointment.salonContextId?.businessName || 
+                      appointment.serviceId?.userId?.businessName || 
+                      appointment.salonId?.businessName || '').toLowerCase();
     
     return !searchQuery ||
       clientName.includes(searchQuery.toLowerCase()) ||
-      serviceName.includes(searchQuery.toLowerCase());
+      serviceName.includes(searchQuery.toLowerCase()) ||
+      salonName.includes(searchQuery.toLowerCase());
   });
 
   const handleStatusChange = (value: string) => {
@@ -144,7 +156,7 @@ export default function AdminAppointmentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search appointments..."
+                placeholder="Search by client, service, or salon..."
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -217,7 +229,12 @@ export default function AdminAppointmentsPage() {
                     <TableRow key={appointment._id}>
                       <TableCell>{appointment.clientId.userName}</TableCell>
                       <TableCell>{appointment.serviceId.title}</TableCell>
-                      <TableCell>{appointment.salonId?.businessName || 'N/A'}</TableCell>
+                      <TableCell>
+                        {appointment.salonContextId?.businessName || 
+                         appointment.serviceId.userId?.businessName || 
+                         appointment.salonId?.businessName || 
+                         'N/A'}
+                      </TableCell>
                       <TableCell>
                         {format(new Date(appointment.date), "MMM d, yyyy")} at {appointment.time}
                       </TableCell>
