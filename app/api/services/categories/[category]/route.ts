@@ -48,18 +48,24 @@ export async function GET(
       ];
     }
     
-    // Fetch services with the matching type
+    // Fetch services with the matching type from active salon owners only
     const services = await Service.find(filters)
       .populate({
         path: "userId",
-        select: "userName businessName",
+        select: "userName businessName isActive",
         model: "User", // Ensure the correct model is used
+        match: { isActive: true } // Only populate if user is active
       })
       .sort({ popularityScore: -1 }) // Sort by popularity score
       .lean({ virtuals: true }); // Ensure virtuals are included if needed
     
+    // Filter out services where userId population failed (deactivated users)
+    const servicesFromActiveUsers = services.filter(service => 
+      service.userId !== null
+    );
+    
     // Transform data for frontend
-    const transformedServices = services.map(service => {
+    const transformedServices = servicesFromActiveUsers.map(service => {
       // userId may be an ObjectId or a populated object
       const user = service.userId as { businessName?: string } | null;
       return {

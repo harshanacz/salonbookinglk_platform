@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
+import User from "@/models/User";
 import mongoose from "mongoose";
 
 export async function GET(
@@ -17,13 +18,25 @@ export async function GET(
         { status: 400 }
       );
     }
-      // First, try to find by _id
-    let salonContext = await SalonContext.findById(id).lean();
+      // First, try to find by _id and populate user to check if active
+    let salonContext = await SalonContext.findById(id)
+      .populate({
+        path: "userId",
+        select: "isActive",
+        model: User
+      })
+      .lean();
     console.log(`[SALON_CONTEXT_GET] Finding by _id: ${id}, Result: ${salonContext ? 'Found' : 'Not found'}`);
     
     // If not found by _id, try finding by userId (in case the id is a user ID)
     if (!salonContext) {
-      salonContext = await SalonContext.findOne({ userId: id }).lean();
+      salonContext = await SalonContext.findOne({ userId: id })
+        .populate({
+          path: "userId",
+          select: "isActive",
+          model: User
+        })
+        .lean();
       console.log(`[SALON_CONTEXT_GET] Finding by userId: ${id}, Result: ${salonContext ? 'Found' : 'Not found'}`);
     }
     
@@ -31,6 +44,17 @@ export async function GET(
       console.log(`[SALON_CONTEXT_GET] Salon context not found for ID: ${id}`);
       return NextResponse.json(
         { error: "Salon context not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if the salon owner is active
+    const contextObj = Array.isArray(salonContext) ? salonContext[0] : salonContext;
+    const user = contextObj?.userId as any;
+    if (!user || !user.isActive) {
+      console.log(`[SALON_CONTEXT_GET] Salon belongs to deactivated user: ${id}`);
+      return NextResponse.json(
+        { error: "Salon not available" },
         { status: 404 }
       );
     }
