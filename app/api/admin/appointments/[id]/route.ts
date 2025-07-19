@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Appointment from "@/models/Appointment";
+import Service from "@/models/Service";
+import SalonContext from "@/models/SalonContext";
+import Staff from "@/models/Staff";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
 import { auth } from "@clerk/nextjs/server";
@@ -26,10 +29,38 @@ export async function GET(
         { status: 400 }
       );
     }
-      const appointment = await Appointment.findById(id)
-      .populate('clientId', 'userName email mobileNumber')
-      .populate('serviceId', 'type price duration')
-      .populate('staffId', 'name');
+    const appointment = await Appointment.findById(id)
+      .populate({
+        path: 'clientId',
+        select: 'userName email mobileNumber phone',
+        options: { strictPopulate: false },
+      })
+      .populate({
+        path: 'serviceId',
+        select: 'title type price duration userId',
+        model: Service,
+        options: { strictPopulate: false },
+        populate: {
+          path: 'userId',
+          select: 'businessName',
+          model: SalonContext,
+          options: { strictPopulate: false },
+        }
+      })
+      .populate({
+        path: 'salonContextId',
+        select: 'businessName phoneNumber location',
+        model: SalonContext,
+        options: { strictPopulate: false },
+      })
+      .populate({
+        path: 'staffId',
+        select: 'name role profileImage',
+        model: Staff,
+        options: { strictPopulate: false },
+      })
+      .lean()
+      .exec();
       
     if (!appointment) {
       return NextResponse.json(
