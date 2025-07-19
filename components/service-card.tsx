@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 interface ServiceCardProps {
   service: {
     id: string;
-    title: string;
+    title: string; 
     image: string;
     price: number;
     salon: string;
