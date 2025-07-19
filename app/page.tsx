@@ -8,6 +8,7 @@ import { UserTypeCards } from "@/components/user/Home/user-type-cards";
 import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 // Define service interface
@@ -28,6 +29,7 @@ interface Service {
 function HomeContent() {
   const [location] = useState("");
   const [hasRedirected, setHasRedirected] = useState(false);
+  const [reactivationMessage, setReactivationMessage] = useState("");
   const [popularServices, setPopularServices] = useState<Service[]>([]);
   const [topRatedServices, setTopRatedServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +88,17 @@ function HomeContent() {
     }
   }, [searchParams, hasRedirected]);
 
+  // Check for reactivation message
+  useEffect(() => {
+    const message = sessionStorage.getItem('accountReactivated');
+    if (message) {
+      setReactivationMessage(message);
+      sessionStorage.removeItem('accountReactivated');
+      // Auto-hide message after 5 seconds
+      setTimeout(() => setReactivationMessage(""), 5000);
+    }
+  }, []);
+
   const handleSearch = () => {
     router.push(`/search?location=${encodeURIComponent(location)}`);
   };
@@ -94,6 +107,22 @@ function HomeContent() {
 
   return (
     <div className="flex flex-col min-h-screen lg-mx-5 mx-4">
+      {/* Reactivation Success Message */}
+      {reactivationMessage && (
+        <div className="bg-green-50 border border-green-200 p-4 mx-4 mt-4 rounded-lg">
+          <div className="flex items-center">
+            <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+            <p className="text-green-700 font-medium">{reactivationMessage}</p>
+            <button 
+              onClick={() => setReactivationMessage("")}
+              className="ml-auto text-green-500 hover:text-green-700"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <HeroSection />
 

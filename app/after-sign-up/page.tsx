@@ -34,7 +34,23 @@ function AfterSignUpContent() {
         });
 
         if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.needsSupport) {
+            // Handle expired reactivation period
+            window.location.href = "/user/reactivate-account?expired=true";
+            return;
+          }
           throw new Error("Failed to create user");
+        }
+
+        const userData = await response.json();
+
+        // Check if account was reactivated
+        if (userData.reactivated) {
+          // Show reactivation success message
+          console.log(userData.message);
+          // You could store this in sessionStorage to show on the next page
+          sessionStorage.setItem('accountReactivated', userData.message);
         }
 
         // Add delay to ensure Clerk session is updated with new metadata

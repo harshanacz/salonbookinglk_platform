@@ -4,24 +4,80 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { AlertTriangle } from "lucide-react"
-import Link from "next/link";
+import { AlertTriangle, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@clerk/nextjs"
 
 export default function AccountDeactivationPage() {
   // State to store user's email address
   const [email, setEmail] = useState("")
 
-  // State to store user's password
-  const [password, setPassword] = useState("")
+  // State to store confirmation text
+  const [confirmationText, setConfirmationText] = useState("")
 
-  // State to store user's confirmation password
-  const [confirmPassword, setConfirmPassword] = useState("")
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Error state
+  const [error, setError] = useState("")
+
+  // Success state
+  const [success, setSuccess] = useState("")
+
+  const router = useRouter()
+  const { signOut } = useAuth()
 
   // Handler function for form submission
-  const handleDeactivate = (e: React.FormEvent) => {
+  const handleDeactivate = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle account deactivation logic here
-    console.log("Deactivation requested")
+    setError("")
+    setSuccess("")
+
+    // Basic validation
+    if (!email || !confirmationText) {
+      setError("All fields are required")
+      return
+    }
+
+    if (confirmationText !== "DEACTIVATE") {
+      setError("Please type 'DEACTIVATE' exactly to confirm")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/api/user/deactivate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          confirmationText,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to deactivate account')
+      }
+
+      setSuccess("Account deactivated successfully. You will be signed out shortly.")
+      
+      // Sign out the user after a delay
+      setTimeout(async () => {
+        await signOut()
+        router.push('/sign-in')
+      }, 2000)
+
+    } catch (err: any) {
+      setError(err.message || 'An error occurred while deactivating your account')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -42,6 +98,20 @@ export default function AccountDeactivationPage() {
           </p>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        {/* Success message */}
+        {success && (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            {success}
+          </div>
+        )}
+
         {/* Deactivation form */}
         <form onSubmit={handleDeactivate}>
           <div className="space-y-4 max-w-md">
@@ -56,46 +126,49 @@ export default function AccountDeactivationPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="col-span-2"
+                required
+                disabled={isLoading}
               />
             </div>
 
-            {/* Password input field */}
+            {/* Confirmation text input field */}
             <div className="grid grid-cols-3 items-center gap-4">
-              <label htmlFor="password" className="text-sm">
-                Password
+              <label htmlFor="confirmation" className="text-sm">
+                Type "DEACTIVATE"
               </label>
               <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="confirmation"
+                type="text"
+                value={confirmationText}
+                onChange={(e) => setConfirmationText(e.target.value)}
                 className="col-span-2"
-              />
-            </div>
-
-            {/* Confirm password input field */}
-            <div className="grid grid-cols-3 items-center gap-4">
-              <label htmlFor="confirm-password" className="text-sm">
-                Re-enter Password
-              </label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="col-span-2"
+                placeholder="DEACTIVATE"
+                required
+                disabled={isLoading}
               />
             </div>
 
             {/* Submit button */}
-            <div className="flex justify-end mt-6">
-              <Link href="/">
+            <div className="flex justify-between mt-6">
+              <Link href="/user/settings">
+                <Button type="button" variant="outline" disabled={isLoading}>
+                  Cancel
+                </Button>
+              </Link>
               <Button
                 type="submit"
+                disabled={isLoading}
+                className="bg-red-600 hover:bg-red-700"
               >
-                Confirm Deactivation
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deactivating...
+                  </>
+                ) : (
+                  "Confirm Deactivation"
+                )}
               </Button>
-              </Link>
             </div>
           </div>
         </form>

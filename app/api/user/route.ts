@@ -33,7 +33,49 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // Create new user
+    // Check if user already exists (might be deactivated)
+    const existingUser = await User.findOne({ clerkUserId: userId });
+
+    if (existingUser) {
+      // If user exists but is deactivated, check if we can reactivate
+      if (!existingUser.isActive) {
+        // Check if 30-day period has expired
+        if (existingUser.deactivatedAt) {
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          if (existingUser.deactivatedAt < thirtyDaysAgo) {
+            return NextResponse.json({
+              error: "Account reactivation period has expired. Please contact support.",
+              needsSupport: true
+            }, { status: 400 });
+          }
+        }
+
+        // Reactivate the user account
+        existingUser.isActive = true;
+        existingUser.deactivatedAt = null;
+        
+        // Update any new information from sign-in
+        if (userName) existingUser.userName = userName;
+        if (email) existingUser.email = email;
+        if (profileImage) existingUser.profileImage = profileImage;
+        if (mobileNumber) existingUser.mobileNumber = mobileNumber;
+        
+        await existingUser.save();
+
+        console.log(`[USER_POST] User account reactivated on login: ${existingUser.email || existingUser.userName}`);
+
+        return NextResponse.json({
+          ...existingUser.toObject(),
+          reactivated: true,
+          message: "Welcome back! Your account has been reactivated."
+        });
+      }
+
+      // If user exists and is active, just update metadata and return existing user
+      return NextResponse.json(existingUser);
+    }
+
+    // Create new user if doesn't exist
     const newUser = await User.create({
       type,
       mobileNumber,

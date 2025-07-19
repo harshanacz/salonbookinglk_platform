@@ -97,6 +97,18 @@ const checkCustomerProfile = async (req: Request): Promise<boolean> => {
     }
     
     const data = await response.json();
+    
+    // Handle reactivation expired case
+    if (data.reactivationExpired) {
+      console.log("[MIDDLEWARE] User reactivation period expired");
+      return false; // This will redirect to complete-profile where we can show the expired message
+    }
+    
+    // Log reactivation if it occurred
+    if (data.reactivated) {
+      console.log("[MIDDLEWARE] User account was reactivated:", data.message);
+    }
+    
     return data.isComplete;
   } catch (error) {
     console.error("[MIDDLEWARE_CUSTOMER_PROFILE_CHECK]", error);

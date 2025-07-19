@@ -22,6 +22,45 @@ export async function GET() {
       return NextResponse.json({ isComplete: false }, { status: 200 });
     }
 
+    // Check if user is deactivated and can be reactivated
+    if (!dbUser.isActive) {
+      console.log("Profile check: User is deactivated, checking reactivation eligibility");
+      
+      // Check if 30-day period has expired
+      if (dbUser.deactivatedAt) {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        if (dbUser.deactivatedAt < thirtyDaysAgo) {
+          console.log("Profile check: Reactivation period expired");
+          return NextResponse.json({ 
+            isComplete: false,
+            reactivationExpired: true,
+            error: "Account reactivation period has expired. Please contact support."
+          }, { status: 400 });
+        }
+      }
+
+      // Reactivate the user account
+      dbUser.isActive = true;
+      dbUser.deactivatedAt = null;
+      await dbUser.save();
+
+      console.log(`[USER_PROFILE_CHECK] User account reactivated on access: ${dbUser.email || dbUser.userName}`);
+      
+      // Return with reactivation flag
+      const isComplete = Boolean(
+        dbUser.userName &&
+        dbUser.mobileNumber &&
+        dbUser.gender &&
+        dbUser.country
+      );
+
+      return NextResponse.json({ 
+        isComplete,
+        reactivated: true,
+        message: "Welcome back! Your account has been reactivated."
+      }, { status: 200 });
+    }
+
     // Check if essential profile fields are filled
     const isComplete = Boolean(
       dbUser.userName &&

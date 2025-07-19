@@ -4,20 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface Service {
   id: string;
   name: string;
   price: number;
   duration: string;
+  image: string;
   selectedTime?: string;
   professional?: string;
   timeSlot?: string;
 }
 
 interface Salon {
-  id?: number;
+  id?: string;
   name: string;
   rating?: number;
   image: string;
@@ -25,6 +26,17 @@ interface Salon {
   isOpen?: boolean;
   address?: string;
   mapLink?: string;
+}
+
+interface ApiAppointment {
+  id: string;
+  date: string;
+  time: number;
+  status: string;
+  service: Service;
+  salon: Salon;
+  note?: string;
+  paymentMethod?: string;
 }
 
 interface Appointment {
@@ -43,90 +55,55 @@ const AppointmentSummary = () => {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [services, setServices] = useState<Service[]>([]);
   const [hasUpcomingAppointment, setHasUpcomingAppointment] = useState(false);
-  const [upcomingAppointment, setUpcomingAppointment] = useState<Appointment | null>(null);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<ApiAppointment[]>([]);
+  const [pastAppointments, setPastAppointments] = useState<ApiAppointment[]>([]);
   const [selectedSalon, setSelectedSalon] = useState<Salon | null>(null);
   const [userName, setUserName] = useState("User");
   const [selectedTime, setSelectedTime] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  const [pastAppointments, setPastAppointments] = useState([
-    {
-      id: 1,
-      name: "Layer Hair Cut",
-      price: 7000,
-      date: "Wednesday 13 December",
-      image: "/haircut.jpg",
-    },
-    {
-      id: 2,
-      name: "Nail Polish",
-      price: 7000,
-      date: "Wednesday 09 December",
-      image: "/nailpolish.jpg",
-    }
-  ]);
-
-  // Load booking data from sessionStorage when component mounts
+  // Load real appointment data from API
   useEffect(() => {
-    try {
-      // Get final booking data
-      const bookingDataStr = sessionStorage.getItem("finalBookingData");
-      const savedAppointmentsStr = localStorage.getItem("appointments");
-      
-      if (bookingDataStr) {
-        const bookingData = JSON.parse(bookingDataStr);
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/user/appointments');
         
-        // Set services
-        if (bookingData.services) {
-          setServices(bookingData.services);
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
         }
         
-        // Set salon
-        if (bookingData.salon) {
-          setSelectedSalon(bookingData.salon);
-        }
+        const data = await response.json();
         
-        // Set date and time
-        if (bookingData.date) {
-          const appointmentDate = new Date(bookingData.date);
-          setSelectedDate(appointmentDate);
-        }
+        setUpcomingAppointments(data.upcoming || []);
+        setPastAppointments(data.past || []);
+        setHasUpcomingAppointment(data.upcoming && data.upcoming.length > 0);
+        setUserName(data.user?.name || "User");
         
-        if (bookingData.time) {
-          setSelectedTime(bookingData.time);
-        }
-        
-        // Calculate total price
-        const totalPrice = bookingData.services.reduce(
-          (sum: number, service: Service) => sum + service.price, 
-          0
-        );
-        
-        // Create upcoming appointment
-        if (bookingData.salon && bookingData.date) {
-          setUpcomingAppointment({
-            salon: bookingData.salon.name,
-            date: new Date(bookingData.date),
-            price: totalPrice,
-            image: bookingData.salon.image,
-            services: bookingData.services
-          });
+        // Set up data for the first upcoming appointment if exists
+        if (data.upcoming && data.upcoming.length > 0) {
+          const firstAppointment = data.upcoming[0];
+          setServices([firstAppointment.service]);
+          setSelectedSalon(firstAppointment.salon);
+          setSelectedDate(new Date(firstAppointment.date));
           
-          setHasUpcomingAppointment(true);
+          // Convert time (minutes from midnight) to HH:MM format
+          const hours = Math.floor(firstAppointment.time / 60);
+          const minutes = firstAppointment.time % 60;
+          setSelectedTime(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
         }
+        
+      } catch (err: any) {
+        console.error('Error fetching appointments:', err);
+        setError(err.message || 'Failed to load appointments');
+      } finally {
+        setLoading(false);
       }
-      
-      // Get user info if available
-      const userInfoStr = localStorage.getItem("userInfo");
-      if (userInfoStr) {
-        const userInfo = JSON.parse(userInfoStr);
-        if (userInfo.name) {
-          setUserName(userInfo.name);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading booking data:", error);
-    }
+    };
+
+    fetchAppointments();
   }, []);
 
   // Calendar generation logic
@@ -227,12 +204,14 @@ const AppointmentSummary = () => {
     setActivePopup(null);
     
     // Update the upcoming appointment with new date and services with updated times
-    if (upcomingAppointment) {
-      setUpcomingAppointment({
-        ...upcomingAppointment,
-        date: selectedDate,
-        services: [...services]
-      });
+    if (upcomingAppointments.length > 0) {
+      // Update the first upcoming appointment
+      const updatedAppointments = [...upcomingAppointments];
+      updatedAppointments[0] = {
+        ...updatedAppointments[0],
+        date: selectedDate.toISOString(),
+      };
+      setUpcomingAppointments(updatedAppointments);
     }
   };
 
@@ -241,19 +220,15 @@ const AppointmentSummary = () => {
     setActivePopup(null);
     
     // Move the canceled appointment to past appointments
-    if (upcomingAppointment) {
-      const canceledAppointment = {
-        id: pastAppointments.length + 1,
-        name: upcomingAppointment.services.map(s => s.name).join(", "),
-        price: upcomingAppointment.price,
-        date: formatDate(upcomingAppointment.date),
-        image: upcomingAppointment.image,
-      };
+    if (upcomingAppointments.length > 0) {
+      const canceledAppointment = upcomingAppointments[0];
       
+      // Add to past appointments
       setPastAppointments(prev => [canceledAppointment, ...prev]);
       
       // Remove from upcoming appointments
-      setHasUpcomingAppointment(false);
+      setUpcomingAppointments(prev => prev.slice(1));
+      setHasUpcomingAppointment(upcomingAppointments.length > 1);
     }
   };
 
@@ -275,10 +250,21 @@ const AppointmentSummary = () => {
     });
   };
 
-  const formatTime = (time: string) => {
-    if (!time || time.length < 5) return "";
+  const formatTime = (time: string | number) => {
+    let timeStr: string;
     
-    const [hours, minutes] = time.split(':');
+    if (typeof time === 'number') {
+      // Convert minutes from midnight to HH:MM format
+      const hours = Math.floor(time / 60);
+      const minutes = time % 60;
+      timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    } else {
+      timeStr = time;
+    }
+    
+    if (!timeStr || timeStr.length < 5) return "";
+    
+    const [hours, minutes] = timeStr.split(':');
     const hourNum = parseInt(hours);
     const period = hourNum >= 12 ? 'PM' : 'AM';
     const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
@@ -287,155 +273,175 @@ const AppointmentSummary = () => {
 
   return (
     <div className="p-7 pl-24 shadow-lg w-full h-screen bg-purple-50 overflow-y-auto scrollbar-hide">
-      <h1 className="text-2xl font-bold mb-6">Welcome, {userName}</h1>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Left Column - Upcoming and Past Appointments */}
-        <div>
-          <div className="bg-white p-4 rounded-lg shadow-md w-full">
-            <h2 className="font-semibold text-lg mb-2">Upcoming</h2>
-            {hasUpcomingAppointment && appointmentStatus !== "Canceled" && upcomingAppointment ? (
-              <div className="flex items-center gap-4">
-                <Image
-                  src={upcomingAppointment.image}
-                  alt={upcomingAppointment.salon}
-                  width={80}
-                  height={60}
-                  className="rounded-lg"
-                />
-                <div>
-                  <h3 className="font-semibold">{upcomingAppointment.salon}</h3>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(upcomingAppointment.date)} at {selectedTime 
-                      ? formatTime(selectedTime) 
-                      : (upcomingAppointment.services[0]?.selectedTime 
-                        ? formatTime(upcomingAppointment.services[0].selectedTime) 
-                        : "")}
-                  </p>
-                  <p className="font-bold">
-                    LKR {upcomingAppointment.price.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-gray-500">No upcoming appointments</p>
-            )}
+      {loading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Loading appointments...</p>
           </div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <h1 className="text-2xl font-bold mb-6">Welcome, {userName}</h1>
 
-          <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
-            <h2 className="font-semibold text-lg mb-2">Past appointments</h2>
-            {pastAppointments.length > 0 ? (
-              pastAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center gap-3 border-b py-2 last:border-0">
-                  <Image
-                    src={appointment.image}
-                    alt={appointment.name}
-                    width={50}
-                    height={50}
-                    className="rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{appointment.name}</h3>
-                    <p className="text-sm text-gray-500">{appointment.date}</p>
-                    <p className="font-bold">LKR {appointment.price.toLocaleString()}</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Left Column - Upcoming and Past Appointments */}
+            <div>
+              <div className="bg-white p-4 rounded-lg shadow-md w-full">
+                <h2 className="font-semibold text-lg mb-2">Upcoming</h2>
+                {hasUpcomingAppointment && upcomingAppointments.length > 0 ? (
+                  <div className="space-y-3">
+                    {upcomingAppointments.map((appointment) => (
+                      <div key={appointment.id} className="flex items-center gap-4">
+                        <Image
+                          src={appointment.service.image}
+                          alt={appointment.service.name}
+                          width={80}
+                          height={60}
+                          className="rounded-lg"
+                        />
+                        <div>
+                          <h3 className="font-semibold">{appointment.salon.name}</h3>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(new Date(appointment.date))} at {formatTime(selectedTime)}
+                          </p>
+                          <p className="font-bold">
+                            LKR {appointment.service.price.toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex flex-col items-start">
-                    <button className="text-black underline m-4 border-2 rounded-lg border-black p-2">
-                      Review
+                ) : (
+                  <p className="text-gray-500">No upcoming appointments</p>
+                )}
+              </div>
+
+              <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+                <h2 className="font-semibold text-lg mb-2">Past appointments</h2>
+                {pastAppointments.length > 0 ? (
+                  pastAppointments.map((appointment) => (
+                    <div key={appointment.id} className="flex items-center gap-3 border-b py-2 last:border-0">
+                      <Image
+                        src={appointment.service.image}
+                        alt={appointment.service.name}
+                        width={50}
+                        height={50}
+                        className="rounded-lg"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{appointment.service.name}</h3>
+                        <p className="text-sm text-gray-500">{formatDate(new Date(appointment.date))}</p>
+                        <p className="font-bold">LKR {appointment.service.price.toLocaleString()}</p>
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <button className="text-black underline m-4 border-2 rounded-lg border-black p-2">
+                          Review
+                        </button>
+                        <Link href="/user/add-complaint" className="text-black underline">
+                          Complain
+                        </Link>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No past appointments</p>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column - Appointment Details */}
+            <div className="bg-white col-span-2 p-6 rounded-lg shadow-md">
+              {hasUpcomingAppointment && upcomingAppointments.length > 0 && selectedSalon ? (
+                <>
+                  <div className="w-full mt-3">
+                    <Image
+                      src={selectedSalon.image}
+                      alt={selectedSalon.name}
+                      width={800}
+                      height={300}
+                      className="rounded-lg"
+                      style={{ objectFit: "cover", height: "300px" }}
+                    />
+                  </div>
+                  
+                  <h2 className={`inline-block ${getStatusStyle()} px-3 py-1 rounded-full text-sm font-bold mt-4`}>
+                    {appointmentStatus}
+                  </h2>
+                  
+                  <p className="text-gray-600">
+                    {selectedDate 
+                      ? formatDate(selectedDate)
+                      : formatDate(new Date(upcomingAppointments[0].date))} at {formatTime(selectedTime)}
+                  </p>
+
+                  <div className="mt-4 space-y-2">
+                    <button className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100">
+                      📅 Add to Calendar
                     </button>
-                    <Link href="/book" className="text-black underline">
-                      Complain
+                    <button
+                      className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100"
+                      onClick={() => setActivePopup("manage")}
+                    >
+                      📂 Manage Appointments
+                    </button>
+                    <button className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100">
+                      📍 Venue Details
+                    </button>
+                  </div>
+
+                  <h2 className="font-semibold text-lg mt-6">Overview</h2>
+                  <div className="mt-2">
+                    {services.map((service, index) => (
+                      <div key={index} className="flex justify-between border-b py-2 last:border-0">
+                        <div>
+                          <h3 className="font-semibold">{service.name}</h3>
+                          <p className="text-gray-500 text-sm">{service.duration}</p>
+                        </div>
+                        <p className="font-bold">LKR {service.price.toLocaleString()}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 border-t pt-2 flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>LKR {services.reduce((sum, service) => sum + service.price, 0).toLocaleString()}</span>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="font-semibold text-red-500">Cancellation policy</h3>
+                    <p className="text-sm text-gray-600">
+                      Please avoid canceling within <strong>12 hours</strong> of your appointment time.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="text-center p-8">
+                    <h2 className="text-2xl font-bold mb-4">No Upcoming Appointment</h2>
+                    <p className="text-gray-600 mb-6">You don't have any active appointments at the moment.</p>
+                    <Link href="/" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
+                      Book a New Appointment
                     </Link>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No past appointments</p>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column - Appointment Details */}
-        <div className="bg-white col-span-2 p-6 rounded-lg shadow-md">
-          {hasUpcomingAppointment && appointmentStatus !== "Canceled" && upcomingAppointment && selectedSalon ? (
-            <>
-              <div className="w-full mt-3">
-                <Image
-                  src={selectedSalon.image}
-                  alt={selectedSalon.name}
-                  width={800}
-                  height={300}
-                  className="rounded-lg"
-                  style={{ objectFit: "cover", height: "500px" }}
-                />
-              </div>
-              
-              <h2 className={`inline-block ${getStatusStyle()} px-3 py-1 rounded-full text-sm font-bold mt-4`}>
-                {appointmentStatus}
-              </h2>
-              
-              <p className="text-gray-600">
-                {selectedDate 
-                  ? formatDate(selectedDate) // Use selectedDate if available
-                  : formatDate(upcomingAppointment.date)} at {selectedTime 
-                    ? formatTime(selectedTime) 
-                    : upcomingAppointment.services.map(s => 
-                      s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}
-              </p>
-
-              <div className="mt-4 space-y-2">
-                <button className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100">
-                  📅 Add to Calendar
-                </button>
-                <button
-                  className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100"
-                  onClick={() => setActivePopup("manage")}
-                >
-                  📂 Manage Appointments
-                </button>
-                <button className="w-full p-3 border rounded-lg flex items-center gap-2 bg-gray-100">
-                  📍 Venue Details
-                </button>
-              </div>
-
-              <h2 className="font-semibold text-lg mt-6">Overview</h2>
-              <div className="mt-2">
-                {upcomingAppointment.services.map((service, index) => (
-                  <div key={index} className="flex justify-between border-b py-2 last:border-0">
-                    <div>
-                      <h3 className="font-semibold">{service.name}</h3>
-                      <p className="text-gray-500 text-sm">{service.duration}</p>
-                    </div>
-                    <p className="font-bold">LKR {service.price.toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 border-t pt-2 flex justify-between font-bold text-lg">
-                <span>Total</span>
-                <span>LKR {upcomingAppointment.price.toLocaleString()}</span>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="font-semibold text-red-500">Cancellation policy</h3>
-                <p className="text-sm text-gray-600">
-                  Please avoid canceling within <strong>12 hours</strong> of your appointment time.
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-4">No Upcoming Appointment</h2>
-                <p className="text-gray-600 mb-6">You don't have any active appointments at the moment.</p>
-                <Link href="/" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
-                  Book a New Appointment
-                </Link>
-              </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Manage Appointment Popup */}
       {activePopup === "manage" && (
@@ -491,14 +497,13 @@ const AppointmentSummary = () => {
             <div className="mb-6">
               <h3 className="font-semibold text-gray-700 mb-2">Current Appointment</h3>
               <div className="bg-gray-50 p-3 rounded">
-                {upcomingAppointment && (
+                {upcomingAppointments.length > 0 && (
                   <>
-                    <p><span className="font-medium">Date:</span> {formatDate(upcomingAppointment.date)}</p>
+                    <p><span className="font-medium">Date:</span> {formatDate(new Date(upcomingAppointments[0].date))}</p>
                     <p><span className="font-medium">Time:</span> {selectedTime 
                       ? formatTime(selectedTime) 
-                      : upcomingAppointment.services.map(s => 
-                        s.selectedTime ? formatTime(s.selectedTime) : "").join(", ")}</p>
-                    <p><span className="font-medium">Services:</span> {upcomingAppointment.services.map(s => s.name).join(", ")}</p>
+                      : formatTime(upcomingAppointments[0].time.toString())}</p>
+                    <p><span className="font-medium">Services:</span> {services.map(s => s.name).join(", ")}</p>
                   </>
                 )}
               </div>

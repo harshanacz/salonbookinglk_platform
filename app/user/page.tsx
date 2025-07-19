@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { Pencil, CheckCircle } from "lucide-react";
 
 export default function UserProfile() {
   const [userData, setUserData] = useState({
@@ -19,6 +19,28 @@ export default function UserProfile() {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState("");
   const [profileImage, setProfileImage] = useState("/placeholder-user.jpg");
+  const [reactivationMessage, setReactivationMessage] = useState("");
+
+  // Check for reactivation message
+  useEffect(() => {
+    const checkReactivation = async () => {
+      try {
+        const response = await fetch('/api/user/profile-check');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.reactivated) {
+            setReactivationMessage(data.message);
+            // Auto-hide message after 10 seconds
+            setTimeout(() => setReactivationMessage(""), 10000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking reactivation:', error);
+      }
+    };
+
+    checkReactivation();
+  }, []);
 
   const handleEditClick = (field: keyof typeof userData) => {
     setEditingField(field);
@@ -50,6 +72,22 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen w-full space-y-6">
+      {/* Reactivation Success Message */}
+      {reactivationMessage && (
+        <div className="bg-green-50 border border-green-200 p-4 rounded-lg mb-6">
+          <div className="flex items-center">
+            <CheckCircle className="h-5 w-5 text-green-500 mr-3" />
+            <p className="text-green-700 font-medium">{reactivationMessage}</p>
+            <button 
+              onClick={() => setReactivationMessage("")}
+              className="ml-auto text-green-500 hover:text-green-700 text-xl font-bold"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="text-3xl font-bold">My Profile</h1>
       </div>
