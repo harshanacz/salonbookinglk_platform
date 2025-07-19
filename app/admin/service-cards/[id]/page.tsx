@@ -137,14 +137,13 @@ export default function ServiceDetail() {
   const handleApprove = async () => {
     try {
       setApproving(true);
-      const response = await fetch('/api/admin/service-cards', {
+      const response = await fetch(`/api/admin/service-cards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceId: id,
-          approved: true
+          action: 'approve'
         }),
       });
 
@@ -174,14 +173,13 @@ export default function ServiceDetail() {
   const handleReject = async () => {
     try {
       setRejecting(true);
-      const response = await fetch('/api/admin/service-cards', {
+      const response = await fetch(`/api/admin/service-cards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceId: id,
-          approved: false
+          action: 'reject'
         }),
       });
 
