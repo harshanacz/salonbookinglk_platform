@@ -19,7 +19,7 @@ interface IStaff extends Document {
   workingDays: string[];
   status: 'Active' | 'Inactive';
   timeSlots: ITimeSlot[];
-  cleanupTimeSlots(): Promise<IStaff>;
+  cleanupTimeSlots(): IStaff;
 }
 
 const timeSlotSchema = new mongoose.Schema(
@@ -104,12 +104,18 @@ staffSchema.methods.cleanupTimeSlots = function(this: IStaff) {
     const slotDate = new Date(slot.start_time);
     return slotDate >= now;
   });
-  return this.save();
+  // Don't call save() here to prevent recursive save issues
+  return this;
 };
 
 // Pre-save middleware to automatically clean up old time slots
 staffSchema.pre('save', function(this: IStaff, next) {
-  this.cleanupTimeSlots();
+  // Clean up old time slots without triggering another save
+  const now = new Date();
+  this.timeSlots = this.timeSlots.filter((slot: ITimeSlot) => {
+    const slotDate = new Date(slot.start_time);
+    return slotDate >= now;
+  });
   next();
 });
 
