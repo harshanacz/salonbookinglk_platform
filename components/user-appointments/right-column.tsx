@@ -27,10 +27,10 @@ interface RightColumnProps {
   onManageAppointment: (appointment: Appointment) => void;
 }
 
-const RightColumn: React.FC<RightColumnProps> = ({
-  latestAppointment,
-  onManageAppointment
-}) => {
+export default function RightColumn({ 
+  latestAppointment, 
+  onManageAppointment 
+}: RightColumnProps) {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -59,17 +59,13 @@ const RightColumn: React.FC<RightColumnProps> = ({
     }
   };
 
+  // Handle case when no appointment is selected
   if (!latestAppointment) {
     return (
-      <div className="bg-white col-span-2 p-6 rounded-lg shadow-md">
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-bold mb-4">No Upcoming Appointment</h2>
-            <p className="text-gray-600 mb-6">You don't have any active appointments at the moment.</p>
-            <Link href="/" className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors">
-              Book a New Appointment
-            </Link>
-          </div>
+      <div className="md:col-span-2 bg-white rounded-lg shadow-lg p-6">
+        <div className="text-center text-gray-500">
+          <p className="text-lg">No appointment selected</p>
+          <p className="text-sm mt-2">Select an appointment from the left to view details</p>
         </div>
       </div>
     );
@@ -138,5 +134,3 @@ const RightColumn: React.FC<RightColumnProps> = ({
     </div>
   );
 };
-
-export default RightColumn;
