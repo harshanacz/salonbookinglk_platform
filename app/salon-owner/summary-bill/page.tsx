@@ -17,155 +17,197 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, DollarSign, Search, User, FileText } from "lucide-react";
+import { Calendar, Clock, DollarSign, Search } from "lucide-react";
 
 interface Bill {
   id: string;
   customerName: string;
-  customerEmail: string;
   services: string[];
   date: string;
   time: string;
   amount: number;
   paymentMethod: string;
   status: string;
-  appointmentStatus: string;
-  staffName: string;
-  note: string;
-}
-
-interface BillStats {
-  totalRevenue: number;
-  paidBillsCount: number;
-  pendingBillsCount: number;
-  paidAmount: number;
-  pendingAmount: number;
-  totalTransactions: number;
+  salonId: string;
+  createdAt: string;
+  appointmentId?: string;
 }
 
 export default function SummaryBillPage() {
   const [dateRange, setDateRange] = useState("today");
   const [searchQuery, setSearchQuery] = useState("");
   const [bills, setBills] = useState<Bill[]>([]);
-  const [stats, setStats] = useState<BillStats>({
-    totalRevenue: 0,
-    paidBillsCount: 0,
-    pendingBillsCount: 0,
-    paidAmount: 0,
-    pendingAmount: 0,
-    totalTransactions: 0
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch bills from API
   useEffect(() => {
     fetchBills();
-  }, [dateRange, searchQuery]);
+  }, []);
 
   const fetchBills = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const params = new URLSearchParams({
-        dateRange,
-        search: searchQuery
-      });
-
-      const response = await fetch(`/api/salon-owner/summary-bills?${params}`, {
-        method: "GET",
-        credentials: "include"
+      console.log('Fetching bills from API...');
+      
+      const response = await fetch('/api/bills', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Bills fetched from API:', data);
+      
       setBills(data.bills || []);
-      setStats(data.stats || {
-        totalRevenue: 0,
-        paidBillsCount: 0,
-        pendingBillsCount: 0,
-        paidAmount: 0,
-        pendingAmount: 0,
-        totalTransactions: 0
-      });
-    } catch (error) {
-      console.error("Error fetching bills:", error);
-      setError("Failed to load bills. Please try again.");
+      if (data.bills.length === 0) {
+      console.log('No bills found, this is normal if no venue payments have been made yet');
+    }
+    } catch (err) {
+      console.error('Error fetching bills:', err);
+      setError(
+        `Failed to load bills: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const updateBillStatus = async (billId: string, newStatus: string) => {
+  // Filter bills based on date range
+  const filterBillsByDate = (bills: Bill[]) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    return bills.filter(bill => {
+      const billDate = new Date(bill.date);
+      
+      switch (dateRange) {
+        case "today":
+          return billDate.toDateString() === today.toDateString();
+        case "week":
+          const weekAgo = new Date(today);
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return billDate >= weekAgo;
+        case "month":
+          const monthAgo = new Date(today);
+          monthAgo.setMonth(monthAgo.getMonth() - 1);
+          return billDate >= monthAgo;
+        case "year":
+          const yearAgo = new Date(today);
+          yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+          return billDate >= yearAgo;
+        default:
+          return true;
+      }
+    });
+  };
+
+  const filteredBills = filterBillsByDate(bills).filter(
+    (bill) =>
+      bill.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bill.services.some((service) =>
+        service.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+  );
+
+  const totalRevenue = filteredBills.reduce((sum, bill) => sum + bill.amount, 0);
+  const paidBills = filteredBills.filter((bill) => bill.status === "paid");
+  const pendingBills = filteredBills.filter((bill) => bill.status === "pending");
+
+  const markAsPaid = async (billId: string) => {
     try {
-      const response = await fetch(`/api/salon-owner/summary-bills/${billId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
+      const response = await fetch('/api/bills', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ billId, status: 'paid' }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.ok) {
+        // Update local state
+        setBills(prevBills => 
+          prevBills.map(bill => 
+            bill.id === billId 
+              ? { ...bill, status: "paid" }
+              : bill
+          )
+        );
+      } else {
+        throw new Error('Failed to update bill status');
       }
-
-      // Update local state
-      setBills(bills.map(bill => 
-        bill.id === billId ? { 
-          ...bill, 
-          status: newStatus === 'COMPLETED' ? 'paid' : 'pending',
-          appointmentStatus: newStatus 
-        } : bill
-      ));
-      
-      // Refresh stats
-      fetchBills();
     } catch (error) {
-      console.error("Error updating bill status:", error);
-      alert("Failed to update bill status. Please try again.");
+      console.error('Error marking bill as paid:', error);
+      alert('Failed to mark bill as paid. Please try again.');
     }
   };
 
-  const downloadReport = () => {
-    // Create CSV content
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Customer Name,Service,Date,Time,Amount,Status,Payment Method,Staff,Note\n" +
-      bills.map(bill => 
-        `"${bill.customerName}","${bill.services.join('; ')}","${bill.date}","${bill.time}","${bill.amount}","${bill.status}","${bill.paymentMethod}","${bill.staffName}","${bill.note}"`
-      ).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `summary_bills_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const createTestBill = async () => {
+    try {
+      const testBill = {
+        customerName: "Test Customer " + Date.now(),
+        services: ["Haircut", "Hair Wash"],
+        date: new Date().toISOString().split('T')[0],
+        time: "10:00 AM",
+        amount: 5000,
+        paymentMethod: "Cash/Venue",
+        status: "pending",
+        salonId: "test-salon-1",
+        appointmentId: "test-appointment-" + Date.now(),
+      };
+      
+      console.log('Creating test bill:', testBill);
+      
+      const response = await fetch('/api/bills', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testBill),
+      });
+      
+      const result = await response.json();
+      console.log('Test bill response:', result);
+      
+      if (response.ok) {
+        alert('Test bill created successfully!');
+        fetchBills(); // Refresh the bills
+      } else {
+        alert('Failed to create test bill');
+      }
+    } catch (error) {
+      console.error('Error creating test bill:', error);
+      alert('Error creating test bill');
+    }
   };
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <p>Loading bills...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Summary Bill</h1>
-        </div>
-        <div className="text-center py-8">
-          <p className="text-red-500">{error}</p>
-          <Button onClick={fetchBills} className="mt-4">
-            Try Again
-          </Button>
-        </div>
+      <div className="flex justify-center items-center h-64 flex-col gap-4">
+        <p className="text-red-500">{error}</p>
+        <Button onClick={fetchBills}>Try Again</Button>
       </div>
     );
   }
@@ -174,7 +216,25 @@ export default function SummaryBillPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Summary Bill</h1>
-        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={createTestBill}
+            className="bg-blue-100 hover:bg-blue-200"
+          >
+            Create Test Bill
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={fetchBills}
+            disabled={loading}
+          >
+            {loading ? "Loading..." : "Refresh"}
+          </Button>
+          <Button className="bg-purple-600 hover:bg-purple-700">
+            Download Report
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -186,10 +246,10 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              LKR {stats.totalRevenue.toLocaleString()}
+              LKR {totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              From {stats.totalTransactions} transactions
+              From {filteredBills.length} transactions
             </p>
           </CardContent>
         </Card>
@@ -201,10 +261,13 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {stats.paidBillsCount}
+              {paidBills.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              LKR {stats.paidAmount.toLocaleString()}
+              LKR{" "}
+              {paidBills
+                .reduce((sum, bill) => sum + bill.amount, 0)
+                .toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -216,10 +279,13 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {stats.pendingBillsCount}
+              {pendingBills.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              LKR {stats.pendingAmount.toLocaleString()}
+              LKR{" "}
+              {pendingBills
+                .reduce((sum, bill) => sum + bill.amount, 0)
+                .toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -228,10 +294,8 @@ export default function SummaryBillPage() {
       {/* Bills List */}
       <Card>
         <CardHeader>
-          <CardTitle>Venue Payment Bills</CardTitle>
-          <CardDescription>
-            Bills for appointments with venue payment method only
-          </CardDescription>
+          <CardTitle>Bills ({bills.length} total)</CardTitle>
+          <CardDescription>View and manage all bills</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -260,14 +324,13 @@ export default function SummaryBillPage() {
           </div>
 
           <div className="space-y-4">
-            {bills.map((bill) => (
+            {filteredBills.map((bill) => (
               <div
                 key={bill.id}
                 className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border gap-4"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="h-4 w-4 text-gray-500" />
+                  <div className="flex items-center gap-2">
                     <h3 className="font-medium">{bill.customerName}</h3>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
@@ -279,22 +342,9 @@ export default function SummaryBillPage() {
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </span>
                   </div>
-                  
-                  <div className="space-y-1">
-                    <p className="text-gray-600 flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      {bill.services.join(", ")}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Staff: {bill.staffName}
-                    </p>
-                    {bill.note && (
-                      <p className="text-sm text-gray-500 italic">
-                        Note: {bill.note}
-                      </p>
-                    )}
-                  </div>
-                  
+                  <p className="text-gray-600">
+                    {Array.isArray(bill.services) ? bill.services.join(", ") : bill.services}
+                  </p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -312,13 +362,7 @@ export default function SummaryBillPage() {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      alert(`Bill Details:\n\nCustomer: ${bill.customerName}\nEmail: ${bill.customerEmail}\nServices: ${bill.services.join(', ')}\nDate: ${bill.date}\nTime: ${bill.time}\nAmount: LKR ${bill.amount.toLocaleString()}\nStaff: ${bill.staffName}\nStatus: ${bill.status}\nNote: ${bill.note || 'No notes'}`);
-                    }}
-                  >
+                  <Button variant="outline" size="sm">
                     View Details
                   </Button>
                   {bill.status === "pending" && (
@@ -326,7 +370,7 @@ export default function SummaryBillPage() {
                       variant="outline"
                       size="sm"
                       className="text-green-600 hover:text-green-700"
-                      onClick={() => updateBillStatus(bill.id, "COMPLETED")}
+                      onClick={() => markAsPaid(bill.id)}
                     >
                       Mark as Paid
                     </Button>
@@ -335,11 +379,20 @@ export default function SummaryBillPage() {
               </div>
             ))}
 
-            {bills.length === 0 && (
+            {filteredBills.length === 0 && (
               <div className="text-center py-8">
                 <p className="text-gray-500">
-                  No venue payment bills found for the selected period
+                  {bills.length === 0 
+                    ? "No bills found. Bills will appear here when customers choose 'Pay at Venue' option." 
+                    : "No bills match your search criteria"}
                 </p>
+                <Button 
+                  variant="outline" 
+                  onClick={fetchBills}
+                  className="mt-2"
+                >
+                  Refresh Bills
+                </Button>
               </div>
             )}
           </div>

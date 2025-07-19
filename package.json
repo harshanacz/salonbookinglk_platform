@@ -72,7 +72,7 @@
     "react-hook-form": "latest",
     "react-leaflet": "latest",
     "react-resizable-panels": "^2.1.7",
-    "recharts": "2.15.0",
+    "recharts": "^2.15.0",
     "sonner": "^1.7.1",
     "stripe": "^13.0.0",
     "tailwind-merge": "^2.5.5",
