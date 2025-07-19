@@ -23,12 +23,27 @@ export default function ManageAppointments() {
   useEffect(() => {
     async function fetchAppointments() {
       setLoading(true);
-      // Replace 'salonOwnerId' with the actual logged-in salon owner's user ID
-      const salonOwnerId = "YOUR_SALON_OWNER_ID"; // TODO: get from auth/session
-      const res = await fetch(`/api/appointments?salonId=${salonOwnerId}`);
-      const data = await res.json();
-      setAppointments(data.appointments || []);
-      setLoading(false);
+      try {
+        // First get the salon context to find the salon owner user ID
+        const salonResponse = await fetch('/api/salon-owner/salon-profile');
+        if (!salonResponse.ok) {
+          throw new Error('Failed to get salon profile');
+        }
+        const salonData = await salonResponse.json();
+        
+        // Use the userId from salon context (this is the User._id that appointments.salonId references)
+        const appointmentsResponse = await fetch(`/api/appointments?salonId=${salonData.userId}`);
+        if (!appointmentsResponse.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+        const appointmentsData = await appointmentsResponse.json();
+        setAppointments(appointmentsData.appointments || []);
+      } catch (error) {
+        console.error('Error loading appointments:', error);
+        setAppointments([]);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchAppointments();
   }, []);
