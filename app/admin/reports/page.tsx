@@ -662,7 +662,7 @@ export default function AdminReportsPage() {
               {reportData?.popularServices &&
                 reportData.popularServices.length > 0 && (
                   <div className="border rounded-md p-2 mb-3 pdf-section">
-                    <h4 className="font-medium mb-3">Most Popular 10 Services</h4>
+                    <h4 className="font-medium mb-3">Most Popular Services</h4>
                     <table className="w-full pdf-report-table">
                       <thead>
                         <tr className="border-b">
