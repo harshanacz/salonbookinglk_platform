@@ -23,6 +23,7 @@ import {
   Phone,
   Mail,
   Loader2,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -34,22 +35,40 @@ interface Appointment {
     _id: string;
     userName: string;
     email: string;
-    mobileNumber: string;
+    mobileNumber?: string;
+    phone?: string;
   };
   serviceId: {
     _id: string;
+    title: string;
     type: string;
     price: number;
     duration: number;
+    userId?: {
+      _id: string;
+      businessName: string;
+    };
   };
-  staffId: {
+  salonContextId?: {
+    _id: string;
+    businessName: string;
+    phoneNumber: string;
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+  staffId?: {
     _id: string;
     name: string;
+    role?: string;
+    profileImage?: string;
   };
   date: string;
-  time: string;
+  time: string | number;
   status: string;
   note?: string;
+  paymentMethod?: string;
 }
 
 export default function AppointmentDetailsPage() {
@@ -165,7 +184,7 @@ export default function AppointmentDetailsPage() {
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Mobile:</span>{" "}
-                  {appointment.clientId.mobileNumber}
+                  {appointment.clientId.mobileNumber || appointment.clientId.phone || 'N/A'}
                 </div>
               </div>
             </div>
@@ -173,32 +192,53 @@ export default function AppointmentDetailsPage() {
             <Separator />
 
             <div className="space-y-4">
-              <div className="font-semibold text-lg">Appointment Details</div>
+              <div className="font-semibold text-lg">Service & Salon Details</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {" "}
                 <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Service:</span>{" "}
-                  {appointment.serviceId.type}
+                  {appointment.serviceId.title || appointment.serviceId.type}
                 </div>
                 <div className="flex items-center gap-2">
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Staff:</span>{" "}
-                  {appointment.staffId.name}
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">Salon:</span>{" "}
+                  {appointment.salonContextId?.businessName || 
+                   appointment.serviceId.userId?.businessName || 
+                   'N/A'}
+                </div>
+                {appointment.staffId && (
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">Staff:</span>{" "}
+                    {appointment.staffId.name}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Duration:</span>{" "}
+                  {appointment.serviceId.duration} minutes
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Date:</span>{" "}
                   {format(new Date(appointment.date), "PPP")}
-                </div>{" "}
+                </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">Time:</span> {appointment.time}
+                  <span className="font-medium">Time:</span>{" "}
+                  {typeof appointment.time === 'number' 
+                    ? `${String(Math.floor(appointment.time / 100)).padStart(2, '0')}:${String(appointment.time % 100).padStart(2, '0')}`
+                    : appointment.time}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Price:</span> Rs.{" "}
                   {appointment.serviceId.price.toLocaleString()}
                 </div>
+                {appointment.paymentMethod && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Payment Method:</span>{" "}
+                    {appointment.paymentMethod}
+                  </div>
+                )}
               </div>
             </div>
 
