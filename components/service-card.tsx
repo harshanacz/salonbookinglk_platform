@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { RatingDisplay } from "@/components/ui/rating-display";
 import { Star, MapPin, Clock, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -199,11 +200,11 @@ export function ServiceCard({ service }: ServiceCardProps) {
             </div>
             
             {/* Show reviews */}
-            <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
-              <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
-              <span className="font-medium">{service.reviews > 0 ? service.rating.toFixed(1) : "0"}</span>
-              <span className="text-gray-500 ml-1">({service.reviews})</span>
-            </div>
+            <RatingDisplay 
+              rating={service.rating} 
+              totalRatings={service.reviews}
+              size="sm"
+            />
           </div>
 
           {/* Title */}
