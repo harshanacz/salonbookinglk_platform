@@ -193,8 +193,6 @@ export default function ServicesManagement() {
                         </TableHead>
                         <TableHead>Service</TableHead>
                         <TableHead>Views</TableHead>
-                        <TableHead>Clicks</TableHead>
-                        <TableHead>Appointments</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -225,8 +223,6 @@ export default function ServicesManagement() {
                             </div>
                           </TableCell>
                           <TableCell>{service.viewsCount || 0}</TableCell>
-                          <TableCell>{service.clicks || 0}</TableCell>
-                          <TableCell>{service.appointments || 0}</TableCell>
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
