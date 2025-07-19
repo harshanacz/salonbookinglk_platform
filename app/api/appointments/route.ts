@@ -65,7 +65,10 @@ export async function POST(req: NextRequest) {
       paymentMethod,
       note,
       date,
-      time
+      time,
+      paymentIntentId,
+      totalAmount,
+      paymentStatus
     } = data;
     
     // Debug log for ID validation
@@ -183,6 +186,9 @@ export async function POST(req: NextRequest) {
       serviceId: new mongoose.Types.ObjectId(serviceId),
       date: new Date(date),
       time: timeAsNumber,
+      paymentIntentId,
+      totalAmount,
+      paymentStatus: paymentStatus || 'pending',
       paymentMethod: paymentMethod, // Use the PaymentMethod value directly
       note: note || "",
       status: AppointmentStatus.CONFIRMED,
