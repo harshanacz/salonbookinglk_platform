@@ -33,11 +33,11 @@ export async function GET(request: NextRequest) {
       })
       .populate({
         path: 'appointmentId',
-        select: 'date time salonId salonContextId serviceId staffId totalAmount',
+        select: 'date time salonId salonContextId serviceId staffId paymentMethod',
         populate: [
           {
             path: 'serviceId',
-            select: 'name title'
+            select: 'name title price duration'
           },
           {
             path: 'staffId',
@@ -45,7 +45,11 @@ export async function GET(request: NextRequest) {
           },
           {
             path: 'salonContextId',
-            select: 'businessName contactNumber'
+            select: 'businessName phoneNumber'
+          },
+          {
+            path: 'salonId',
+            select: 'email userName'
           }
         ]
       })
@@ -81,7 +85,7 @@ export async function GET(request: NextRequest) {
           if (complaint.appointmentId.salonContextId && typeof complaint.appointmentId.salonContextId === 'string') {
             try {
               salonData = await SalonContext.findById(complaint.appointmentId.salonContextId)
-                .select('businessName contactNumber')
+                .select('businessName phoneNumber')
                 .lean();
             } catch (error) {
               console.log(`[ADMIN_COMPLAINTS_SIMPLE] Error fetching salon context by ID:`, error);
@@ -90,12 +94,18 @@ export async function GET(request: NextRequest) {
             try {
               // Fallback: try to find salon context by userId (salonId)
               salonData = await SalonContext.findOne({ userId: complaint.appointmentId.salonId })
-                .select('businessName contactNumber')
+                .select('businessName phoneNumber')
                 .lean();
             } catch (error) {
               console.log(`[ADMIN_COMPLAINTS_SIMPLE] Error fetching salon context by userId:`, error);
             }
           }
+        }
+
+        // Get salon owner email from the populated salonId
+        let salonOwnerEmail = 'No email provided';
+        if (complaint.appointmentId?.salonId?.email) {
+          salonOwnerEmail = complaint.appointmentId.salonId.email;
         }
 
         return {
@@ -115,8 +125,9 @@ export async function GET(request: NextRequest) {
           },
           salon: {
             name: salonData?.businessName || 'Unknown Salon',
-            contact: salonData?.contactNumber || 'No contact provided',
-            id: complaint.appointmentId?.salonId?.toString() || complaint.appointmentId?.salonContextId?.toString() || null
+            contact: salonData?.phoneNumber || 'No contact provided',
+            email: salonOwnerEmail,
+            id: complaint.appointmentId?.salonId?._id?.toString() || complaint.appointmentId?.salonContextId?.toString() || null
           },
           appointment: {
             id: complaint.appointmentId?._id?.toString() || null,
@@ -124,7 +135,7 @@ export async function GET(request: NextRequest) {
             time: complaint.appointmentId?.time || 1400,
             serviceName: complaint.appointmentId?.serviceId?.name || complaint.appointmentId?.serviceId?.title || 'Unknown Service',
             staffName: complaint.appointmentId?.staffId?.name || 'No staff assigned',
-            amount: complaint.appointmentId?.totalAmount || 0
+            amount: complaint.appointmentId?.serviceId?.price || 0
           },
           createdAt: complaint.createdAt,
           updatedAt: complaint.updatedAt

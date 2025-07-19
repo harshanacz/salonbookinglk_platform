@@ -65,20 +65,28 @@ export default function ViewComplaint() {
   const fetchComplaintData = async (id: string) => {
     try {
       setIsLoading(true);
+      console.log('[VIEW_COMPLAINT] Fetching complaint with ID:', id);
+      
       const response = await fetch(`/api/admin/complaints/${id}`);
       
+      console.log('[VIEW_COMPLAINT] Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch complaint data');
+        const errorText = await response.text();
+        console.error('[VIEW_COMPLAINT] Error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('[VIEW_COMPLAINT] Received data:', data);
+      
       setComplaintData(data);
     } catch (error) {
-      console.error('Error fetching complaint:', error);
+      console.error('[VIEW_COMPLAINT] Error fetching complaint:', error);
       setError("Failed to load complaint data");
       toast({
         title: "Error",
-        description: "Failed to load complaint data. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to load complaint data. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -89,12 +97,16 @@ export default function ViewComplaint() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Pending":
-        return "bg-yellow-100 text-yellow-800";
+      case "PENDING":
+        return "bg-red-100 text-red-800";
       case "In Progress":
-        return "bg-blue-100 text-blue-800";
+      case "IN_PROGRESS":
+        return "bg-yellow-100 text-yellow-800";
       case "Resolved":
+      case "RESOLVED":
         return "bg-green-100 text-green-800";
       case "Closed":
+      case "CLOSED":
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -191,8 +203,8 @@ export default function ViewComplaint() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-800">{complaintData.defendant.name}</p>
                 <p className="text-sm text-gray-500">{complaintData.defendant.contact}</p>
-                <p className="text-sm text-gray-500">{complaintData.defendant.email}</p>
-                {complaintData.defendant.address && (
+                <p className="text-sm text-gray-500">Email: {complaintData.defendant.email}</p>
+                {complaintData.defendant.address && complaintData.defendant.address !== 'No address provided' && complaintData.defendant.address !== 'Address not available in salon context' && (
                   <p className="text-sm text-gray-500">{complaintData.defendant.address}</p>
                 )}
               </div>
@@ -206,10 +218,14 @@ export default function ViewComplaint() {
               <div className="space-y-1">
                 <p className="text-sm font-medium text-gray-800">Service: {complaintData.service}</p>
                 <p className="text-sm text-gray-500">
-                  Date: {new Date(complaintData.appointment.date).toLocaleDateString()}
+                  Date: {complaintData.appointment.date !== 'No date' 
+                    ? new Date(complaintData.appointment.date).toLocaleDateString() 
+                    : 'Not available'}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Time: {complaintData.appointment.time}
+                  Time: {complaintData.appointment.time !== 'No time' 
+                    ? complaintData.appointment.time 
+                    : 'Not available'}
                 </p>
               </div>
             </div>
