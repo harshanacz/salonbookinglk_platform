@@ -8,6 +8,8 @@ import { Navbar } from "@/components/user/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { ClerkProvider } from "@clerk/nextjs";
+import { AIAgentProvider } from "@/components/salon/ai-agent-provider";
+import FloatingAIAgent from "@/components/salon/floating-ai-agent";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -30,10 +32,14 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en"> 
         <body className={montserrat.className}>
-          {!isAdminPage && !isSalonOwnerPage && <Navbar />}
-          <main>{children}</main>
-          {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
-          <Toaster />
+          <AIAgentProvider defaultEnabled={!isAdminPage && !isSalonOwnerPage}>
+            {!isAdminPage && !isSalonOwnerPage && <Navbar />}
+            <main>{children}</main>
+            {!isAdminPage && !isUserPage && !isSalonOwnerPage && <Footer />}
+            <Toaster />
+            {/* AI Agent - Only show on public pages */}
+            {!isAdminPage && !isSalonOwnerPage && <FloatingAIAgent />}
+          </AIAgentProvider>
         </body>
       </html>
     </ClerkProvider>
