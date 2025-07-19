@@ -11,7 +11,13 @@ import {
 import { CreditCard, BarChart2, PlusCircle } from "lucide-react";
 import { PaymentCards } from "@/components/user/payments/payment-cards";
 import { PaymentAnalytics } from "@/components/user/payments/payment-analytics";
-import { AddCard } from "@/components/user/payments/add-card";
+
+import { loadStripe } from "@stripe/stripe-js";
+
+if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY === undefined) {
+  throw new Error("NEXT_PUBLIC_STRIPE_PUBLIC_KEY is no defined");
+}
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function PaymentsPage() {
   return (
@@ -66,20 +72,9 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        
 
-        <TabsContent value="add-card" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Add New Card</CardTitle>
-              <CardDescription>
-                Add a new payment method to your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AddCard />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        
       </Tabs>
     </div>
   );

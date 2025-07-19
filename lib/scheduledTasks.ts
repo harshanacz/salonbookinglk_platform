@@ -2,9 +2,7 @@ import Staff from "@/models/Staff";
 import SalonContext from "@/models/SalonContext";
 import Service from "@/models/Service";
 import dbConnect from "@/lib/mongodb";
-// Update the import path to a relative path if "@/lib/redis" does not exist
-// TODO: Implement or install './redis' module with getServiceViews and syncServiceViewsToMongoDB exports.
-// import { getServiceViews, syncServiceViewsToMongoDB } from "./redis";
+import { getServiceViews, syncServiceViewsToMongoDB } from "@/lib/redis";
 
 // Function to sync service views from Redis to MongoDB
 async function syncServiceViews() {
@@ -22,9 +20,7 @@ async function syncServiceViews() {
     
     for (const serviceId of serviceIds) {
       try {
-        // TODO: Implement Redis sync functionality when Redis module is available
-        // await syncServiceViewsToMongoDB(serviceId);
-        console.log(`[Scheduled Task] Skipping sync for service ${serviceId} - Redis not configured`);
+        await syncServiceViewsToMongoDB(serviceId);
         syncedCount++;
       } catch (error) {
         console.error(`[Scheduled Task] Error syncing views for service ${serviceId}:`, error);
@@ -46,14 +42,16 @@ async function cleanupTimeSlots() {
     // Clean up staff time slots
     const staffMembers = await Staff.find({});
     for (const staff of staffMembers) {
-      await staff.cleanupTimeSlots();
+      staff.cleanupTimeSlots();
+      await staff.save();
     }
     console.log(`[Scheduled Task] Cleaned up time slots for ${staffMembers.length} staff members`);
 
     // Clean up salon time slots
     const salons = await SalonContext.find({});
     for (const salon of salons) {
-      await salon.cleanupTimeSlots();
+      salon.cleanupTimeSlots();
+      await salon.save();
     }
     console.log(`[Scheduled Task] Cleaned up time slots for ${salons.length} salons`);
 

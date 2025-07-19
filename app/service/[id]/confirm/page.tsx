@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import SalonCard from "@/components/booking/salon-card";
 import BookingNavigation from "@/components/booking/booking-navigation";
+import PaymentWrapper from "@/components/payment/payment-wrapper";
+import CheckoutForm from "@/components/checkout/checkout-form";
 import { PaymentMethod } from "@/models/enums";
 
 // Define Service interface - making it compatible with the format from SelectTime
@@ -45,6 +47,9 @@ const ConfirmPage = () => {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedCard, setSelectedCard] = useState<CardDetails | null>(null);
   const [bookingNotes, setBookingNotes] = useState<string>("");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const router = useRouter();
   const params = useParams();
@@ -107,7 +112,11 @@ const ConfirmPage = () => {
       (sum, service) => sum + service.price,
       0
     );
-    return `LKR ${total.toLocaleString()}`;
+    return total;
+  };
+
+  const calculateTotalFormatted = () => {
+    return `LKR ${calculateTotal().toLocaleString()}`;
   };
 
   // Format services for SalonCard
@@ -120,33 +129,51 @@ const ConfirmPage = () => {
 
   const handlePaymentMethodChange = (method: "venue" | "card") => {
     setPaymentMethod(method === "venue" ? PaymentMethod.VENUE : PaymentMethod.CARD_PAYMENT);
+    setShowPaymentForm(false);
   };
 
-  const handleContinue = async () => {
-    // Store final booking data for access on appointment/payment pages
-    const finalBookingData = {
-      services: selectedServices,
-      salon: selectedSalon,
-      professional: selectedProfessional,
-      date: selectedDate,
-      time: selectedTime,
-      paymentMethod: paymentMethod,
-      totalAmount: calculateTotal(),
-      card: selectedCard,
-    };
-
-    sessionStorage.setItem(
-      "finalBookingData",
-      JSON.stringify(finalBookingData)
-    );
-    
+  const createPaymentIntent = async () => {
     try {
-      // Show loading state to the user
-      const loadingToast = () => {
-        alert("Processing your booking request...");
-      };
-      loadingToast();
+      setIsProcessing(true);
       
+      const response = await fetch('/api/create-payment-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+         amount: calculateTotal(), 
+        currency: 'usd', 
+          metadata: {
+            salonId: selectedSalon?.id?.toString() || params.id,
+            services: selectedServices.map(s => s.id).join(','),
+            date: selectedDate,
+            time: selectedTime,
+            professional: selectedProfessional,
+          },
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret);
+        setShowPaymentForm(true);
+      } else {
+        throw new Error(data.error || 'Failed to create payment intent');
+      }
+    } catch (error) {
+      console.error('Error creating payment intent:', error);
+      alert('Failed to initialize payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const saveAppointment = async (paymentIntentId?: string) => {
+    try {
+      setIsProcessing(true);
+
       // Get the time slot data from sessionStorage
       const timeSlotData = sessionStorage.getItem("selectedTimeSlot");
       let timeSlot = null;
@@ -175,7 +202,7 @@ const ConfirmPage = () => {
         return;
       }
       
-      // Ensure slot_id is set correctly - this is critical for matching with the database
+      // Ensure slot_id is set correctly
       if (!timeSlot.slot_id && timeSlot.id) {
         timeSlot.slot_id = timeSlot.id;
         console.log("Set slot_id from id:", timeSlot.slot_id);
@@ -208,25 +235,27 @@ const ConfirmPage = () => {
         console.log("URL params ID:", params.id);
       } else if (Array.isArray(params.id)) {
         console.log("URL params ID (array):", params.id[0]);
-        salonUserId = params.id[0]; // Use the first value if it's an array
+        salonUserId = params.id[0];
       }
       
       // Prepare the data for the booking API
       const bookingData = {
         timeSlot: {
           ...timeSlot,
-          // Ensure both id and slot_id are set correctly
           slot_id: timeSlot.slot_id || timeSlot.id,
           id: timeSlot.id || timeSlot.slot_id,
-          // Make sure we include all fields needed for creating a new time slot
           start_time: timeSlot.start_time,
           period: timeSlot.period || 30,
           timestamp: timeSlot.timestamp || new Date(timeSlot.start_time).getTime()
         },
-        salonId: salonUserId, // Salon owner's userId
-        serviceId: serviceId || salonUserId, // Fallback to salonId if no serviceId
-        staffId: staffMember ? staffMember._id : null, // Use staffMember._id if a specific staff was selected
+        salonId: salonUserId,
+        serviceId: serviceId || salonUserId,
+        staffId: staffMember ? staffMember._id : null,
         paymentMethod: paymentMethod,
+        paymentIntentId: paymentIntentId || null,
+        amount: calculateTotal(),
+        totalAmount: calculateTotal(), 
+        paymentStatus: paymentIntentId ? 'completed' : 'pending',
         note: bookingNotes,
         date: selectedDate,
         time: selectedTime
@@ -271,13 +300,164 @@ const ConfirmPage = () => {
       
       console.log("Booking successful:", result);
       
+      if (paymentMethod === PaymentMethod.VENUE) {
+      try {
+        console.log('Creating bill for venue payment...');
+        // Get customer name from session storage or use a default
+        const customerData = sessionStorage.getItem("customerData");
+        let customerName = "Guest Customer";
+        
+        if (customerData) {
+      try {
+        const customer = JSON.parse(customerData);
+        customerName = customer.name || customer.firstName || customer.email || "Guest Customer";
+      } catch (e) {
+        console.error('Error parsing customer data:', e);
+      }
+    }
+    if (!customerName || customerName === "Guest Customer") {
+      // You might have user data in a different location, check your app's user management
+      const userData = sessionStorage.getItem("user");
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          customerName = user.name || user.firstName || customerName;
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
+      }
+    }
+    if (!customerName || customerName === "Guest Customer") {
+      customerName = "Test Customer " + Date.now();
+    }
+        
+        const billData = {
+          customerName: customerName,
+          services: selectedServices.map(service => service.name),
+          date: selectedDate,
+          time: selectedTime,
+          amount: calculateTotal(),
+          paymentMethod: "Cash/Venue",
+          status: "pending",
+          salonId: salonUserId.toString(),
+          appointmentId: result.appointmentId,
+        };
+        console.log('Bill data to be sent:', billData);
+         const billResponse = await fetch('/api/bills', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(billData),
+        });
+        const billResult = await billResponse.json();
+    console.log('Bill response:', billResult);
+        
+       if (billResponse.ok) {
+      console.log("✅ Bill created successfully for salon owner");
+      alert("Booking confirmed! A bill has been created for the salon owner.");
+    } else {
+      console.error("❌ Failed to create bill for salon owner:", billResult);
+    }
+  } catch (billError) {
+    console.error("Error creating bill:", billError);
+    // Don't block the appointment creation if bill creation fails
+  }
+    }
+      
+      // Store final booking data for access on appointment/payment pages
+      const finalBookingData = {
+        services: selectedServices,
+        salon: selectedSalon,
+        professional: selectedProfessional,
+        date: selectedDate,
+        time: selectedTime,
+        paymentMethod: paymentMethod,
+        totalAmount: calculateTotalFormatted(),
+        card: selectedCard,
+        appointmentId: result.appointmentId,
+        paymentIntentId: paymentIntentId,
+      };
+
+      sessionStorage.setItem(
+        "finalBookingData",
+        JSON.stringify(finalBookingData)
+      );
+      
       // Redirect to user appointments page
       router.push("/user/booking/user-appointments");
     } catch (error) {
       console.error("Error processing booking:", error);
       alert("There was an error booking your appointment. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
+
+  const handleContinue = async () => {
+    if (paymentMethod === PaymentMethod.CARD_PAYMENT) {
+      await createPaymentIntent();
+    } else {
+      // Handle venue payment
+      await saveAppointment();
+    }
+  };
+
+  const handlePaymentSuccess = (paymentIntentId: string) => {
+    console.log('Payment successful:', paymentIntentId);
+    saveAppointment(paymentIntentId);
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error);
+    alert(`Payment failed: ${error}`);
+    setShowPaymentForm(false);
+    setIsProcessing(false);
+  };
+  // If showing payment form, render the payment interface
+  if (showPaymentForm) {
+    return (
+      <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
+        <BookingNavigation salonId={Number(params.id || 1)} />
+        
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold mb-6 text-center">Complete Payment</h2>
+            
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-2">Booking Summary</h3>
+              <p className="text-gray-600">{selectedSalon?.name}</p>
+              <p className="text-gray-600">{selectedServices.map(s => s.name).join(', ')}</p>
+              <p className="text-gray-600">{selectedDate} at {selectedTime}</p>
+              <p className="text-gray-600">Professional: {selectedProfessional}</p>
+              <div className="mt-2 pt-2 border-t">
+    <p className="font-semibold">Total: LKR {calculateTotal().toLocaleString()}</p>
+    <p className="text-sm text-gray-500">
+      (Approximately ${(calculateTotal() / 300).toFixed(2)} USD)
+    </p>
+  </div>
+            </div>
+
+            <PaymentWrapper clientSecret={clientSecret}>
+              <CheckoutForm
+                amount={calculateTotal()}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+              />
+            </PaymentWrapper>
+
+            <button
+              onClick={() => setShowPaymentForm(false)}
+              className="w-full mt-4 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              disabled={isProcessing}
+            >
+              Back to Payment Options
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-7 shadow-lg w-full min-h-screen bg-purple-50 flex flex-col overflow-y-auto">
@@ -297,6 +477,7 @@ const ConfirmPage = () => {
                   : "border-gray-300"
               }`}
               onClick={() => handlePaymentMethodChange("venue")}
+              disabled={isProcessing}
             >
               🏠 Pay at venue
             </button>
@@ -307,6 +488,7 @@ const ConfirmPage = () => {
                   : "border-gray-300"
               }`}
               onClick={() => handlePaymentMethodChange("card")}
+              disabled={isProcessing}
             >
               💳 Pay via Credit/Debit Card
             </button>
@@ -326,6 +508,7 @@ const ConfirmPage = () => {
                 <button
                   className="text-sm text-purple-600 hover:underline"
                   onClick={() => router.push("/user/payments/payment-cards")}
+                  disabled={isProcessing}
                 >
                   Change
                 </button>
@@ -345,6 +528,7 @@ const ConfirmPage = () => {
             placeholder="Include comments on your booking"
             value={bookingNotes}
             onChange={(e) => setBookingNotes(e.target.value)}
+            disabled={isProcessing}
           />
         </div>
 
@@ -352,14 +536,20 @@ const ConfirmPage = () => {
         <SalonCard
           salonName={selectedSalon?.name || ""}
           services={formattedServices}
-          total={calculateTotal()}
+          total={calculateTotalFormatted()}
           selectedSalon={selectedSalon || undefined}
           selectedProfessionalId="1"
           selectedProfessionalName={selectedProfessional}
           selectedDate={selectedDate}
           selectedTime={selectedTime}
           onContinue={handleContinue}
-          buttonText="Confirm Booking"
+          buttonText={
+            isProcessing
+              ? "Processing..."
+              : paymentMethod === PaymentMethod.CARD_PAYMENT
+              ? "Proceed to Payment"
+              : "Confirm Booking"
+          }
           paymentMethod={paymentMethod === PaymentMethod.VENUE ? "venue" : "card"}
           cardDetails={
             selectedCard
