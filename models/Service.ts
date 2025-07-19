@@ -67,6 +67,10 @@ const serviceSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    viewsCount: {
+      type: Number,
+      default: 0,
+    },
     bookings: {
       type: Number,
       default: 0,
@@ -103,7 +107,9 @@ function arrayLimit(val: string[]) {
 
 // Calculate popularity score before saving
 serviceSchema.pre('save', function(next) {
-  this.popularityScore = (this.views * 0.3) + (this.bookings * 0.7);
+  // Use viewsCount (from Redis) if available, otherwise fall back to views
+  const viewCount = this.viewsCount || this.views || 0;
+  this.popularityScore = (viewCount * 0.3) + (this.bookings * 0.7);
   next();
 });
 
