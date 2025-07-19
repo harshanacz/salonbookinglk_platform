@@ -401,12 +401,12 @@ export default function SelectTime() {
                         />
                       </div>
                       <div>
-                        <p className="font-medium">Testing Purpose</p>
+                        <p className="font-medium">{mainServices[0]?.name || mainServices[0]?.title || "Service"}</p>
                         <p className="text-sm text-gray-600">{selectedProfessionalName}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-purple-700">LKR 2,200</p>
+                      <p className="font-bold text-purple-700">LKR {mainServices[0]?.price?.toLocaleString() || "0"}</p>
                       <p className="text-sm text-gray-500">{mainServices[0]?.duration || 30} mins</p>
                     </div>
                   </div>
