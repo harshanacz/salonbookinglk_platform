@@ -32,19 +32,25 @@ export async function GET(request: NextRequest) {
       ];
     }
     
-    // Fetch services with the matching criteria
+    // Fetch services with the matching criteria from active salon owners only
     const services = await Service.find(filters)
       .populate({
         path: "userId",
-        select: "userName businessName",
+        select: "userName businessName isActive",
         model: "User",
+        match: { isActive: true } // Only populate if user is active
       })
       .sort({ popularityScore: -1 })
       .lean({ virtuals: true });
     
-    // Get salon contexts for all services
+    // Filter out services where userId population failed (deactivated users)
+    const servicesFromActiveUsers = services.filter(service => 
+      service.userId !== null
+    );
+    
+    // Get salon contexts for all services from active users
     const salonContexts = (await SalonContext.find({
-      _id: { $in: services.map(s => s.salonContextId).filter(Boolean) }
+      _id: { $in: servicesFromActiveUsers.map(s => s.salonContextId).filter(Boolean) }
     }).lean()) as unknown as SalonContextType[];
     
     // Create a map of salon contexts for quick lookup
@@ -53,7 +59,7 @@ export async function GET(request: NextRequest) {
     );
     
     // Transform data for frontend
-    const transformedServices = services.map(service => {
+    const transformedServices = servicesFromActiveUsers.map(service => {
       const salonContext = service.salonContextId 
         ? salonContextMap.get(service.salonContextId.toString())
         : null;

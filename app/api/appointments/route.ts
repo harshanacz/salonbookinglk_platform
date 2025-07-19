@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   let filter: any = {};
   if (salonId && mongoose.Types.ObjectId.isValid(salonId)) {
-    filter.userId = salonId;
+    filter.salonId = salonId;
   }
 
   // Populate client, service, and staff for display
