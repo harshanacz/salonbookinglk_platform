@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MoreVertical, Search, Eye, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 type Admin = {
   id: string;
@@ -52,6 +53,7 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchAdmins = async () => {
@@ -95,8 +97,19 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
         }
 
         setAdmins(admins.filter((admin) => admin.id !== adminToDelete.id));
+        
+        toast({
+          title: "Admin Deleted",
+          description: `Admin ${adminToDelete.name} has been successfully deleted.`,
+          variant: "default",
+        });
       } catch (err: any) {
         setError(err.message || "Failed to delete admin");
+        toast({
+          title: "Error",
+          description: err.message || "Failed to delete admin",
+          variant: "destructive",
+        });
       } finally {
         setDeleteDialogOpen(false);
         setAdminToDelete(null);
@@ -210,8 +223,8 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              admin account and remove their data.
+              This will permanently delete the
+              admin account for <strong>{adminToDelete?.name}</strong> ({adminToDelete?.email}) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -220,7 +233,7 @@ export function AdminList({ onSelectAdmin }: AdminListProps) {
               onClick={confirmDelete}
               className="bg-destructive text-destructive-foreground"
             >
-              Delete
+              Delete Admin
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

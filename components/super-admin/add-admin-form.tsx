@@ -35,6 +35,10 @@ const formSchema = z.object({
       message: "Password must contain at least one lowercase letter",
     })
     .regex(/[0-9]/, { message: "Password must contain at least one number" }),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -49,6 +53,7 @@ export function AddAdminForm() {
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -154,6 +159,20 @@ export function AddAdminForm() {
                   (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
                 </span>
               </FormLabel>
+              <FormControl>
+                <Input placeholder="••••••••" type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Re-enter Password</FormLabel>
               <FormControl>
                 <Input placeholder="••••••••" type="password" {...field} />
               </FormControl>
