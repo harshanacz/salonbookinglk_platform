@@ -87,7 +87,8 @@ interface ISalonContext extends Document {
   }>;
   profilePictureUrl?: string;
   timeSlots: ITimeSlot[];
-  cleanupTimeSlots(): ISalonContext;
+  cleanupTimeSlots(): Promise<ISalonContext>;
+  updateOverallRating(): Promise<ISalonContext>;
 }
 
 const salonContextSchema = new mongoose.Schema(
@@ -168,6 +169,54 @@ salonContextSchema.methods.cleanupTimeSlots = function(this: ISalonContext) {
   });
   // Don't call save() here to prevent recursive save issues
   return this;
+};
+
+// Method to update overall salon rating based on all services
+salonContextSchema.methods.updateOverallRating = async function(this: ISalonContext) {
+  try {
+    // Import Service model dynamically to avoid circular dependency
+    const Service = mongoose.models.Service || require('./Service').default;
+    
+    // Get all services for this salon
+    const services = await Service.find({ 
+      salonContextId: this._id,
+      status: 'ACTIVE' // Only include active services
+    });
+
+    if (services.length === 0) {
+      // No services, reset rating
+      this.numberOfReviewers = 0;
+      this.reviewScore = 0;
+      return this.save();
+    }
+
+    // Calculate weighted average rating
+    let totalWeightedRating = 0;
+    let totalReviewers = 0;
+
+    services.forEach((service: any) => {
+      if (service.reviewCount > 0) {
+        // Weight each service's rating by its number of reviews
+        totalWeightedRating += service.averageRating * service.reviewCount;
+        totalReviewers += service.reviewCount;
+      }
+    });
+
+    if (totalReviewers > 0) {
+      // Calculate overall salon rating
+      this.reviewScore = parseFloat((totalWeightedRating / totalReviewers).toFixed(2));
+      this.numberOfReviewers = totalReviewers;
+    } else {
+      // No reviews yet
+      this.reviewScore = 0;
+      this.numberOfReviewers = 0;
+    }
+
+    return this.save();
+  } catch (error) {
+    console.error('Error updating salon overall rating:', error);
+    throw error;
+  }
 };
 
 // Pre-save middleware to automatically clean up old time slots
