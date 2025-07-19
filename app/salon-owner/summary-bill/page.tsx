@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,65 +17,164 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, DollarSign, Search } from "lucide-react";
+import { Calendar, Clock, DollarSign, Search, User, FileText } from "lucide-react";
+
+interface Bill {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  services: string[];
+  date: string;
+  time: string;
+  amount: number;
+  paymentMethod: string;
+  status: string;
+  appointmentStatus: string;
+  staffName: string;
+  note: string;
+}
+
+interface BillStats {
+  totalRevenue: number;
+  paidBillsCount: number;
+  pendingBillsCount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  totalTransactions: number;
+}
 
 export default function SummaryBillPage() {
   const [dateRange, setDateRange] = useState("today");
   const [searchQuery, setSearchQuery] = useState("");
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [stats, setStats] = useState<BillStats>({
+    totalRevenue: 0,
+    paidBillsCount: 0,
+    pendingBillsCount: 0,
+    paidAmount: 0,
+    pendingAmount: 0,
+    totalTransactions: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Sample bills data
-  const bills = [
-    {
-      id: 1,
-      customerName: "Sarah Johnson",
-      services: ["Haircut & Styling", "Hair Treatment"],
-      date: "2024-04-10",
-      time: "11:30 AM",
-      amount: 7500,
-      paymentMethod: "Card",
-      status: "paid",
-    },
-    {
-      id: 2,
-      customerName: "Michael Brown",
-      services: ["Hair Coloring"],
-      date: "2024-04-10",
-      time: "2:00 PM",
-      amount: 12000,
-      paymentMethod: "Cash",
-      status: "paid",
-    },
-    {
-      id: 3,
-      customerName: "Emily Davis",
-      services: ["Manicure & Pedicure", "Facial"],
-      date: "2024-04-10",
-      time: "3:30 PM",
-      amount: 9500,
-      paymentMethod: "Card",
-      status: "pending",
-    },
-  ];
+  useEffect(() => {
+    fetchBills();
+  }, [dateRange, searchQuery]);
 
-  const totalRevenue = bills.reduce((sum, bill) => sum + bill.amount, 0);
-  const paidBills = bills.filter((bill) => bill.status === "paid");
-  const pendingBills = bills.filter((bill) => bill.status === "pending");
+  const fetchBills = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        dateRange,
+        search: searchQuery
+      });
 
-  const filteredBills = bills.filter(
-    (bill) =>
-      bill.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bill.services.some((service) =>
-        service.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-  );
+      const response = await fetch(`/api/salon-owner/summary-bills?${params}`, {
+        method: "GET",
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setBills(data.bills || []);
+      setStats(data.stats || {
+        totalRevenue: 0,
+        paidBillsCount: 0,
+        pendingBillsCount: 0,
+        paidAmount: 0,
+        pendingAmount: 0,
+        totalTransactions: 0
+      });
+    } catch (error) {
+      console.error("Error fetching bills:", error);
+      setError("Failed to load bills. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateBillStatus = async (billId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/salon-owner/summary-bills/${billId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state
+      setBills(bills.map(bill => 
+        bill.id === billId ? { 
+          ...bill, 
+          status: newStatus === 'COMPLETED' ? 'paid' : 'pending',
+          appointmentStatus: newStatus 
+        } : bill
+      ));
+      
+      // Refresh stats
+      fetchBills();
+    } catch (error) {
+      console.error("Error updating bill status:", error);
+      alert("Failed to update bill status. Please try again.");
+    }
+  };
+
+  const downloadReport = () => {
+    // Create CSV content
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      "Customer Name,Service,Date,Time,Amount,Status,Payment Method,Staff,Note\n" +
+      bills.map(bill => 
+        `"${bill.customerName}","${bill.services.join('; ')}","${bill.date}","${bill.time}","${bill.amount}","${bill.status}","${bill.paymentMethod}","${bill.staffName}","${bill.note}"`
+      ).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `summary_bills_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Summary Bill</h1>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-red-500">{error}</p>
+          <Button onClick={fetchBills} className="mt-4">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Summary Bill</h1>
-        <Button className="bg-purple-600 hover:bg-purple-700">
-          Download Report
-        </Button>
+        
       </div>
 
       {/* Summary Cards */}
@@ -87,10 +186,10 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              LKR {totalRevenue.toLocaleString()}
+              LKR {stats.totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              From {bills.length} transactions
+              From {stats.totalTransactions} transactions
             </p>
           </CardContent>
         </Card>
@@ -102,13 +201,10 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {paidBills.length}
+              {stats.paidBillsCount}
             </div>
             <p className="text-xs text-muted-foreground">
-              LKR{" "}
-              {paidBills
-                .reduce((sum, bill) => sum + bill.amount, 0)
-                .toLocaleString()}
+              LKR {stats.paidAmount.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -120,13 +216,10 @@ export default function SummaryBillPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {pendingBills.length}
+              {stats.pendingBillsCount}
             </div>
             <p className="text-xs text-muted-foreground">
-              LKR{" "}
-              {pendingBills
-                .reduce((sum, bill) => sum + bill.amount, 0)
-                .toLocaleString()}
+              LKR {stats.pendingAmount.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -135,8 +228,10 @@ export default function SummaryBillPage() {
       {/* Bills List */}
       <Card>
         <CardHeader>
-          <CardTitle>Bills</CardTitle>
-          <CardDescription>View and manage all bills</CardDescription>
+          <CardTitle>Venue Payment Bills</CardTitle>
+          <CardDescription>
+            Bills for appointments with venue payment method only
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -165,13 +260,14 @@ export default function SummaryBillPage() {
           </div>
 
           <div className="space-y-4">
-            {filteredBills.map((bill) => (
+            {bills.map((bill) => (
               <div
                 key={bill.id}
                 className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border gap-4"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="h-4 w-4 text-gray-500" />
                     <h3 className="font-medium">{bill.customerName}</h3>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${
@@ -183,9 +279,22 @@ export default function SummaryBillPage() {
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </span>
                   </div>
-                  <p className="text-gray-600">
-                    {bill.services.join(", ")}
-                  </p>
+                  
+                  <div className="space-y-1">
+                    <p className="text-gray-600 flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      {bill.services.join(", ")}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Staff: {bill.staffName}
+                    </p>
+                    {bill.note && (
+                      <p className="text-sm text-gray-500 italic">
+                        Note: {bill.note}
+                      </p>
+                    )}
+                  </div>
+                  
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -203,7 +312,13 @@ export default function SummaryBillPage() {
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      alert(`Bill Details:\n\nCustomer: ${bill.customerName}\nEmail: ${bill.customerEmail}\nServices: ${bill.services.join(', ')}\nDate: ${bill.date}\nTime: ${bill.time}\nAmount: LKR ${bill.amount.toLocaleString()}\nStaff: ${bill.staffName}\nStatus: ${bill.status}\nNote: ${bill.note || 'No notes'}`);
+                    }}
+                  >
                     View Details
                   </Button>
                   {bill.status === "pending" && (
@@ -211,6 +326,7 @@ export default function SummaryBillPage() {
                       variant="outline"
                       size="sm"
                       className="text-green-600 hover:text-green-700"
+                      onClick={() => updateBillStatus(bill.id, "COMPLETED")}
                     >
                       Mark as Paid
                     </Button>
@@ -219,9 +335,11 @@ export default function SummaryBillPage() {
               </div>
             ))}
 
-            {filteredBills.length === 0 && (
+            {bills.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No bills found</p>
+                <p className="text-gray-500">
+                  No venue payment bills found for the selected period
+                </p>
               </div>
             )}
           </div>
