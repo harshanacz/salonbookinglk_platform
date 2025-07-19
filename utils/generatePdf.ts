@@ -56,21 +56,21 @@ export async function generatePdf(
   };
   // Convert the element to canvas
   const canvas = await html2canvas(element, {
-    scale: 2, // Higher scale for better quality
+    scale: 1.2, // Optimized scale for better quality and size
     logging: false,
     useCORS: true,
     allowTaint: true,
     backgroundColor: '#ffffff'
   });
   
-  const imgData = canvas.toDataURL('image/png');
+  const imgData = canvas.toDataURL('image/jpeg', 0.85); // Use JPEG format with 85% quality for smaller file size
     // Calculate positioning for A4 size
   const imgWidth = pageWidth - (margins.left + margins.right);
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
   let yPosition = margins.top; // Start from the top margin since HTML content has its own header
   
   // Add the image to the PDF
-  pdf.addImage(imgData, 'PNG', margins.left, yPosition, imgWidth, imgHeight);
+  pdf.addImage(imgData, 'JPEG', margins.left, yPosition, imgWidth, imgHeight);
   
   // Save the PDF
   pdf.save(filename);
