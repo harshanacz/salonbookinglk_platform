@@ -229,7 +229,6 @@ export function ActivityLogs({ adminId, adminName }: ActivityLogsProps) {
                 <SelectItem value="APPOINTMENT_APPROVAL">Appointment Approval</SelectItem>
                 <SelectItem value="NOTIFICATION_SEND">Notifications</SelectItem>
                 <SelectItem value="COMPLAINT_MANAGEMENT">Complaints</SelectItem>
-                <SelectItem value="ADMIN_SETTINGS_UPDATE">Settings</SelectItem>
                 <SelectItem value="ADMIN_NAME_CHANGE">Name Change</SelectItem>
                 <SelectItem value="PASSWORD_CHANGE">Password Change</SelectItem>
               </SelectGroup>
