@@ -36,6 +36,10 @@ export const ManageAppointmentPopup: React.FC<ManageAppointmentPopupProps> = ({
 }) => {
   console.log("ManageAppointmentPopup received:", appointment); // Debug log
   
+  const handleCancelClick = () => {
+    onCancel(appointment);
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
@@ -87,28 +91,28 @@ export const ManageAppointmentPopup: React.FC<ManageAppointmentPopupProps> = ({
           <button 
             className={`w-full p-3 border rounded-lg ${
               appointment.status === "Canceled" 
-                ? "bg-gray-300 cursor-not-allowed" 
-                : "bg-gray-100 text-blue-500"
+                ? "bg-gray-300 cursor-not-allowed text-gray-500" 
+                : "bg-gray-100 text-blue-500 hover:bg-blue-50"
             }`}
             onClick={() => onReschedule(appointment)}
             disabled={appointment.status === "Canceled"}
           >
-            📅 Reschedule appointment
+            📅 {appointment.status === "Canceled" ? "Cannot Reschedule" : "Reschedule appointment"}
           </button>
           <button
             className={`w-full p-3 border rounded-lg ${
               appointment.status === "Canceled" 
-                ? "bg-gray-300 cursor-not-allowed" 
-                : "bg-gray-100 text-red-500"
+                ? "bg-red-100 cursor-not-allowed text-red-400" 
+                : "bg-gray-100 text-red-500 hover:bg-red-50"
             }`}
-            onClick={() => onCancel(appointment)}
+            onClick={handleCancelClick}
             disabled={appointment.status === "Canceled"}
           >
             ❌ {appointment.status === "Canceled" ? "Appointment Canceled" : "Cancel appointment"}
           </button>
         </div>
         <button
-          className="w-full p-3 border rounded-lg bg-purple-500 text-white mt-4"
+          className="w-full p-3 border rounded-lg bg-purple-500 text-white mt-4 hover:bg-purple-600"
           onClick={onClose}
         >
           Close

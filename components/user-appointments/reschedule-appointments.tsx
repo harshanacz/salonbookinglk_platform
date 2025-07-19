@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Appointment {
+  id: string;
   date: Date;
   appointmentTime: string;
-  services: { name: string }[];
+  services: Service[];
 }
 
 interface Service {
@@ -18,7 +19,7 @@ interface RescheduleAppointmentPopupProps {
   appointment: Appointment;
   services: Service[];
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (newDate: Date, newTimes: { [serviceId: string]: string }) => void;
   onSelectTime: (serviceId: string, time: string) => void;
 }
 
@@ -32,6 +33,7 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedTimes, setSelectedTimes] = useState<{ [serviceId: string]: string }>({});
 
   // Calendar generation logic
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -93,8 +95,31 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
 
   const handleSelectDate = (day: number | null) => {
     if (day) {
-      const date = new Date(currentYear, currentMonth, day);
-      setSelectedDate(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const selectedDateObj = new Date(currentYear, currentMonth, day);
+      
+      // Prevent selecting past dates
+      if (selectedDateObj >= today) {
+        setSelectedDate(selectedDateObj);
+        // Clear selected times when date changes
+        setSelectedTimes({});
+      }
+    }
+  };
+
+  const handleSelectTime = (serviceId: string, time: string) => {
+    setSelectedTimes(prev => ({
+      ...prev,
+      [serviceId]: time
+    }));
+    onSelectTime(serviceId, time);
+  };
+
+  const handleConfirmReschedule = () => {
+    if (selectedDate && Object.keys(selectedTimes).length === appointment.services.length) {
+      onConfirm(selectedDate, selectedTimes);
     }
   };
 
@@ -116,6 +141,15 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
     const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
     return `${displayHour}:${minutes} ${period}`;
   };
+
+  const isDateSelectable = (day: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dateToCheck = new Date(currentYear, currentMonth, day);
+    return dateToCheck >= today;
+  };
+
+  const allTimesSelected = appointment.services.every(service => selectedTimes[service.id]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -164,13 +198,14 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
               {weeks.flat().map((day, index) => (
                 <button
                   key={index}
-                  disabled={!day}
+                  disabled={!day || !isDateSelectable(day)}
                   onClick={() => day && handleSelectDate(day)}
                   className={`h-8 w-8 rounded-full flex items-center justify-center text-sm
                     ${!day ? "invisible" : ""}
+                    ${!day || (day && !isDateSelectable(day)) ? "text-gray-300 cursor-not-allowed" : ""}
                     ${selectedDate && selectedDate.getDate() === day 
                       ? "bg-purple-600 text-white" 
-                      : "hover:bg-gray-100"}`}
+                      : day && isDateSelectable(day) ? "hover:bg-gray-100" : ""}`}
                 >
                   {day}
                 </button>
@@ -182,7 +217,7 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
         {/* Time Slots for each service */}
         {selectedDate && (
           <div className="space-y-6">
-            {services.map((service) => (
+            {appointment.services.map((service) => (
               <div key={service.id} className="mb-6">
                 <h3 className="font-semibold text-gray-700 mb-2">
                   Select Time for {service.name} ({service.duration})
@@ -192,12 +227,12 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
                     <button
                       key={index}
                       disabled={slot.status === "unavailable"}
-                      onClick={() => onSelectTime(service.id, slot.time)}
+                      onClick={() => handleSelectTime(service.id, slot.time)}
                       className={`p-2 border rounded-lg text-center
                         ${slot.status === "unavailable" 
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
                           : "hover:bg-gray-50"}
-                        ${service.selectedTime === slot.time 
+                        ${selectedTimes[service.id] === slot.time 
                           ? "border-purple-600 border-2 bg-purple-50" 
                           : ""}`}
                     >
@@ -221,11 +256,11 @@ export const RescheduleAppointmentPopup: React.FC<RescheduleAppointmentPopupProp
             Cancel
           </button>
           <button
-            onClick={onConfirm}
-            className={`px-4 py-2 rounded-lg ${selectedDate && services.every(s => s.selectedTime)
+            onClick={handleConfirmReschedule}
+            className={`px-4 py-2 rounded-lg ${selectedDate && allTimesSelected
               ? "bg-purple-600 text-white hover:bg-purple-700" 
               : "bg-purple-300 text-white cursor-not-allowed"}`}
-            disabled={!selectedDate || !services.every(s => s.selectedTime)}
+            disabled={!selectedDate || !allTimesSelected}
           >
             Confirm Reschedule
           </button>

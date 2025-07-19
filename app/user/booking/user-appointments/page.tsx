@@ -221,12 +221,34 @@ const AppointmentSummary = () => {
 
   // Handler for canceling an appointment
   const handleCancelAppointment = (appointment: Appointment) => {
-    // Example: Remove the appointment from upcomingAppointments
-    const updatedAppointments = upcomingAppointments.filter(app => app.id !== appointment.id);
+    // Update the appointment status to "Canceled" instead of removing it
+    const updatedAppointments = upcomingAppointments.map(app => 
+      app.id === appointment.id 
+        ? { ...app, status: "Canceled" as const }
+        : app
+    );
     setUpcomingAppointments(updatedAppointments);
-    // Optionally, update localStorage
+    
+    // If the canceled appointment is the currently selected one, clear it from right column
+    if (latestAppointment && latestAppointment.id === appointment.id) {
+      setLatestAppointment(null);
+    }
+    
+    // Update localStorage
     localStorage.setItem("upcomingAppointments", JSON.stringify(updatedAppointments));
     setActivePopup(null);
+    setSelectedAppointmentForAction(null);
+  };
+
+  // Handler for selecting a time (used in RescheduleAppointmentPopup)
+  const handleSelectTime = (serviceId: string, time: string) => {
+    setServices(prevServices => 
+      prevServices.map(service => 
+        service.id === serviceId 
+          ? { ...service, selectedTime: time }
+          : service
+      )
+    );
   };
 
   // Handler for confirming reschedule
@@ -236,14 +258,15 @@ const AppointmentSummary = () => {
       app.id === updatedAppointment.id ? updatedAppointment : app
     );
     setUpcomingAppointments(updatedAppointments);
+    
+    // Update the latest appointment if it's the one being rescheduled
+    if (latestAppointment && latestAppointment.id === updatedAppointment.id) {
+      setLatestAppointment(updatedAppointment);
+    }
+    
     localStorage.setItem("upcomingAppointments", JSON.stringify(updatedAppointments));
     setActivePopup(null);
     setSelectedAppointmentForAction(null);
-  };
-
-  // Handler for selecting a time (used in RescheduleAppointmentPopup)
-  const handleSelectTime = (time: string) => {
-    setSelectedTime(time);
   };
 
   return (
@@ -283,13 +306,20 @@ const AppointmentSummary = () => {
       {activePopup === "reschedule" && selectedAppointmentForAction && (
         <RescheduleAppointmentPopup
           appointment={selectedAppointmentForAction}
-          services={services}
+          services={selectedAppointmentForAction.services || []}
           onClose={() => setActivePopup(null)}
-          onConfirm={() => {
-            // You may want to update the appointment here, e.g.:
-            // handleConfirmReschedule(selectedAppointmentForAction);
-            setActivePopup(null);
-            setSelectedAppointmentForAction(null);
+          onConfirm={(newDate: Date, newTimes: { [serviceId: string]: string }) => {
+            // Create updated appointment with new date and times
+            const updatedAppointment: Appointment = {
+              ...selectedAppointmentForAction,
+              date: newDate,
+              appointmentTime: Object.values(newTimes)[0] || selectedAppointmentForAction.appointmentTime,
+              services: selectedAppointmentForAction.services.map(service => ({
+                ...service,
+                selectedTime: newTimes[service.id] || service.selectedTime
+              }))
+            };
+            handleConfirmReschedule(updatedAppointment);
           }}
           onSelectTime={handleSelectTime}
         />
