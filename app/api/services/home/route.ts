@@ -8,16 +8,22 @@ export async function GET() {
   try {
     await dbConnect();
 
-    // Find all ACTIVE services
+    // Find all ACTIVE services from ACTIVE salon owners
     const activeServices = await Service.find({ 
       status: ServiceStatus.ACTIVE 
     }).populate({
       path: "userId",
-      select: "userName businessName",
-      model: User
+      select: "userName businessName isActive",
+      model: User,
+      match: { isActive: true } // Only populate if user is active
     }).lean({ virtuals: true });
 
-    if (!activeServices.length) {
+    // Filter out services where userId population failed (deactivated users)
+    const servicesFromActiveUsers = activeServices.filter(service => 
+      service.userId !== null
+    );
+
+    if (!servicesFromActiveUsers.length) {
       return NextResponse.json({
         popularServices: [],
         topRatedServices: []
@@ -25,7 +31,7 @@ export async function GET() {
     }
 
     // Transform data for frontend
-    const transformedServices = activeServices.map(service => {
+    const transformedServices = servicesFromActiveUsers.map(service => {
       // Handle populated data or objectId
       const userId = service.userId as any;
       const businessName = 
