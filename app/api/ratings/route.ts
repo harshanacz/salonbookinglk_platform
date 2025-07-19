@@ -6,6 +6,7 @@ import Service from "@/models/Service";
 import User from "@/models/User";
 import Appointment from "@/models/Appointment";
 import mongoose from "mongoose";
+import { updateSalonOverallRating } from "@/utils/salonRatingUtils";
 
 // GET - Retrieve ratings for a user or service
 export async function GET(request: NextRequest) {
@@ -184,6 +185,15 @@ export async function POST(request: NextRequest) {
       reviewCount: service.reviewCount,
       averageRating: service.averageRating
     });
+
+    // Update overall salon rating based on all services
+    console.log("Rating API - Updating salon overall rating...");
+    try {
+      await updateSalonOverallRating(service.salonContextId);
+    } catch (error) {
+      console.error("Rating API - Error updating salon overall rating:", error);
+      // Don't fail the request if salon rating update fails
+    }
 
     return NextResponse.json({
       success: true,
