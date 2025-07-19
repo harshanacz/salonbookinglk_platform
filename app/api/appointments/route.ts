@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
 import Staff from "@/models/Staff";
+import Service from "@/models/Service";
 import User from "@/models/User";
 import AppointmentModel, { IAppointment } from "@/models/Appointment";
 import { AppointmentStatus, PaymentMethod } from "@/models/enums";

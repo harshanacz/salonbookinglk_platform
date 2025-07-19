@@ -5,6 +5,11 @@ import User from "@/models/User";
 import Complaint from "@/models/complaint";
 import Appointment from "@/models/Appointment";
 import SalonContext from "@/models/SalonContext";
+import Staff from "@/models/Staff";
+import Service from "@/models/Service";
+
+// Ensure all models are registered
+import "@/models/index";
 
 // Simple GET endpoint for debugging
 export async function GET(request: NextRequest) {
