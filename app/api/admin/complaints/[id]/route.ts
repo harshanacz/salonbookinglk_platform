@@ -29,19 +29,27 @@ export async function GET(
     const complaint = await Complaint.findById(complaintId)
       .populate({
         path: 'userId',
-        select: 'userName email phone'
+        select: 'userName email phone mobileNumber'
       })
       .populate({
         path: 'appointmentId',
-        select: 'date time salonId salonContextId serviceId staffId totalAmount paymentMethod',
+        select: 'date time salonId salonContextId serviceId staffId paymentMethod',
         populate: [
           {
             path: 'serviceId',
-            select: 'name price duration'
+            select: 'name title price duration'
           },
           {
             path: 'staffId',
             select: 'name'
+          },
+          {
+            path: 'salonContextId',
+            select: 'businessName phoneNumber'
+          },
+          {
+            path: 'salonId',
+            select: 'email userName'
           }
         ]
       })
@@ -57,41 +65,65 @@ export async function GET(
     // Get salon context data
     let salonData: any = null;
     
+    // Extract salon information from the populated salonContextId
     if ((complaint as any).appointmentId?.salonContextId) {
-      salonData = await SalonContext.findById((complaint as any).appointmentId.salonContextId)
-        .select('businessName contactNumber email address')
-        .lean();
-    } else if ((complaint as any).appointmentId?.salonId) {
-      salonData = await SalonContext.findOne({ userId: (complaint as any).appointmentId.salonId })
-        .select('businessName contactNumber email address')
-        .lean();
+      salonData = (complaint as any).appointmentId.salonContextId;
+    } else if ((complaint as any).appointmentId) {
+      // Fallback: try to fetch salon data if salonContextId wasn't populated
+      if ((complaint as any).appointmentId.salonContextId && typeof (complaint as any).appointmentId.salonContextId === 'string') {
+        try {
+          salonData = await SalonContext.findById((complaint as any).appointmentId.salonContextId)
+            .select('businessName phoneNumber')
+            .lean();
+        } catch (error) {
+          console.log(`[ADMIN_COMPLAINT_DETAIL] Error fetching salon context by ID:`, error);
+        }
+      } else if ((complaint as any).appointmentId.salonId) {
+        try {
+          salonData = await SalonContext.findOne({ userId: (complaint as any).appointmentId.salonId })
+            .select('businessName phoneNumber')
+            .lean();
+        } catch (error) {
+          console.log(`[ADMIN_COMPLAINT_DETAIL] Error fetching salon context by userId:`, error);
+        }
+      }
     }
+
+    // Get salon owner email from the populated salonId
+    let salonOwnerEmail = 'No email provided';
+    if ((complaint as any).appointmentId?.salonId?.email) {
+      salonOwnerEmail = (complaint as any).appointmentId.salonId.email;
+    }
+
+    console.log('[ADMIN_COMPLAINT_DETAIL] Salon data:', salonData);
+    console.log('[ADMIN_COMPLAINT_DETAIL] Salon owner email:', salonOwnerEmail);
+    console.log('[ADMIN_COMPLAINT_DETAIL] Complaint appointment:', (complaint as any).appointmentId);
 
     // Format the response
     const complaintData = {
       id: (complaint as any)._id.toString(),
       complainant: {
         name: (complaint as any).userId?.userName || 'Unknown User',
-        contact: (complaint as any).userId?.phone || 'No phone provided',
+        contact: (complaint as any).userId?.phone || (complaint as any).userId?.mobileNumber || 'No phone provided',
         email: (complaint as any).userId?.email || 'No email provided',
       },
       defendant: {
         name: salonData?.businessName || 'Unknown Salon',
-        contact: salonData?.contactNumber || 'No contact provided',
-        email: salonData?.email || 'No email provided',
-        address: salonData?.address || 'No address provided'
+        contact: salonData?.phoneNumber || 'No contact provided',
+        email: salonOwnerEmail,
+        address: 'Address not available in salon context'
       },
-      service: (complaint as any).appointmentId?.serviceId?.name || 'Unknown Service',
+      service: (complaint as any).appointmentId?.serviceId?.name || (complaint as any).appointmentId?.serviceId?.title || 'Unknown Service',
       appointment: {
         date: (complaint as any).appointmentId?.date 
           ? new Date((complaint as any).appointmentId.date).toISOString().split('T')[0] 
           : 'No date',
         time: (complaint as any).appointmentId?.time 
-          ? `${Math.floor((complaint as any).appointmentId.time / 100)}:${String((complaint as any).appointmentId.time % 100).padStart(2, '0')}`
+          ? `${String(Math.floor((complaint as any).appointmentId.time / 60)).padStart(2, '0')}:${String((complaint as any).appointmentId.time % 60).padStart(2, '0')}`
           : 'No time',
       },
-      payment: (complaint as any).appointmentId?.totalAmount 
-        ? `LKR ${(complaint as any).appointmentId.totalAmount.toLocaleString()}`
+      payment: (complaint as any).appointmentId?.serviceId?.price 
+        ? `LKR ${(complaint as any).appointmentId.serviceId.price.toLocaleString()}`
         : 'Amount not available',
       paymentMethod: (complaint as any).appointmentId?.paymentMethod || 'Not specified',
       staffInvolved: (complaint as any).appointmentId?.staffId?.name || 'No staff assigned',
