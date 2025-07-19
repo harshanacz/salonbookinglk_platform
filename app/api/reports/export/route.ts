@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import AppointmentModel from "@/models/Appointment";
+import Service from "@/models/Service";
 import { AppointmentStatus } from "@/models/enums";
 import { startOfDay, endOfDay, format } from "date-fns";
 

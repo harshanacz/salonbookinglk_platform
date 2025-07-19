@@ -5,8 +5,13 @@ import User from "@/models/User";
 import Complaint from "@/models/complaint";
 import Appointment from "@/models/Appointment";
 import SalonContext from "@/models/SalonContext";
+import Staff from "@/models/Staff";
+import Service from "@/models/Service";
 import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
 import { getAdminInfo } from "@/utils/adminActivityMiddleware";
+
+// Ensure all models are registered
+import "@/models/index";
 
 // Get all complaints
 export async function GET(request: NextRequest) {
