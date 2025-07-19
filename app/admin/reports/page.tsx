@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -23,7 +24,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, Download, Loader2 } from "lucide-react";
+import { CalendarIcon, Download, Loader2, Search } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { Bar, Line, Pie } from "react-chartjs-2";
 import { generatePdf } from "@/utils/generatePdf"; 
@@ -61,19 +62,42 @@ interface ReportData {
   stats: {
     totalRevenue: number;
     totalAppointments: number;
-    activeSalons: number;
-    newSalonsThisMonth: number;
+    activeSalons?: number;
+    verified?: number;
+    totalSalons?: number;
+    newSalonsThisMonth?: number;
     customerSatisfaction: number;
+    lostRevenue?: number;
   };
   appointmentsData: {
     confirmed: number;
     pending: number;
     completed: number;
     cancelled: number;
+    confirmedRevenue?: number;
+    pendingRevenue?: number;
+    completedRevenue?: number;
+    cancelledRevenue?: number;
   };
   popularServices: Array<{
     title: string;
     count: number;
+    salonName?: string;
+    revenue?: number;
+  }>;
+  popularSalons?: Array<{
+    name: string;
+    count: number;
+    revenue: number;
+  }>;
+  topSalons?: Array<{
+    id: string;
+    name: string;
+    revenue: number;
+    appointments: number;
+    services: number;
+    rating: number;
+    location: string;
   }>;
   revenueData: Array<{
     month: string;
@@ -92,6 +116,7 @@ export default function AdminReportsPage() {
     to: new Date(),
   });
   const [selectedSalon, setSelectedSalon] = useState<string>("all");
+  const [salonSearch, setSalonSearch] = useState<string>("");
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +139,12 @@ export default function AdminReportsPage() {
     // Only fetch again when salon changes, not on date range changes
     // Date range changes will be applied when the Apply button is clicked
   }, [selectedSalon]);
+
+  // Filter salons based on search
+  const filteredSalons = reportData?.salons.filter(salon =>
+    salon.name.toLowerCase().includes(salonSearch.toLowerCase())
+  ) || [];
+
   const fetchReportData = async () => {
     try {
       setLoading(true);
@@ -131,6 +162,8 @@ export default function AdminReportsPage() {
       }
 
       const data = await response.json();
+      console.log("API Response:", data); // Debug log
+      console.log("popularServices in response:", data.popularServices); // Debug log
       setReportData(data);
     } catch (err) {
       console.error("Error fetching report data:", err);
@@ -293,8 +326,8 @@ export default function AdminReportsPage() {
       const summary = {
         "Total Revenue": `LKR ${reportData.stats.totalRevenue.toLocaleString()}`,
         "Total Appointments": reportData.stats.totalAppointments.toLocaleString(),
-        "Active Salons": reportData.stats.activeSalons.toString(),
-        "New Salons This Month": reportData.stats.newSalonsThisMonth.toString(),
+        "Active Salons": (reportData.stats.verified || reportData.stats.activeSalons || 0).toString(),
+        "New Salons This Month": (reportData.stats.newSalonsThisMonth || 0).toString(),
         "Customer Satisfaction": `${reportData.stats.customerSatisfaction}/5`,
       };
 
@@ -445,8 +478,17 @@ export default function AdminReportsPage() {
             <SelectValue placeholder="Select salon" />
           </SelectTrigger>
           <SelectContent>
+            <div className="flex items-center px-3 py-2 border-b">
+              <Search className="h-4 w-4 mr-2 text-muted-foreground" />
+              <Input
+                placeholder="Search salons..."
+                value={salonSearch}
+                onChange={(e) => setSalonSearch(e.target.value)}
+                className="h-8 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+            </div>
             <SelectItem value="all">All Salons</SelectItem>
-            {reportData?.salons.map((salon) => (
+            {filteredSalons.map((salon) => (
               <SelectItem key={salon.id} value={salon.id}>
                 {salon.name}
               </SelectItem>
@@ -493,109 +535,156 @@ export default function AdminReportsPage() {
                     : format(new Date(), "LLL dd, y")}
                 </p>
               </div>
-              <div className="border rounded-md p-2 mb-3 pdf-section">
-                <h4 className="font-medium mb-2">Summary</h4>
-                <table className="w-full pdf-report-table">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Metric</th>
-                      <th className="text-right py-2">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-2">Total Revenue</td>
-                      <td className="text-right py-2">
-                        LKR {reportData?.stats.totalRevenue.toLocaleString()}
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Total Appointments</td>
-                      <td className="text-right py-2">
-                        {reportData?.stats.totalAppointments.toLocaleString()}
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Active Salons</td>
-                      <td className="text-right py-2">
-                        {reportData?.stats.activeSalons}
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">New Salons This Month</td>
-                      <td className="text-right py-2">
-                        {reportData?.stats.newSalonsThisMonth}
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Customer Satisfaction</td>
-                      <td className="text-right py-2">
-                        {reportData?.stats.customerSatisfaction}/5
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              {reportData?.appointmentsData &&
-                Object.values(reportData.appointmentsData).some(
-                  (val) => val > 0
-                ) && (
-                  <div className="border rounded-md p-2 mb-3 pdf-section">
-                    <h4 className="font-medium mb-2">Appointment Statistics</h4>
+              {/* Two-column layout for Summary and Appointment Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div className="border rounded-md p-2 pdf-section">
+                  <h4 className="font-medium mb-3">Summary</h4>
+                  <table className="w-full pdf-report-table">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2">Metric</th>
+                        <th className="text-right py-2">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="py-2">Total Revenue</td>
+                        <td className="text-right py-2">
+                          LKR {reportData?.stats.totalRevenue.toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">Total Appointments</td>
+                        <td className="text-right py-2">
+                          {reportData?.stats.totalAppointments.toLocaleString()}
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">Active Salons</td>
+                        <td className="text-right py-2">
+                          {reportData?.stats.verified || reportData?.stats.activeSalons || 0}
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">New Salons This Month</td>
+                        <td className="text-right py-2">
+                          {reportData?.stats.newSalonsThisMonth || 0}
+                        </td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-2">Customer Satisfaction</td>
+                        <td className="text-right py-2">
+                          {reportData?.stats.customerSatisfaction}/5
+                        </td>
+                      </tr>                        {reportData?.stats.lostRevenue && reportData.stats.lostRevenue > 0 && (
+                        <tr className="border-b">
+                          <td className="py-2">Lost Revenue (Cancelled)</td>
+                          <td className="text-right py-2 text-red-600">
+                            LKR {reportData.stats.lostRevenue.toLocaleString()}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Always show Appointment Statistics */}
+                {reportData?.appointmentsData && (
+                  <div className="border rounded-md p-2 pdf-section">
+                    <h4 className="font-medium mb-3">Appointment Statistics</h4>
                     <table className="w-full pdf-report-table">
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-2">Status</th>
                           <th className="text-right py-2">Count</th>
+                          <th className="text-right py-2">Revenue</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-b">
                           <td className="py-2">Confirmed</td>
                           <td className="text-right py-2">
-                            {reportData.appointmentsData.confirmed}
+                            {reportData.appointmentsData.confirmed || 0}
+                          </td>
+                          <td className="text-right py-2">
+                            LKR {(reportData.appointmentsData.confirmedRevenue || 0).toLocaleString()}
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="py-2">Pending</td>
                           <td className="text-right py-2">
-                            {reportData.appointmentsData.pending}
+                            {reportData.appointmentsData.pending || 0}
+                          </td>
+                          <td className="text-right py-2">
+                            LKR {(reportData.appointmentsData.pendingRevenue || 0).toLocaleString()}
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="py-2">Completed</td>
                           <td className="text-right py-2">
-                            {reportData.appointmentsData.completed}
+                            {reportData.appointmentsData.completed || 0}
+                          </td>
+                          <td className="text-right py-2">
+                            LKR {(reportData.appointmentsData.completedRevenue || 0).toLocaleString()}
                           </td>
                         </tr>
                         <tr className="border-b">
                           <td className="py-2">Cancelled</td>
                           <td className="text-right py-2">
-                            {reportData.appointmentsData.cancelled}
+                            {reportData.appointmentsData.cancelled || 0}
+                          </td>
+                          <td className="text-right py-2 text-red-600">
+                            LKR {(reportData.appointmentsData.cancelledRevenue || 0).toLocaleString()}
+                          </td>
+                        </tr>
+                        <tr className="border-b font-medium">
+                          <td className="py-2">Total</td>
+                          <td className="text-right py-2">
+                            {(reportData.appointmentsData.confirmed || 0) +
+                             (reportData.appointmentsData.pending || 0) +
+                             (reportData.appointmentsData.completed || 0) +
+                             (reportData.appointmentsData.cancelled || 0)}
+                          </td>
+                          <td className="text-right py-2">
+                            LKR {((reportData.appointmentsData.confirmedRevenue || 0) +
+                             (reportData.appointmentsData.pendingRevenue || 0) +
+                             (reportData.appointmentsData.completedRevenue || 0) +
+                             (reportData.appointmentsData.cancelledRevenue || 0)).toLocaleString()}
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
-                )}{" "}
+                )}
+              </div>
+              
+              {/* Popular Services - Always show top 10 services with salon names */}
               {reportData?.popularServices &&
                 reportData.popularServices.length > 0 && (
                   <div className="border rounded-md p-2 mb-3 pdf-section">
-                    <h4 className="font-medium mb-2">Popular Services</h4>
+                    <h4 className="font-medium mb-3">Most Popular 10 Services</h4>
                     <table className="w-full pdf-report-table">
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-2">Service</th>
+                          <th className="text-left py-2">Salon</th>
                           <th className="text-right py-2">Bookings</th>
+                          <th className="text-right py-2">Revenue</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {reportData.popularServices.map((service, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="py-2">{service.title}</td>
-                            <td className="text-right py-2">{service.count}</td>
-                          </tr>
-                        ))}
+                        {reportData.popularServices
+                          .slice(0, 10)
+                          .map((service, index) => (
+                            <tr key={index} className="border-b">
+                              <td className="py-2">{service.title}</td>
+                              <td className="py-2 text-muted-foreground">
+                                {service.salonName || 'N/A'}
+                              </td>
+                              <td className="text-right py-2">{service.count}</td>
+                              <td className="text-right py-2">LKR {(service.revenue || 0).toLocaleString()}</td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>
@@ -647,10 +736,10 @@ export default function AdminReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {reportData?.stats.activeSalons}
+                  {reportData?.stats.verified || reportData?.stats.activeSalons || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +{reportData?.stats.newSalonsThisMonth} new this month
+                  +{reportData?.stats.newSalonsThisMonth || 0} new this month
                 </p>
               </CardContent>
             </Card>
@@ -670,6 +759,25 @@ export default function AdminReportsPage() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Lost Revenue Card - Show only if there's cancelled revenue */}
+          {reportData?.stats.lostRevenue && reportData.stats.lostRevenue > 0 && (
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-red-800">
+                  Lost Revenue (Cancelled Appointments)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  LKR {reportData.stats.lostRevenue.toLocaleString()}
+                </div>
+                <p className="text-xs text-red-600">
+                  Potential revenue from {reportData.appointmentsData?.cancelled || 0} cancelled appointments
+                </p>
+              </CardContent>
+            </Card>
+          )}
           <Tabs defaultValue="revenue">
             <TabsList>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
@@ -727,7 +835,7 @@ export default function AdminReportsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Popular Services</CardTitle>
-                  <CardDescription>Top 5 most booked services</CardDescription>
+                  <CardDescription>Top 10 most booked services with salon information</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {reportData?.popularServices.length ? (
