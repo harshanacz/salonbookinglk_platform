@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSalonData } from "@/hooks/useSalonData";
+import SalonRatingDisplay from "@/components/salon/salon-rating-display";
+import SalonStatistics from "@/components/salon/salon-statistics";
 
 // Sample salon data (in a real app, you'd fetch this based on the ID)
 const salonData = {
@@ -111,14 +114,37 @@ export default function SalonPage({ params }: { params: { id: string } }) {
     new Date()
   );
   const [isMapLoading, setIsMapLoading] = useState(true);
+  
+  const { salon, serviceRatings, loading, error } = useSalonData(params.id);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Clock className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+          <p>Loading salon details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !salon) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Error: {error || "Salon not found"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="relative h-[400px] bg-gray-900">
         <Image
-          src={salonData.images[0] || "/placeholder.svg"}
-          alt={salonData.name}
+          src={salon.basicInfo.images[0] || "/placeholder.svg"}
+          alt={salon.basicInfo.name}
           fill
           className="object-cover"
           priority
@@ -127,18 +153,18 @@ export default function SalonPage({ params }: { params: { id: string } }) {
         <div className="absolute bottom-0 left-0 right-0 container mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="text-white">
-              <h1 className="text-4xl font-bold">{salonData.name}</h1>
+              <h1 className="text-4xl font-bold">{salon.basicInfo.name}</h1>
               <div className="flex flex-wrap items-center gap-4 mt-2">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                  <span className="ml-1 font-medium">{salonData.rating}</span>
-                  <span className="ml-1 text-gray-300">
-                    ({salonData.reviewList.length} reviews)
-                  </span>
-                </div>
+                {salon.reviewScore !== undefined && salon.numberOfReviewers !== undefined && (
+                  <SalonRatingDisplay 
+                    reviewScore={salon.reviewScore}
+                    numberOfReviewers={salon.numberOfReviewers}
+                    className="text-white"
+                  />
+                )}
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5" />
-                  <span className="ml-1">{salonData.contact.address}</span>
+                  <span className="ml-1">{salon.basicInfo.address}</span>
                 </div>
               </div>
             </div>
@@ -167,38 +193,55 @@ export default function SalonPage({ params }: { params: { id: string } }) {
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>About {salonData.name}</CardTitle>
+                <CardTitle>About {salon.basicInfo.name}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">{salonData.description}</p>
+                <p className="text-gray-600">{salon.basicInfo.description || "Welcome to our salon!"}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
                   <div className="space-y-3">
                     <div className="flex items-center">
                       <Phone className="h-5 w-5 text-gray-400 mr-2" />
-                      <span>{salonData.contact.phone}</span>
+                      <span>{salon.basicInfo.contactNumber}</span>
                     </div>
-                    <div className="flex items-center">
-                      <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                      <span>{salonData.contact.email}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Globe className="h-5 w-5 text-gray-400 mr-2" />
-                      <span>{salonData.contact.website}</span>
-                    </div>
+                    {salon.basicInfo.email && (
+                      <div className="flex items-center">
+                        <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                        <span>{salon.basicInfo.email}</span>
+                      </div>
+                    )}
+                    {salon.basicInfo.website && (
+                      <div className="flex items-center">
+                        <Globe className="h-5 w-5 text-gray-400 mr-2" />
+                        <span>{salon.basicInfo.website}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center">
-                      <Facebook className="h-5 w-5 text-gray-400 mr-2" />
-                      <span>Facebook</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Instagram className="h-5 w-5 text-gray-400 mr-2" />
-                      <span>Instagram</span>
-                    </div>
+                    {salon.socialMedia?.facebook && (
+                      <div className="flex items-center">
+                        <Facebook className="h-5 w-5 text-gray-400 mr-2" />
+                        <span>Facebook</span>
+                      </div>
+                    )}
+                    {salon.socialMedia?.instagram && (
+                      <div className="flex items-center">
+                        <Instagram className="h-5 w-5 text-gray-400 mr-2" />
+                        <span>Instagram</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Rating Statistics */}
+            {salon.reviewScore !== undefined && salon.numberOfReviewers !== undefined && (
+              <SalonStatistics 
+                overallRating={salon.reviewScore}
+                totalReviews={salon.numberOfReviewers}
+                serviceRatings={serviceRatings}
+              />
+            )}
 
             <Card>
               <CardHeader>
@@ -386,14 +429,17 @@ export default function SalonPage({ params }: { params: { id: string } }) {
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">Business Hours</h3>
                   <div className="space-y-2">
-                    {Object.entries(salonData.hours).map(([day, hours]) => (
+                    {Object.entries(salon.operatingHours).map(([day, hours]) => (
                       <div
                         key={day}
                         className="flex items-center justify-between text-sm"
                       >
                         <span className="capitalize">{day}</span>
                         <span>
-                          {hours.open} - {hours.close}
+                          {hours.isOpen 
+                            ? `${hours.openTime} - ${hours.closeTime}`
+                            : 'Closed'
+                          }
                         </span>
                       </div>
                     ))}
