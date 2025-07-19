@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     const complaints = await Complaint.find({})
       .populate({
         path: 'userId',
-        select: 'userName email phone'
+        select: 'userName email phone mobileNumber'
       })
       .populate({
         path: 'appointmentId',
@@ -42,11 +42,15 @@ export async function GET(request: NextRequest) {
         populate: [
           {
             path: 'serviceId',
-            select: 'name'
+            select: 'name title'
           },
           {
             path: 'staffId',
             select: 'name'
+          },
+          {
+            path: 'salonContextId',
+            select: 'businessName contactNumber'
           }
         ]
       })
@@ -101,10 +105,23 @@ export async function GET(request: NextRequest) {
       complaints.map(async (complaint: any) => {
         try {
           let salonData: any = null;
+          let userName = 'Unknown User';
+          let userEmail = 'No email provided';
+          let userPhone = 'No phone provided';
           
-          // Only try to fetch salon data if appointment exists
-          if (complaint.appointmentId) {
-            if (complaint.appointmentId.salonContextId) {
+          // Extract user information
+          if (complaint.userId) {
+            userName = complaint.userId.userName || 'Unknown User';
+            userEmail = complaint.userId.email || 'No email provided';
+            userPhone = complaint.userId.phone || complaint.userId.mobileNumber || 'No phone provided';
+          }
+          
+          // Extract salon information from the populated salonContextId
+          if (complaint.appointmentId?.salonContextId) {
+            salonData = complaint.appointmentId.salonContextId;
+          } else if (complaint.appointmentId) {
+            // Fallback: try to fetch salon data if salonContextId wasn't populated
+            if (complaint.appointmentId.salonContextId && typeof complaint.appointmentId.salonContextId === 'string') {
               try {
                 salonData = await SalonContext.findById(complaint.appointmentId.salonContextId)
                   .select('businessName contactNumber')
@@ -157,20 +174,20 @@ export async function GET(request: NextRequest) {
             status: statusMapping[complaint.status] || 'PENDING',
             priority: priority,
             complainant: {
-              name: complaint.userId?.userName || 'Unknown User',
-              email: complaint.userId?.email || 'No email provided',
-              phone: complaint.userId?.phone || 'No phone provided'
+              name: userName,
+              email: userEmail,
+              phone: userPhone
             },
             salon: {
               name: salonData?.businessName || 'Unknown Salon',
               contact: salonData?.contactNumber || 'No contact provided',
-              id: complaint.appointmentId?.salonId?.toString() || null
+              id: complaint.appointmentId?.salonId?.toString() || complaint.appointmentId?.salonContextId?.toString() || null
             },
             appointment: {
               id: complaint.appointmentId?._id?.toString() || null,
               date: complaint.appointmentId?.date || null,
               time: complaint.appointmentId?.time || null,
-              serviceName: complaint.appointmentId?.serviceId?.name || 'Unknown Service',
+              serviceName: complaint.appointmentId?.serviceId?.name || complaint.appointmentId?.serviceId?.title || 'Unknown Service',
               staffName: complaint.appointmentId?.staffId?.name || 'No staff assigned',
               amount: complaint.appointmentId?.totalAmount || 0
             },
@@ -190,7 +207,7 @@ export async function GET(request: NextRequest) {
             complainant: {
               name: complaint.userId?.userName || 'Unknown User',
               email: complaint.userId?.email || 'No email provided',
-              phone: complaint.userId?.phone || 'No phone provided'
+              phone: complaint.userId?.phone || complaint.userId?.mobileNumber || 'No phone provided'
             },
             salon: {
               name: 'Unknown Salon',
