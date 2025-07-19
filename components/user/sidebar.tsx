@@ -41,7 +41,11 @@ const routes = [
     icon: CreditCard,
     href: "/user/payments",
   },
-  
+  {
+    label: "My Complaints",
+    icon: MessageSquare,
+    href: "/user/complaints",
+  },
   {
     label: "Notifications",
     icon: BellIcon,
