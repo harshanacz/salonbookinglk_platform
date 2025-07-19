@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { RatingModal } from "@/components/ui/rating-modal";
+import { PastAppointment } from "@/components/user-appointments/appointment-utils";
 
 interface Service {
   id: string;
@@ -23,28 +25,25 @@ interface Appointment {
   appointmentTime: string;
 }
 
-interface PastAppointment {
-  id: number;
-  name: string;
-  price: number;
-  date: string;
-  image: string;
-  status?: 'completed' | 'canceled';
-}
-
 interface LeftColumnProps {
   upcomingAppointments: Appointment[];
   pastAppointments: PastAppointment[];
   latestAppointment: Appointment | null;
   onSelectAppointment: (appointment: Appointment) => void;
+  onRefreshAppointments?: () => void; // Add this prop for refreshing appointments
 }
 
 const LeftColumn: React.FC<LeftColumnProps> = ({
   upcomingAppointments,
   pastAppointments,
   latestAppointment,
-  onSelectAppointment
+  onSelectAppointment,
+  onRefreshAppointments
 }) => {
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
+  const [selectedAppointmentForRating, setSelectedAppointmentForRating] = useState<PastAppointment | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
   useEffect(() => {
     console.log('LeftColumn received updated appointments:', upcomingAppointments);
   }, [upcomingAppointments]);
@@ -95,6 +94,67 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
 
   const activeUpcomingAppointments = upcomingAppointments.filter(app => app.status !== "Canceled");
 
+  // Handle review button click
+  const handleReviewClick = (appointment: PastAppointment) => {
+    setSelectedAppointmentForRating(appointment);
+    setIsRatingModalOpen(true);
+  };
+
+  // Handle rating submission (create or update)
+  const handleRatingSubmit = async (rating: number, comment: string) => {
+    if (!selectedAppointmentForRating) return;
+
+    setIsSubmittingRating(true);
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appointmentId: selectedAppointmentForRating.appointmentId,
+          serviceId: selectedAppointmentForRating.serviceId,
+          salonId: selectedAppointmentForRating.salonId, // Add the missing salonId
+          rating,
+          comment,
+          ratingId: selectedAppointmentForRating.currentRating?.ratingId // Include for updates
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        const action = result.isUpdate ? 'updated' : 'submitted';
+        alert(`Rating ${action} successfully!`);
+        setIsRatingModalOpen(false);
+        setSelectedAppointmentForRating(null);
+        
+        // Refresh appointments from parent component instead of page reload
+        if (onRefreshAppointments) {
+          onRefreshAppointments();
+        }
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to submit rating');
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Failed to submit rating. Please try again.');
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  // Check if appointment has been rated
+  const isAppointmentRated = (appointment: PastAppointment) => {
+    return appointment.currentRating !== null;
+  };
+
+  // Get rating button text
+  const getRatingButtonText = (appointment: PastAppointment) => {
+    return appointment.currentRating ? 'Edit Review' : 'Review';
+  };
+
   return (
     <div>
       {/* Upcoming Appointments */}
@@ -138,7 +198,11 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No upcoming appointments</p>
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-2">📅</div>
+            <p className="text-gray-500 mb-2">No upcoming appointments</p>
+            <p className="text-sm text-gray-400">Book a new appointment to get started!</p>
+          </div>
         )}
       </div>
 
@@ -166,8 +230,11 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
                 </div>
                 <div className="flex flex-col items-start">
                   {appointment.status === 'completed' && (
-                    <button className="text-black underline text-xs border border-black rounded px-2 py-1 mb-1">
-                      Review
+                    <button 
+                      className="text-xs border rounded px-2 py-1 mb-1 text-black border-black hover:bg-gray-50"
+                      onClick={() => handleReviewClick(appointment)}
+                    >
+                      {getRatingButtonText(appointment)}
                     </button>
                   )}
                   <Link href="/book" className="text-black underline text-xs">
@@ -178,9 +245,32 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No past appointments</p>
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-2">📋</div>
+            <p className="text-gray-500 mb-2">No past appointments</p>
+            <p className="text-sm text-gray-400">Your completed appointments will appear here</p>
+          </div>
         )}
       </div>
+
+      {/* Rating Modal */}
+      {selectedAppointmentForRating && (
+        <RatingModal
+          isOpen={isRatingModalOpen}
+          onClose={() => {
+            setIsRatingModalOpen(false);
+            setSelectedAppointmentForRating(null);
+          }}
+          onSubmit={handleRatingSubmit}
+          serviceName={selectedAppointmentForRating.name}
+          salonName={selectedAppointmentForRating.salonName || "Salon"}
+          loading={isSubmittingRating}
+          existingRating={selectedAppointmentForRating.currentRating ? {
+            rating: selectedAppointmentForRating.currentRating.rating,
+            comment: selectedAppointmentForRating.currentRating.comment
+          } : null}
+        />
+      )}
     </div>
   );
 };

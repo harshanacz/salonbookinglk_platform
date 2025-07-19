@@ -27,8 +27,9 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Upload, FileText, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { UploadButton } from "@/lib/uploadthing";
 
 // Interface for salon data
 interface SalonData {
@@ -47,6 +48,7 @@ interface SalonData {
     open: string;
     close: string;
   }>;
+  businessRegistrationNumber?: string; // This will store the document URL
 }
 
 // Interface for user data
@@ -88,8 +90,30 @@ export default function SalonSettings() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // State for document upload
+  const [uploadedDocumentUrl, setUploadedDocumentUrl] = useState<string | null>(null);
+  const [isSubmittingVerification, setIsSubmittingVerification] = useState(false);
+  const [formattedAddress, setFormattedAddress] = useState<string>("");
+
   // Generate all available time options for the time selectors (30 min intervals)
   const timeOptions = generateTimeOptions();
+
+  // Geocoder to convert coordinates to address
+  const geocodeLocation = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        return data.results[0].formatted_address;
+      }
+      return "";
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return "";
+    }
+  };
 
   // State for business hours configuration with default values
   const [businessHours, setBusinessHours] = useState({
@@ -193,6 +217,20 @@ export default function SalonSettings() {
           });
 
           setBusinessHours(initialBusinessHours);
+        }
+
+        // Set uploaded document URL if it exists
+        if (salonDataResponse.businessRegistrationNumber) {
+          setUploadedDocumentUrl(salonDataResponse.businessRegistrationNumber);
+        }
+
+        // Get formatted address if location exists
+        if (salonDataResponse.location && salonDataResponse.location.lat && salonDataResponse.location.lng) {
+          const address = await geocodeLocation(
+            salonDataResponse.location.lat,
+            salonDataResponse.location.lng
+          );
+          setFormattedAddress(address);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -303,9 +341,9 @@ export default function SalonSettings() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          businessName: document.getElementById("salon-name")?.value,
-          website: document.getElementById("salon-website")?.value,
-          phoneNumber: document.getElementById("salon-phone")?.value,
+          businessName: (document.getElementById("salon-name") as HTMLInputElement)?.value,
+          website: (document.getElementById("salon-website") as HTMLInputElement)?.value,
+          phoneNumber: (document.getElementById("salon-phone") as HTMLInputElement)?.value,
           businessHours: businessHoursData,
         }),
       });
@@ -381,6 +419,49 @@ export default function SalonSettings() {
     }
   };
 
+  // Handle verification submission
+  const submitVerification = async () => {
+    try {
+      setIsSubmittingVerification(true);
+
+      if (!uploadedDocumentUrl) {
+        toast({
+          title: "Document required",
+          description: "Please upload a verification document before submitting.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update salon profile with verification document
+      const response = await fetch("/api/salon-owner/salon-profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessRegistrationNumber: uploadedDocumentUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit verification");
+      }
+
+      toast({
+        title: "Verification submitted",
+        description: "Your salon verification has been submitted successfully. We'll review it soon.",
+      });
+    } catch (error) {
+      console.error("Error submitting verification:", error);
+      toast({
+        title: "Error submitting verification",
+        description: "There was a problem submitting your verification. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingVerification(false);
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -452,6 +533,8 @@ export default function SalonSettings() {
                     id="salon-email"
                     type="email"
                     defaultValue={userData?.email || ""}
+                    readOnly
+                    className="bg-gray-50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-2">
@@ -477,11 +560,9 @@ export default function SalonSettings() {
                 <Label htmlFor="salon-address">Address</Label>
                 <Input
                   id="salon-address"
-                  defaultValue={
-                    salonData?.location
-                      ? `Lat: ${salonData.location.lat}, Lng: ${salonData.location.lng}`
-                      : ""
-                  }
+                  value={formattedAddress || (salonData?.location ? `Lat: ${salonData.location.lat}, Lng: ${salonData.location.lng}` : "")}
+                  readOnly
+                  className="bg-gray-50 cursor-not-allowed"
                 />
               </div>
             </CardContent>
@@ -754,57 +835,147 @@ export default function SalonSettings() {
             <CardHeader>
               <CardTitle>Verify Salon</CardTitle>
               <CardDescription>
-                Complete the information to verify your salon.
+                Upload your business registration document to verify your salon.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="salon-name">Salon Name</Label>
-                  <Input id="salon-name" placeholder="Enter your salon name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="salon-email">Email Address</Label>
-                  <Input
-                    id="salon-email"
-                    type="email"
-                    placeholder="Enter your email"
+                  <Label htmlFor="verification-salon-name">Salon Name</Label>
+                  <Input 
+                    id="verification-salon-name" 
+                    value={salonData?.businessName || ""} 
+                    readOnly
+                    className="bg-gray-50"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="salon-phone">Contact Number</Label>
+                  <Label htmlFor="verification-salon-email">Email Address</Label>
                   <Input
-                    id="salon-phone"
-                    placeholder="Enter your contact number"
+                    id="verification-salon-email"
+                    type="email"
+                    value={userData?.email || ""}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="verification-salon-phone">Contact Number</Label>
+                  <Input
+                    id="verification-salon-phone"
+                    value={salonData?.phoneNumber || ""}
+                    readOnly
+                    className="bg-gray-50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="verification-salon-owner">Owner Name</Label>
+                  <Input
+                    id="verification-salon-owner"
+                    value={salonData?.ownerName || ""}
+                    readOnly
+                    className="bg-gray-50"
                   />
                 </div>
               </div>
 
               <Separator />
 
-              <div className="space-y-2">
-                <Label htmlFor="salon-documents">Upload Documents</Label>
-                <p className="text-sm text-gray-500 mb-4">
-                  Upload relevant documents for verification (e.g., Business
-                  Registration).
-                </p>
-                <Input
-                  id="salon-documents"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                  className="border-2 border-gray-300 rounded-md p-2"
-                />
+              <div className="space-y-4">
+                <div>
+                  <Label>Upload Verification Documents</Label>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Upload your business registration certificate or other relevant documents for verification.
+                    Accepted formats: PDF, JPG, PNG (Max: 8MB for PDF, 4MB for images)
+                  </p>
+                </div>
+
+                {uploadedDocumentUrl ? (
+                  <div className="border-2 border-green-200 rounded-md p-4 bg-green-50">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-green-800">Document uploaded successfully</p>
+                        <p className="text-xs text-green-600 truncate">{uploadedDocumentUrl}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(uploadedDocumentUrl, '_blank')}
+                      >
+                        <FileText className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-md p-6">
+                    <div className="text-center">
+                      <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                      <UploadButton
+                        endpoint="documentUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res && res[0]) {
+                            setUploadedDocumentUrl(res[0].url);
+                            toast({
+                              title: "Document uploaded",
+                              description: "Your verification document has been uploaded successfully.",
+                            });
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          toast({
+                            title: "Upload failed",
+                            description: `Error: ${error.message}`,
+                            variant: "destructive",
+                          });
+                        }}
+                        appearance={{
+                          button: "bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-md",
+                          allowedContent: "text-sm text-gray-500",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {uploadedDocumentUrl && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUploadedDocumentUrl(null);
+                        toast({
+                          title: "Document removed",
+                          description: "You can upload a new document.",
+                        });
+                      }}
+                    >
+                      Upload Different Document
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
             <CardFooter>
               <Button
                 variant="default"
-                onClick={() => {
-                  // Logic for submitting the form data to admin
-                  alert("Salon verification data submitted to admin!");
-                }}
+                onClick={submitVerification}
+                disabled={!uploadedDocumentUrl || isSubmittingVerification}
+                className="bg-purple-600 hover:bg-purple-700"
               >
-                Submit Verification
+                {isSubmittingVerification ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Submit Verification
+                  </>
+                )}
               </Button>
             </CardFooter>
           </Card>

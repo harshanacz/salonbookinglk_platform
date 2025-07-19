@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Check, X, Home, ChevronRight, Loader2, Phone, Mail, MapPin, Clock, Calendar, User, Building, Globe, Briefcase } from "lucide-react";
+import { Check, X, Home, ChevronRight, Loader2, Phone, Mail, MapPin, Clock, Calendar, User, Building, Globe, Briefcase, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -116,6 +116,9 @@ export default function ServiceDetail() {
         const data = await response.json();
         console.log("Service data received:", data);
         console.log("User status (isActive):", data.userId?.isActive);
+        console.log("Salon context:", data.salonContext);
+        console.log("Review score:", data.salonContext?.reviewScore);
+        console.log("Number of reviewers:", data.salonContext?.numberOfReviewers);
         setService(data);
       } catch (err) {
         console.error("Failed to fetch service details:", err);
@@ -137,14 +140,13 @@ export default function ServiceDetail() {
   const handleApprove = async () => {
     try {
       setApproving(true);
-      const response = await fetch('/api/admin/service-cards', {
+      const response = await fetch(`/api/admin/service-cards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceId: id,
-          approved: true
+          action: 'approve'
         }),
       });
 
@@ -174,14 +176,13 @@ export default function ServiceDetail() {
   const handleReject = async () => {
     try {
       setRejecting(true);
-      const response = await fetch('/api/admin/service-cards', {
+      const response = await fetch(`/api/admin/service-cards/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceId: id,
-          approved: false
+          action: 'reject'
         }),
       });
 
@@ -472,9 +473,10 @@ export default function ServiceDetail() {
                         className="object-cover"
                       />
                     </div>
-                    <h3 className="text-xl font-semibold">{service.userId?.userName || "Unknown"}</h3>
-                    <p className="text-sm text-muted-foreground mb-2">{service.userId?.businessName}</p>
-                    <Badge className="mb-4">{service.userId?.type}</Badge>
+                    
+                    <h4 className="text-lg font-semibold mb-2">
+                      {service.salonContext?.ownerName || service.userId?.userName || "Owner Name Not Provided"}
+                    </h4>
                     
                     <div className="flex items-center gap-2 my-1">
                       <Mail className="h-4 w-4 text-muted-foreground" />
@@ -486,26 +488,48 @@ export default function ServiceDetail() {
                       <span className="text-sm">{service.salonContext?.phoneNumber || service.userId?.mobileNumber || "No phone provided"}</span>
                     </div>
                     
-                    <div className="flex items-center gap-2 my-1">
+                    {/* <div className="flex items-center gap-2 my-1">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
                         {service.userId?.gender || "Gender not specified"}
                       </span>
-                    </div>
+                    </div> */}
                     
-                    <div className="flex items-center gap-2 my-1">
+                    {/* <div className="flex items-center gap-2 my-1">
                       <Globe className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{service.userId?.country || "Country not specified"}</span>
                     </div>
-                    
-                    {service.salonContext?.reviewScore !== undefined && (
+                     */}
+                    {(service.salonContext?.reviewScore !== undefined || service.salonContext?.numberOfReviewers !== undefined) && (
                       <div className="mt-4 bg-primary/10 px-4 py-2 rounded-full">
-                        <span className="font-semibold">
-                          Rating: {(service.salonContext.reviewScore !== undefined && service.salonContext.numberOfReviewers ? (service.salonContext.reviewScore / service.salonContext.numberOfReviewers).toFixed(1) : "0.0" )}/5
-                        </span>
-                        <span className="text-xs ml-2">
-                          ({service.salonContext.numberOfReviewers} reviews)
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center">
+                            {[1, 2, 3, 4, 5].map((star) => {
+                              const averageRating = service.salonContext?.numberOfReviewers && service.salonContext.numberOfReviewers > 0 
+                                ? (service.salonContext?.reviewScore || 0) / service.salonContext.numberOfReviewers 
+                                : 0;
+                              return (
+                                <Star
+                                  key={star}
+                                  className={`h-4 w-4 ${
+                                    star <= Math.round(averageRating)
+                                      ? "fill-yellow-400 stroke-yellow-400"
+                                      : "fill-gray-200 stroke-gray-200"
+                                  }`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <span className="font-semibold">
+                            {service.salonContext?.numberOfReviewers && service.salonContext.numberOfReviewers > 0 
+                              ? ((service.salonContext?.reviewScore || 0) / service.salonContext.numberOfReviewers).toFixed(1)
+                              : "0.0"
+                            }/5
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({service.salonContext?.numberOfReviewers || 0} reviews)
+                          </span>
+                        </div>
                       </div>
                     )}
                   </div>

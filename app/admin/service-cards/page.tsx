@@ -79,10 +79,7 @@ export default function ServiceCards() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Pending Approval</h1>
-        <div className="text-sm text-gray-500">Last 30 Days</div>
-      </div>
 
       <Card>
         <CardHeader>

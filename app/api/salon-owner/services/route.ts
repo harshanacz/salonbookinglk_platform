@@ -105,10 +105,11 @@ export async function GET(req: Request) {
       image: service.images[0] || "",
       price: service.price,
       status: service.status.toLowerCase(),
-      impressions: 0,
-      clicks: 0,
-      appointments: 0,
+      viewsCount: service.viewsCount || 0,
+      clicks: 0, // This could be tracked separately if needed
+      appointments: service.bookings || 0,
       staffAssigned: Array.isArray(service.staffAssigned) ? service.staffAssigned.length : 0,
+      userId: service.userId ? service.userId.toString() : null,
       salonContextId: service.salonContextId ? service.salonContextId.toString() : null,
     }));
 
