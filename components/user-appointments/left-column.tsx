@@ -30,13 +30,15 @@ interface LeftColumnProps {
   pastAppointments: PastAppointment[];
   latestAppointment: Appointment | null;
   onSelectAppointment: (appointment: Appointment) => void;
+  onRefreshAppointments?: () => void; // Add this prop for refreshing appointments
 }
 
 const LeftColumn: React.FC<LeftColumnProps> = ({
   upcomingAppointments,
   pastAppointments,
   latestAppointment,
-  onSelectAppointment
+  onSelectAppointment,
+  onRefreshAppointments
 }) => {
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
   const [selectedAppointmentForRating, setSelectedAppointmentForRating] = useState<PastAppointment | null>(null);
@@ -122,32 +124,15 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
       if (response.ok) {
         const result = await response.json();
         
-        // Update the appointment data locally to reflect the change
-        const updatedAppointments = pastAppointments.map(apt => {
-          if (apt.appointmentId === selectedAppointmentForRating.appointmentId) {
-            return {
-              ...apt,
-              currentRating: {
-                ratingId: result.rating._id,
-                rating: rating,
-                comment: comment,
-                createdAt: new Date().toISOString()
-              }
-            };
-          }
-          return apt;
-        });
-        
-        // If there's a way to update the parent component's state, do it here
-        // For now, we'll just show the success message
-        
         const action = result.isUpdate ? 'updated' : 'submitted';
         alert(`Rating ${action} successfully!`);
         setIsRatingModalOpen(false);
         setSelectedAppointmentForRating(null);
         
-        // Refresh the page to show updated data
-        window.location.reload();
+        // Refresh appointments from parent component instead of page reload
+        if (onRefreshAppointments) {
+          onRefreshAppointments();
+        }
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to submit rating');
@@ -213,7 +198,11 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No upcoming appointments</p>
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-2">📅</div>
+            <p className="text-gray-500 mb-2">No upcoming appointments</p>
+            <p className="text-sm text-gray-400">Book a new appointment to get started!</p>
+          </div>
         )}
       </div>
 
@@ -256,7 +245,11 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
             ))}
           </div>
         ) : (
-          <p className="text-gray-500">No past appointments</p>
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-2">📋</div>
+            <p className="text-gray-500 mb-2">No past appointments</p>
+            <p className="text-sm text-gray-400">Your completed appointments will appear here</p>
+          </div>
         )}
       </div>
 
