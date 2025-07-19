@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,6 +25,7 @@ interface SalonData {
   address: string;
   website: string;
   businessRegistration: string;
+  isVerified: boolean;
 }
 
 export default function SalonOwnerProfile() {
@@ -40,6 +42,7 @@ export default function SalonOwnerProfile() {
     address: "",
     website: "",
     businessRegistration: "",
+    isVerified: false,
   });
   const [editingField, setEditingField] = useState<
     "ownerName" | "salonName" | "description" | null
@@ -129,6 +132,7 @@ export default function SalonOwnerProfile() {
               : ""),
           website: salon.website || "",
           businessRegistration: salon.businessRegistrationNumber || "",
+          isVerified: salon.isVerified || false,
         });
       } catch (err) {
         console.error("[PROFILE_FETCH]", err);
@@ -279,7 +283,14 @@ export default function SalonOwnerProfile() {
                 </div>
                 
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">{salonData.salonName}</h2>
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <h2 className="text-2xl font-bold text-gray-800">{salonData.salonName}</h2>
+                    {salonData.isVerified && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        Verified
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-gray-600 flex items-center justify-center">
                     <User className="h-4 w-4 mr-2" />
                     {userData.ownerName}
