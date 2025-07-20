@@ -56,19 +56,46 @@ export default function SalonOwnerProfile() {
   // Geocoder to convert coordinates to address
   const geocodeLocation = useCallback(async (lat: number, lng: number) => {
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        const address = data.results[0].formatted_address;
-        setFormattedAddress(address);
-        return address;
+      // First try with Google Maps API if available
+      if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+        
+        if (data.status === "OK" && data.results && data.results.length > 0) {
+          const address = data.results[0].formatted_address;
+          setFormattedAddress(address);
+          return address;
+        } else {
+          console.warn("Google Geocoding failed:", data.status, data.error_message);
+        }
       }
-      return "";
+
+      // Fallback to Nominatim (OpenStreetMap) - free alternative
+      try {
+        const nominatimResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+        );
+        const nominatimData = await nominatimResponse.json();
+        
+        if (nominatimData.display_name) {
+          setFormattedAddress(nominatimData.display_name);
+          return nominatimData.display_name;
+        }
+      } catch (nominatimError) {
+        console.warn("Nominatim geocoding failed:", nominatimError);
+      }
+
+      // Last resort: return coordinates
+      const fallback = `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      setFormattedAddress(fallback);
+      return fallback;
     } catch (error) {
       console.error("Geocoding error:", error);
-      return "";
+      const fallback = `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      setFormattedAddress(fallback);
+      return fallback;
     }
   }, []);
 
@@ -128,8 +155,8 @@ export default function SalonOwnerProfile() {
           address:
             address ||
             (salon.location
-              ? `${salon.location.lat}, ${salon.location.lng}`
-              : ""),
+              ? "Address not available"
+              : "No address available"),
           website: salon.website || "",
           businessRegistration: salon.businessRegistrationNumber || "",
           isVerified: salon.isVerified || false,
@@ -426,7 +453,9 @@ export default function SalonOwnerProfile() {
                         <label className="text-sm font-semibold text-purple-700 uppercase tracking-wider">
                           Address
                         </label>
-                        <p className="text-gray-800 mt-1 leading-relaxed">{salonData.address}</p>
+                        <p className="text-gray-800 mt-1 leading-relaxed">
+                          {salonData.address || "No address available"}
+                        </p>
                       </div>
                     </div>
 
