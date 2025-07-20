@@ -590,11 +590,11 @@ export default function ServiceDetail() {
                     
                     {service.salonContext ? (
                       <div className="space-y-4">
-                        <div className="bg-muted/50 p-4 rounded-lg">
+                        {/* <div className="bg-muted/50 p-4 rounded-lg">
                           <p className="font-medium">{service.salonContext.businessName}</p>
                           <p>{service.salonContext.description}</p>
                           <p>{service.userId?.country}</p>
-                        </div>
+                        </div> */}
 
                         {service.salonContext.location && (
                           <div className="h-[300px] rounded-lg overflow-hidden">
