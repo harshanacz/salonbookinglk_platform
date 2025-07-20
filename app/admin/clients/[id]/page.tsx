@@ -43,8 +43,6 @@ interface Client {
   avatar?: string;
   joinDate?: string;
   membershipStatus?: string;
-  favoriteServices?: string;
-  preferredSalon?: string;
 }
 
 // Interface for booking data
@@ -100,8 +98,6 @@ export default function ClientDetailsPage(props: { params: { id: string } }) {
             ? new Date(data.createdAt).toLocaleDateString()
             : undefined,
           membershipStatus: data.userType || "",
-          favoriteServices: data.favoriteServices || data.preferredServices,
-          preferredSalon: data.preferredSalon || data.favoriteSalon,
         }); // Fetch bookings for this client
         try {
           // Change clientId to userId in the API query parameter
@@ -267,7 +263,7 @@ export default function ClientDetailsPage(props: { params: { id: string } }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div className="space-y-4">
               <div>
                 <h3 className="text-lg font-medium">Contact Information</h3>
@@ -303,21 +299,7 @@ export default function ClientDetailsPage(props: { params: { id: string } }) {
                 </div>
               </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium">Preferences</h3>
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Favorite Services:</span>{" "}
-                    {client.favoriteServices || "Not specified"}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Preferred Salon:</span>{" "}
-                    {client.preferredSalon || "Not specified"}
-                  </div>
-                </div>
-              </div>
-            </div>
+
           </div>
         </CardContent>
       </Card>
