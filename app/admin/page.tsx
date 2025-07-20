@@ -159,11 +159,11 @@ const Page = () => {
           const salons = Array.isArray(data.users) ? data.users : [];
           const totalSalons = salons.length;
 
-          // Calculate salons created in the last month
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+          // Calculate salons created in the current calendar month
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
           const newSalons = salons.filter(
-            (salon: any) => new Date(salon.createdAt) > oneMonthAgo
+            (salon: any) => new Date(salon.createdAt) >= startOfMonth
           ).length;
           setLastMonthSalons(newSalons);
 
@@ -247,15 +247,28 @@ const Page = () => {
           
           console.log(`Found ${salonOwners} salon owners and ${clients} clients, total: ${totalUsers}`);
 
+          // Calculate users registered this month
+          const now = new Date();
+          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const newUsersThisMonth = users.filter((user: any) => 
+            (user.role === "SALON_OWNER" || user.type === "SALON_OWNER" || 
+             user.role === "CUSTOMER" || user.type === "CUSTOMER") &&
+            new Date(user.createdAt) >= startOfMonth
+          ).length;
+
           // Only update if we have actual values
           if (totalUsers > 0 || users.length > 0) {
+            const description = newUsersThisMonth > 0 
+              ? `${newUsersThisMonth} new ${newUsersThisMonth === 1 ? 'user' : 'users'} this month`
+              : "No new users this month";
+              
             setStats((prevStats) =>
               prevStats.map((stat) =>
                 stat.id === 3
                   ? {
                       ...stat,
                       value: totalUsers,
-                      description: `${totalUsers} total users this month`,
+                      description: description,
                     }
                   : stat
               )
