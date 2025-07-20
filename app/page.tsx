@@ -10,6 +10,7 @@ import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import Head from "next/head";
+import Image from "next/image";
 
 // Define service interface
 interface Service {
@@ -32,6 +33,7 @@ function HomeContent() {
   const [popularServices, setPopularServices] = useState<Service[]>([]);
   const [topRatedServices, setTopRatedServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -101,11 +103,22 @@ function HomeContent() {
       {/* Popular services section with enhanced UI */}
       <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900">
-              Popular Services
-            </h2>
-            <p className="text-gray-500 mt-2">Most booked services by our customers</p>
+          <div className="flex items-center">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900">
+                  Popular Services
+                </h2>
+                <button
+                  onClick={() => setShowHelpModal(true)}
+                  className="w-6 h-6 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-purple-600 hover:text-purple-700 transition-colors"
+                  title="Help"
+                >
+                  <span className="text-sm font-semibold">?</span>
+                </button>
+              </div>
+              <p className="text-gray-500 mt-2">Most booked services by our customers</p>
+            </div>
           </div>
           
           <Link href="/search" className="text-purple-700 font-medium hover:text-purple-800 hover:underline flex items-center">
@@ -219,6 +232,34 @@ function HomeContent() {
         </div>
         <StylesGallery />
       </section>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-900">Help - Popular Services</h3>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-700 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="relative w-full h-auto">
+                <Image
+                  src="/dev/Add a heading.png"
+                  alt="Help - Popular Services Guide"
+                  width={800}
+                  height={600}
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
