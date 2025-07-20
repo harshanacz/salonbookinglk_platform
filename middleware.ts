@@ -104,6 +104,23 @@ const checkCustomerProfile = async (req: Request): Promise<boolean> => {
   }
 };
 
+// Check and reactivate user account if deactivated
+const checkAndReactivateAccount = async (req: Request): Promise<void> => {
+  try {
+    const baseUrl = new URL(req.url).origin;
+    await fetch(`${baseUrl}/api/user/reactivate`, {
+      method: "POST",
+      headers: {
+        cookie: req.headers.get("cookie") || "",
+      },
+    });
+    // We don't need to handle the response as this is just a background check
+  } catch (error) {
+    console.error("[MIDDLEWARE_REACTIVATE_CHECK]", error);
+    // Continue silently if reactivation check fails
+  }
+};
+
 export default clerkMiddleware(async (auth, req) => {
   // Skip user-type-based redirects for API routes
   if (req.nextUrl.pathname.startsWith("/api/")) {
@@ -131,6 +148,11 @@ export default clerkMiddleware(async (auth, req) => {
     const userType = sessionClaims?.metadata?.type as string | undefined;
 
     console.log("User type:", userType);
+
+    // Check and reactivate account for customers if needed (but not on deactivation page)
+    if (userType === "CUSTOMER" && !req.nextUrl.pathname.includes("/deactivate-account")) {
+      await checkAndReactivateAccount(req);
+    }
 
     // If user type is not set, treat them as a customer
     // This helps during initial sign up before the type is set
