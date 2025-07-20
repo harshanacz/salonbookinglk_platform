@@ -18,37 +18,61 @@ export default function ManageAppointments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   // Fetch appointments from API
   useEffect(() => {
     async function fetchAppointments() {
-      setLoading(true);
-      // Replace 'salonOwnerId' with the actual logged-in salon owner's user ID
-      const salonOwnerId = "YOUR_SALON_OWNER_ID"; // TODO: get from auth/session
-      const res = await fetch(`/api/appointments?salonId=${salonOwnerId}`);
-      const data = await res.json();
-      setAppointments(data.appointments || []);
-      setLoading(false);
+      try {
+        setLoading(true);
+        setError("");
+        
+        const res = await fetch(`/api/appointments`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        console.log("Fetched appointments data:", data);
+        
+        setAppointments(data.appointments || []);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        setError("Failed to fetch appointments");
+      } finally {
+        setLoading(false);
+      }
     }
     fetchAppointments();
   }, []);
 
   // Cancel appointment handler
   const handleCancelAppointment = async (id: string) => {
-    // Update in DB
-    await fetch(`/api/appointments`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status: "CANCELLED" }),
-    });
-    // Update in UI
-    setAppointments(
-      appointments.map((appointment) =>
-        appointment._id === id
-          ? { ...appointment, status: "CANCELLED" }
-          : appointment
-      )
-    );
+    try {
+      const res = await fetch(`/api/appointments`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: "CANCELLED" }),
+      });
+      
+      if (res.ok) {
+        // Update in UI
+        setAppointments(
+          appointments.map((appointment) =>
+            appointment._id === id
+              ? { ...appointment, status: "CANCELLED" }
+              : appointment
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -80,15 +104,58 @@ export default function ManageAppointments() {
   // Filter and search
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesFilter = filter === "all" || appointment.status === filter;
-    const clientName =
-      appointment.clientId?.name || appointment.clientName || "";
-    const serviceName =
-      appointment.serviceId?.name || appointment.service || "";
+    
+    // Handle different possible field structures
+    const clientName = 
+      appointment.clientId?.userName || 
+      appointment.clientId?.name || 
+      appointment.clientName || 
+      "Unknown Client";
+      
+    const serviceName = 
+      appointment.serviceId?.title || 
+      appointment.serviceId?.name || 
+      appointment.service || 
+      "Unknown Service";
+    
     const matchesSearch =
       clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       serviceName.toLowerCase().includes(searchQuery.toLowerCase());
+      
     return matchesFilter && matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Manage Appointments</h1>
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-gray-500">Loading appointments...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Manage Appointments</h1>
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-red-500">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -129,85 +196,105 @@ export default function ManageAppointments() {
           </div>
 
           <div className="space-y-4">
-            {loading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading...</p>
-              </div>
-            ) : filteredAppointments.length === 0 ? (
+            {filteredAppointments.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">No appointments found</p>
               </div>
             ) : (
-              filteredAppointments.map((appointment) => (
-                <div
-                  key={appointment._id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border gap-4"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">
-                        {appointment.clientId?.name || "Unknown"}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${getStatusColor(
-                          appointment.status
-                        )}`}
-                      >
-                        {getStatusIcon(appointment.status)}
-                        {appointment.status.charAt(0) +
-                          appointment.status.slice(1).toLowerCase()}
-                      </span>
-                    </div>
-                    <p className="text-gray-600">
-                      <span className="font-semibold">Service:</span>{" "}
-                      {appointment.serviceId?.name || "Service"}
-                    </p>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {new Date(appointment.date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {String(Math.floor(appointment.time / 100)).padStart(2, "0")}:
-                        {String(appointment.time % 100).padStart(2, "0")}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        💳
-                        <span>
-                          {appointment.paymentMethod
-                            ? appointment.paymentMethod.charAt(0) +
-                              appointment.paymentMethod.slice(1).toLowerCase()
-                            : "N/A"}
+              filteredAppointments.map((appointment) => {
+                const clientName = 
+                  appointment.clientId?.userName || 
+                  appointment.clientId?.name || 
+                  "Unknown Client";
+                  
+                const serviceName = 
+                  appointment.serviceId?.title || 
+                  appointment.serviceId?.name || 
+                  "Unknown Service";
+
+                return (
+                  <div
+                    key={appointment._id}
+                    className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg border gap-4"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">
+                          {clientName}
+                        </h3>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${getStatusColor(
+                            appointment.status
+                          )}`}
+                        >
+                          {getStatusIcon(appointment.status)}
+                          {appointment.status.charAt(0) +
+                            appointment.status.slice(1).toLowerCase()}
                         </span>
                       </div>
+                      <p className="text-gray-600">
+                        <span className="font-semibold">Service:</span>{" "}
+                        {serviceName}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            {appointment.date
+                              ? new Date(appointment.date).toLocaleDateString()
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>
+                            {appointment.time 
+                              ? typeof appointment.time === 'number' 
+                                ? `${Math.floor(appointment.time / 100)}:${(appointment.time % 100).toString().padStart(2, '0')}`
+                                : appointment.time
+                              : "N/A"}
+                          </span>
+                        </div>
+                        {appointment.staffId?.name && (
+                          <div className="flex items-center gap-1">
+                            <span>Staff: {appointment.staffId.name}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {appointment.staffId && (
-                      <div className="text-sm text-gray-700 mt-1">
-                        <span className="font-semibold">Professional:</span>{" "}
-                        {appointment.staffId?.name || appointment.staffId}
-                      </div>
-                    )}
-                    {appointment.note && (
-                      <div className="text-sm text-gray-700 mt-1">
-                        <span className="font-semibold">Note:</span> {appointment.note}
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      {appointment.status === "PENDING" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCancelAppointment(appointment._id)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              // Handle confirm appointment
+                            }}
+                          >
+                            Confirm
+                          </Button>
+                        </>
+                      )}
+                      {appointment.status === "CONFIRMED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCancelAppointment(appointment._id)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {appointment.status !== "CANCELLED" && (
-                    <div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleCancelAppointment(appointment._id)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>

@@ -37,7 +37,7 @@ export const ManageAppointmentPopup: React.FC<ManageAppointmentPopupProps> = ({
   console.log("ManageAppointmentPopup received:", appointment); // Debug log
   
   const handleCancelClick = () => {
-    onCancel(appointment);
+    onCancel(appointment); // This should call the updated handleCancelClick function
   };
 
   return (
