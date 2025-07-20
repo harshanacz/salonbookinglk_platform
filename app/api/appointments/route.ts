@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
 import Staff from "@/models/Staff";
+import Service from "@/models/Service";
 import User from "@/models/User";
 import AppointmentModel, { IAppointment } from "@/models/Appointment";
 import { AppointmentStatus, PaymentMethod } from "@/models/enums";
@@ -65,7 +66,10 @@ export async function POST(req: NextRequest) {
       paymentMethod,
       note,
       date,
-      time
+      time,
+      paymentIntentId,
+      totalAmount,
+      paymentStatus
     } = data;
     
     // Debug log for ID validation
@@ -183,6 +187,9 @@ export async function POST(req: NextRequest) {
       serviceId: new mongoose.Types.ObjectId(serviceId),
       date: new Date(date),
       time: timeAsNumber,
+      paymentIntentId,
+      totalAmount,
+      paymentStatus: paymentStatus || 'pending',
       paymentMethod: paymentMethod, // Use the PaymentMethod value directly
       note: note || "",
       status: AppointmentStatus.CONFIRMED,

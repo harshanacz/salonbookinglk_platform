@@ -10,6 +10,7 @@ import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import Link from "next/link";
+import Head from "next/head";
 
 // Define service interface
 interface Service {
@@ -253,17 +254,105 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">
-            Loading...
-          </h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+    <>
+      <Head>
+        <title>SalonBooking.lk - Book Premium Salon Services in Sri Lanka</title>
+        <meta 
+          name="description" 
+          content="Sri Lanka's premier salon booking platform. Find and book beauty services, haircuts, facials, massages and more at top-rated salons across Sri Lanka." 
+        />
+        <meta 
+          name="keywords" 
+          content="salon booking Sri Lanka, beauty services, haircut booking, facial treatments, massage therapy, spa services, Colombo salons" 
+        />
+        <link rel="canonical" href="https://salonbooking.lk" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="SalonBooking.lk - Book Premium Salon Services in Sri Lanka" />
+        <meta property="og:description" content="Sri Lanka's premier salon booking platform. Find and book beauty services at top-rated salons." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://salonbooking.lk" />
+        <meta property="og:image" content="https://salonbooking.lk/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SalonBooking.lk - Book Premium Salon Services in Sri Lanka" />
+        <meta name="twitter:description" content="Sri Lanka's premier salon booking platform. Find and book beauty services at top-rated salons." />
+        <meta name="twitter:image" content="https://salonbooking.lk/twitter-image.jpg" />
+        
+        {/* Local Business Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "@id": "https://salonbooking.lk",
+              "name": "SalonBooking.lk",
+              "description": "Sri Lanka's premier salon booking platform connecting customers with top-rated beauty salons and wellness centers.",
+              "url": "https://salonbooking.lk",
+              "telephone": "+94-11-123-4567", // Replace with actual phone
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "LK",
+                "addressRegion": "Western Province"
+              },
+              "areaServed": {
+                "@type": "Country",
+                "name": "Sri Lanka"
+              },
+              "serviceType": [
+                "Hair Salon",
+                "Beauty Salon", 
+                "Spa Services",
+                "Massage Therapy",
+                "Nail Salon",
+                "Skincare Services"
+              ],
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Salon Services",
+                "itemListElement": [
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Hair Cut & Styling"
+                    }
+                  },
+                  {
+                    "@type": "Offer", 
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Facial Treatments"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service", 
+                      "name": "Massage Therapy"
+                    }
+                  }
+                ]
+              }
+            })
+          }}
+        />
+      </Head>
+      
+      <Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold mb-4">
+              Loading...
+            </h1>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </div>
         </div>
-      </div>
-    }>
-      <HomeContent />
-    </Suspense>
+      }>
+        <HomeContent />
+      </Suspense>
+    </>
   );
 }

@@ -49,7 +49,6 @@ interface Appointment {
 
 const AppointmentSummary = () => {
   const [activePopup, setActivePopup] = useState<"manage" | "reschedule" | null>(null);
-  const [appointmentStatus, setAppointmentStatus] = useState<"Confirmed" | "Canceled" | "Rescheduled">("Confirmed");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -63,6 +62,7 @@ const AppointmentSummary = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { moveAppointmentToPast, checkAndMovePastAppointments, loadBookingData } = useAppointmentDataManager();
 
   // Load real appointment data from API
   useEffect(() => {
@@ -118,86 +118,262 @@ const AppointmentSummary = () => {
       weeks.push(week);
       week = [];
     }
-  }
-  if (week.length > 0) {
-    weeks.push([...week, ...Array(7 - week.length).fill(null)]);
-  }
+  };
 
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
+  // Fetch real past appointments from database
+  const fetchPastAppointments = async () => {
+    try {
+      console.log('Fetching past appointments...');
+      const response = await fetch('/api/user/past-appointments');
+      console.log('Past appointments response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fetched past appointments:', data);
+        
+        // Transform API response to match the expected format
+        const transformedAppointments: PastAppointment[] = data.pastAppointments.map((appointment: any) => ({
+          id: appointment.appointmentId,
+          appointmentId: appointment.appointmentId,
+          serviceId: appointment.serviceId,
+          salonId: appointment.salonId,
+          name: appointment.name,
+          salonName: appointment.salonName,
+          price: appointment.price,
+          date: appointment.date,
+          image: appointment.image,
+          status: appointment.status,
+          time: appointment.time,
+          currentRating: appointment.currentRating
+        }));
+        
+        setPastAppointments(transformedAppointments);
+        return transformedAppointments;
+      } else if (response.status === 401) {
+        console.log('User not authenticated');
+        setError("Please sign in to view your appointments");
+        return [];
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to fetch past appointments:', response.status, errorData);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching past appointments:', error);
+      return [];
+    }
+  };
 
-  // Time slots for services
-  const generateTimeSlots = () => {
-    const slots = [];
-    const startHour = 9; // 9 AM
-    const endHour = 17; // 5 PM
+  // Load data from storage when component mounts
+  useEffect(() => {
+    const loadAppointments = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Fetch both upcoming and past appointments from API
+        const [upcomingApps, pastApps] = await Promise.all([
+          fetchUpcomingAppointments(),
+          fetchPastAppointments()
+        ]);
+
+        // Load booking data from sessionStorage
+        loadBookingData(
+          setSelectedServices,
+          setServices,
+          setSelectedSalon,
+          setSelectedProfessional,
+          setSelectedDate,
+          setSelectedTime,
+          setPaymentMethod,
+          setBookingNotes
+        );
+
+        // Check for new booking data from sessionStorage (new appointment)
+        const bookingDataStr = sessionStorage.getItem("finalBookingData");
+        
+        if (bookingDataStr) {
+          const bookingData = JSON.parse(bookingDataStr);
+          
+          // Set services
+          if (bookingData.services) {
+            setServices(bookingData.services);
+          }
+          
+          // Set salon
+          if (bookingData.salon) {
+            setSelectedSalon(bookingData.salon);
+          }
+          
+          // Set date and time
+          if (bookingData.date) {
+            const appointmentDate = new Date(bookingData.date);
+            setSelectedDate(appointmentDate);
+          }
+          
+          if (bookingData.time) {
+            setSelectedTime(bookingData.time);
+          }
+          
+          // Calculate total price
+          const totalPrice = bookingData.services.reduce(
+            (sum: number, service: Service) => sum + service.price, 
+            0
+          );
+          
+          // Create new appointment
+          if (bookingData.salon && bookingData.date) {
+            const appointmentDate = new Date(bookingData.date);
+            const appointmentTime = bookingData.time || bookingData.services[0]?.selectedTime;
+            
+            const newAppointment: Appointment = {
+              id: Date.now().toString(),
+              salon: bookingData.salon.name,
+              salonId: bookingData.salon.id || bookingData.salon._id,
+              date: appointmentDate,
+              price: totalPrice,
+              image: bookingData.salon.image,
+              services: bookingData.services,
+              status: "Confirmed",
+              appointmentTime: appointmentTime || "",
+              professional: bookingData.professional,
+              paymentMethod: bookingData.paymentMethod,
+              note: bookingData.note
+            };
+            
+            // Check if appointment time has passed
+            if (appointmentTime && isAppointmentPast(appointmentDate, appointmentTime)) {
+              // Move to past appointments automatically
+              moveAppointmentToPast(
+                newAppointment, 
+                'completed', 
+                pastApps,
+                setPastAppointments,
+                upcomingApps,
+                setUpcomingAppointments,
+                latestAppointment,
+                setLatestAppointment
+              );
+            } else {
+              // Add to upcoming appointments
+              const updatedUpcomingApps = [...upcomingApps, newAppointment];
+              setUpcomingAppointments(updatedUpcomingApps);
+              
+              // Set this as the latest appointment immediately
+              setLatestAppointment(newAppointment);
+              
+              // Save to localStorage as backup
+              localStorage.setItem("upcomingAppointments", JSON.stringify(updatedUpcomingApps));
+            }
+            
+            // Clear booking data from sessionStorage as it's now processed
+            sessionStorage.removeItem("finalBookingData");
+          }
+        }
+        
+        // Get user info if available
+        const userInfoStr = localStorage.getItem("userInfo");
+        if (userInfoStr) {
+          const userInfo = JSON.parse(userInfoStr);
+          if (userInfo.name) {
+            setUserName(userInfo.name);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading appointment data:", error);
+        setError("Failed to load appointments. Please try refreshing the page.");
+        
+        // Fallback to localStorage for upcoming appointments
+        const savedUpcomingAppointments = localStorage.getItem("upcomingAppointments");
+        if (savedUpcomingAppointments) {
+          try {
+            const parsed = JSON.parse(savedUpcomingAppointments);
+            const upcomingApps = parsed.map((app: any) => ({
+              ...app,
+              date: new Date(app.date)
+            }));
+            setUpcomingAppointments(upcomingApps);
+            console.log('Loaded upcoming appointments from localStorage:', upcomingApps);
+            
+            if (upcomingApps.length > 0) {
+              setLatestAppointment(upcomingApps[0]);
+            }
+          } catch (parseError) {
+            console.error('Error parsing localStorage appointments:', parseError);
+          }
+        }
+        
+        // Fallback to localStorage for past appointments
+        const savedPastAppointments = localStorage.getItem("pastAppointments");
+        if (savedPastAppointments) {
+          try {
+            const pastApps = JSON.parse(savedPastAppointments);
+            const uniquePastApps = removeDuplicatePastAppointments(pastApps);
+            setPastAppointments(uniquePastApps);
+          } catch (parseError) {
+            console.error('Error parsing localStorage past appointments:', parseError);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAppointments();
+  }, []);
+
+  // Rest of your component with event handlers and rendering logic...
+  // [Rest of the component remains the same]
+
+  // Handler for rescheduling an appointment
+  const handleRescheduleAppointment = (appointment: Appointment) => {
+    setSelectedAppointmentForAction(appointment);
+    setActivePopup("reschedule");
+  };
+
+  // Handler for canceling an appointment
+  const handleCancelAppointment = (appointment: Appointment) => {
+    // Update the appointment status to "Canceled" instead of removing it
+    const updatedAppointments = upcomingAppointments.map(app => 
+      app.id === appointment.id 
+        ? { ...app, status: "Canceled" as const }
+        : app
+    );
+    setUpcomingAppointments(updatedAppointments);
     
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        // Randomly mark some slots as unavailable
-        const status = Math.random() > 0.3 ? "available" : "unavailable";
-        slots.push({ time, status });
-      }
+    // If the canceled appointment is the currently selected one, clear it from right column
+    if (latestAppointment && latestAppointment.id === appointment.id) {
+      setLatestAppointment(null);
     }
-    return slots;
+    
+    // Update localStorage
+    localStorage.setItem("upcomingAppointments", JSON.stringify(updatedAppointments));
+    setActivePopup(null);
+    setSelectedAppointmentForAction(null);
   };
 
-  const timeSlots = generateTimeSlots();
-
-  const handleMonthChange = (increment: number) => {
-    setCurrentMonth((prevMonth) => {
-      let newMonth = prevMonth + increment;
-      let newYear = currentYear;
-
-      if (newMonth < 0) {
-        newMonth = 11;
-        newYear -= 1;
-      } else if (newMonth > 11) {
-        newMonth = 0;
-        newYear += 1;
-      }
-
-      setCurrentYear(newYear);
-      return newMonth;
-    });
-  };
-
-  const handleSelectDate = (day: number | null) => {
-    if (day) {
-      const date = new Date(currentYear, currentMonth, day);
-      setSelectedDate(date);
-    }
-  };
-
+  // Handler for selecting a time (used in RescheduleAppointmentPopup)
   const handleSelectTime = (serviceId: string, time: string) => {
     setServices(prevServices => 
       prevServices.map(service => 
-        service.id === serviceId ? { ...service, selectedTime: time } : service
+        service.id === serviceId 
+          ? { ...service, selectedTime: time }
+          : service
       )
     );
   };
 
-  const handleRescheduleAppointment = () => {
-    if (appointmentStatus === "Canceled") {
-      alert("Cannot reschedule a canceled appointment");
-      return;
-    }
-    setActivePopup("reschedule");
-  };
-
-  const handleConfirmReschedule = () => {
-    if (!selectedDate) {
-      alert("Please select a date");
-      return;
-    }
+  // Handler for confirming reschedule
+  const handleConfirmReschedule = (updatedAppointment: Appointment) => {
+    // Replace the appointment in upcomingAppointments with the updated one
+    const updatedAppointments = upcomingAppointments.map(app =>
+      app.id === updatedAppointment.id ? updatedAppointment : app
+    );
+    setUpcomingAppointments(updatedAppointments);
     
-    const allServicesHaveTime = services.every(service => service.selectedTime);
-    if (!allServicesHaveTime) {
-      alert("Please select time slots for all services");
-      return;
+    // Update the latest appointment if it's the one being rescheduled
+    if (latestAppointment && latestAppointment.id === updatedAppointment.id) {
+      setLatestAppointment(updatedAppointment);
     }
     
     setAppointmentStatus("Rescheduled");
@@ -269,6 +445,7 @@ const AppointmentSummary = () => {
     const period = hourNum >= 12 ? 'PM' : 'AM';
     const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
     return `${displayHour}:${minutes} ${period}`;
+
   };
 
   return (
@@ -444,43 +621,13 @@ const AppointmentSummary = () => {
       )}
 
       {/* Manage Appointment Popup */}
-      {activePopup === "manage" && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full">
-            <h2 className="text-xl font-bold">Manage appointment</h2>
-            {services.map((service) => (
-              <div key={service.id} className="flex items-center gap-3 mt-4 border-b pb-2 last:border-0">
-                <div className="flex-1">
-                  <h3 className="font-semibold">{service.name}</h3>
-                  <p className="text-gray-500 text-sm">{service.duration}</p>
-                </div>
-                <p className="font-bold">LKR {service.price.toLocaleString()}</p>
-              </div>
-            ))}
-            <div className="mt-4 space-y-2">
-              <button 
-                className={`w-full p-3 border rounded-lg ${appointmentStatus === "Canceled" ? "bg-gray-300 cursor-not-allowed" : "bg-gray-100 text-blue-500"}`}
-                onClick={handleRescheduleAppointment}
-                disabled={appointmentStatus === "Canceled"}
-              >
-                📅 Reschedule appointment
-              </button>
-              <button
-                className={`w-full p-3 border rounded-lg ${appointmentStatus === "Canceled" ? "bg-gray-300 cursor-not-allowed" : "bg-gray-100 text-red-500"}`}
-                onClick={handleCancelAppointment}
-                disabled={appointmentStatus === "Canceled"}
-              >
-                ❌ {appointmentStatus === "Canceled" ? "Appointment Canceled" : "Cancel appointment"}
-              </button>
-            </div>
-            <button
-              className="w-full p-3 border rounded-lg bg-purple-500 text-white mt-4"
-              onClick={() => setActivePopup(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+      {activePopup === "manage" && selectedAppointmentForAction && (
+        <ManageAppointmentPopup
+          appointment={selectedAppointmentForAction}
+          onClose={() => setActivePopup(null)}
+          onReschedule={handleRescheduleAppointment}
+          onCancel={handleCancelAppointment}
+        />
       )}
 
       {/* Reschedule Popup */}
@@ -614,6 +761,7 @@ const AppointmentSummary = () => {
             </div>
           </div>
         </div>
+
       )}
     </div>
   );

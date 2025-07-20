@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import Appointment from "@/models/Appointment";
+import Service from "@/models/Service";
+import SalonContext from "@/models/SalonContext";
+import Staff from "@/models/Staff";
 import dbConnect from "@/lib/mongodb";
 import mongoose from "mongoose";
+import { auth } from "@clerk/nextjs/server";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 // Helper to validate if the ID is a valid MongoDB ObjectId
 function isValidObjectId(id: string): boolean {
@@ -23,10 +29,38 @@ export async function GET(
         { status: 400 }
       );
     }
-      const appointment = await Appointment.findById(id)
-      .populate('clientId', 'userName email mobileNumber')
-      .populate('serviceId', 'type price duration')
-      .populate('staffId', 'name');
+    const appointment = await Appointment.findById(id)
+      .populate({
+        path: 'clientId',
+        select: 'userName email mobileNumber phone',
+        options: { strictPopulate: false },
+      })
+      .populate({
+        path: 'serviceId',
+        select: 'title type price duration userId',
+        model: Service,
+        options: { strictPopulate: false },
+        populate: {
+          path: 'userId',
+          select: 'businessName',
+          model: SalonContext,
+          options: { strictPopulate: false },
+        }
+      })
+      .populate({
+        path: 'salonContextId',
+        select: 'businessName phoneNumber location',
+        model: SalonContext,
+        options: { strictPopulate: false },
+      })
+      .populate({
+        path: 'staffId',
+        select: 'name role profileImage',
+        model: Staff,
+        options: { strictPopulate: false },
+      })
+      .lean()
+      .exec();
       
     if (!appointment) {
       return NextResponse.json(
@@ -40,6 +74,102 @@ export async function GET(
     console.error("Failed to fetch appointment:", error);
     return NextResponse.json(
       { error: "Failed to fetch appointment" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    // Authentication
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+    
+    const { id } = params;
+    const { status } = await request.json();
+    
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { error: "Invalid appointment ID" },
+        { status: 400 }
+      );
+    }
+
+    // Validate status
+    const validStatuses = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400 }
+      );
+    }
+
+    // Find and update appointment
+    const appointment = await Appointment.findById(id)
+      .populate('clientId', 'userName email')
+      .populate('serviceId', 'title');
+
+    if (!appointment) {
+      return NextResponse.json(
+        { error: "Appointment not found" },
+        { status: 404 }
+      );
+    }
+
+    const previousStatus = appointment.status;
+    appointment.status = status;
+    await appointment.save();
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        const clientName = (appointment.clientId as any)?.userName || 'Unknown Client';
+        const clientEmail = (appointment.clientId as any)?.email;
+        const serviceName = (appointment.serviceId as any)?.title || 'Unknown Service';
+        
+        // Use client email as target, fallback to appointment description
+        const target = clientEmail || `appointment: ${clientName} - ${serviceName}`;
+        
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: AdminActionType.APPOINTMENT_APPROVAL,
+          target: target,
+          details: `Changed appointment status from ${previousStatus} to ${status} for client ${clientName} (Service: ${serviceName})`,
+          metadata: {
+            appointmentId: id,
+            clientName,
+            clientEmail,
+            serviceName,
+            previousStatus,
+            newStatus: status,
+            appointmentDate: appointment.date,
+            appointmentTime: appointment.time
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      message: `Appointment ${status.toLowerCase()} successfully`,
+      appointment 
+    });
+  } catch (error) {
+    console.error("Failed to update appointment:", error);
+    return NextResponse.json(
+      { error: "Failed to update appointment" },
       { status: 500 }
     );
   }
