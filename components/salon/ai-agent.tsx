@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,8 +44,50 @@ export default function SalonAIAgent({ salonId, className = "", floating = false
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isOpen, setIsOpen] = useState(!floating);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { user, isLoaded } = useUser();
+
+  // Check user access permissions
+  useEffect(() => {
+    const checkUserAccess = async () => {
+      if (!isLoaded) return; // Wait for Clerk to load
+      
+      setIsCheckingAccess(true);
+      
+      try {
+        if (!user) {
+          // Not logged in - allow access
+          setUserType(null);
+          setIsCheckingAccess(false);
+          return;
+        }
+
+        // User is logged in, check their type
+        const response = await fetch('/api/user');
+        if (response.ok) {
+          const userData = await response.json();
+          setUserType(userData.type);
+          
+          // Block access for salon owners and admins
+          if (userData.type === 'SALON_OWNER' || userData.type === 'ADMIN' || userData.type === 'SUPER_ADMIN') {
+            setIsCheckingAccess(false);
+            return; // Will show access denied message
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user access:', error);
+        // On error, allow access (fail-safe for customers)
+        setUserType(null);
+      } finally {
+        setIsCheckingAccess(false);
+      }
+    };
+
+    checkUserAccess();
+  }, [user, isLoaded]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -174,6 +217,16 @@ What can I help you find today?`,
   const handleQuickAction = (action: string) => {
     setInputMessage(action);
   };
+
+  // Show loading while checking access
+  if (isCheckingAccess) {
+    return null; // Or a loading spinner if preferred
+  }
+
+  // Block access for salon owners and admins
+  if (userType === 'SALON_OWNER' || userType === 'ADMIN' || userType === 'SUPER_ADMIN') {
+    return null; // Hide the AI agent completely
+  }
 
   if (floating && !isOpen) {
     return (

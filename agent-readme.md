@@ -1,7 +1,15 @@
 # AI Agent Technical Documentation
 
 ## Overview
-The AI Agent is an intelligent chat assistant designed for the SalonBooking.lk platform. It provides contextual service recommendations, pricing information, care instructions, and booking guidance to users through a conversational interface.
+The AI Agent is an intelligent chat assistant designed for the SalonBooking.lk platform. It provides context## Key Features
+
+### 1. **Access Control**
+- **Customer Access**: Available to logged-in customers (UserType.CUSTOMER)
+- **Guest Access**: Available to non-logged-in users
+- **Restricted Access**: Hidden from salon owners (UserType.SALON_OWNER), admins (UserType.ADMIN), and super admins (UserType.SUPER_ADMIN)
+- **Authentication Check**: Uses Clerk authentication to verify user type and permissions
+
+### 2. **Intelligent Query Understanding** service recommendations, pricing information, care instructions, and booking guidance to users through a conversational interface.
 
 ## Architecture
 
@@ -15,9 +23,40 @@ The AI Agent is an intelligent chat assistant designed for the SalonBooking.lk p
   - Service suggestion cards integrated within chat flow
   - Minimize/maximize functionality for floating mode
   - Navigation integration for service detail pages
+  - **Access Control**: Restricts access based on user type
 
 **Key Code Segments**:
 ```typescript
+// Access control check
+const { user, isLoaded } = useUser();
+const [userType, setUserType] = useState<string | null>(null);
+
+useEffect(() => {
+  const checkUserAccess = async () => {
+    if (!isLoaded) return;
+    
+    if (!user) {
+      // Not logged in - allow access
+      setUserType(null);
+      return;
+    }
+
+    // Check user type from API
+    const response = await fetch('/api/user');
+    if (response.ok) {
+      const userData = await response.json();
+      setUserType(userData.type);
+    }
+  };
+  
+  checkUserAccess();
+}, [user, isLoaded]);
+
+// Block access for restricted user types
+if (userType === 'SALON_OWNER' || userType === 'ADMIN' || userType === 'SUPER_ADMIN') {
+  return null; // Hide the AI agent completely
+}
+
 // Floating button with enhanced animation
 <Button
   className="rounded-full w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 animate-bounce"
