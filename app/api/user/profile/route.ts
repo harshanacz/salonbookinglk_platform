@@ -49,8 +49,8 @@ export async function POST(req: Request) {
     const userId = user.id;
     console.log("Authenticated user ID:", userId);
 
-    const { fullName, mobileNumber, gender, country } = await req.json();
-    console.log("Received profile data:", { fullName, mobileNumber, gender, country });
+    const { fullName, mobileNumber, gender, country, profileImage } = await req.json();
+    console.log("Received profile data:", { fullName, mobileNumber, gender, country, profileImage: profileImage ? "Image data received" : "No image" });
 
     await dbConnect();
 
@@ -66,19 +66,27 @@ export async function POST(req: Request) {
         mobileNumber,
         gender,
         country,
+        profileImage,
         email: user.emailAddresses[0]?.emailAddress,
       });
       console.log("Created new user:", dbUser);
     } else {
       // Update the existing user
+      const updateData: any = {
+        userName: fullName,
+        mobileNumber,
+        gender,
+        country,
+      };
+      
+      // Only update profileImage if it's provided
+      if (profileImage) {
+        updateData.profileImage = profileImage;
+      }
+      
       dbUser = await User.findOneAndUpdate(
         { clerkUserId: userId },
-        {
-          userName: fullName,
-          mobileNumber,
-          gender,
-          country,
-        },
+        updateData,
         { new: true }
       );
       console.log("Updated existing user:", dbUser);
