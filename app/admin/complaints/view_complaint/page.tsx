@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 import { Bell, XCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ComplaintData {
   id: string;
@@ -44,7 +45,7 @@ interface ComplaintData {
   updatedAt: string;
 }
 
-export default function ViewComplaint() {
+function ComplaintViewContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [complaintData, setComplaintData] = useState<ComplaintData | null>(null);
@@ -388,5 +389,21 @@ export default function ViewComplaint() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function ViewComplaint() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-6">
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="space-y-6">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    }>
+      <ComplaintViewContent />
+    </Suspense>
   );
 }
