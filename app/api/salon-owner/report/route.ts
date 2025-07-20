@@ -4,6 +4,7 @@ import Appointment from "@/models/Appointment";
 import User, { UserType } from "@/models/User";
 import dbConnect from "@/lib/mongodb";
 
+// This route now provides detailed chart data (can be used for additional analytics)
 export async function GET(request: Request) {
     try {
         const { userId: clerkUserId } = await auth();
@@ -22,13 +23,12 @@ export async function GET(request: Request) {
         const fromDate = searchParams.get('from') ? new Date(searchParams.get('from')!) : undefined;
         const toDate = searchParams.get('to') ? new Date(searchParams.get('to')!) : undefined;
 
-        // Updated match query to properly handle dates
         const matchQuery = {
             salonId: user._id,
             ...(fromDate && toDate && {
-                createdAt: {  // Changed from date to createdAt
+                createdAt: {
                     $gte: fromDate,
-                    $lte: new Date(toDate.setHours(23, 59, 59, 999)) // Include full day
+                    $lte: new Date(toDate.setHours(23, 59, 59, 999))
                 }
             })
         };
@@ -159,12 +159,6 @@ export async function GET(request: Request) {
                         data: weeklyRevenue.map(item => item.revenue),
                         counts: weeklyRevenue.map(item => item.count) // Added counts for reference
                     }
-                },
-                debug: {
-                    dateRange: { fromDate, toDate },
-                    matchQuery,
-                    aggregateCount: summary.totalAppointments,
-                    actualCount: totalCount
                 }
             });
 
@@ -173,7 +167,7 @@ export async function GET(request: Request) {
             return new NextResponse("Error generating reports", { status: 500 });
         }
     } catch (error) {
-        console.error("[REPORTS_GET]", error);
+        console.error("[SALON_OWNER_REPORTS_GET]", error);
         return new NextResponse("Internal error", { status: 500 });
     }
 }
