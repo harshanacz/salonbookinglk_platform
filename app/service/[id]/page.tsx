@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Heart, MapPin, Share2, Star, Phone, Clock, Check } from "lucide-react";
 import Image from "next/image";
@@ -40,6 +41,7 @@ interface ServiceData {
     bestSeller: boolean;
     profilePictureUrl: string;
     todaysClosingTime: string;
+    isVerified?: boolean;
     workingHours: Array<{
       day: string;
       isWorking: boolean;
@@ -490,9 +492,16 @@ export default function ServicePage(props: ServicePageProps) {
                   />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">
-                    {service.salon.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg">
+                      {service.salon.name}
+                    </h3>
+                    {service.salon.isVerified && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0">
+                        ✓
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center">
                     <div className="flex items-center text-yellow-500 mr-1">
                       <Star className="h-4 w-4 fill-current" />
@@ -739,7 +748,14 @@ export default function ServicePage(props: ServicePageProps) {
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                  {service.salon.isVerified && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0">
+                      ✓
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="text-sm">
