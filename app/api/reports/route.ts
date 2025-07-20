@@ -1,209 +1,200 @@
-import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import dbConnect from "@/lib/mongodb";
+import { NextResponse } from "next/server";
+import Appointment from "@/models/Appointment";
 import User, { UserType } from "@/models/User";
-import SalonContext from "@/models/SalonContext";
-import AppointmentModel from "@/models/Appointment";
-import Service from "@/models/Service";
-import { AppointmentStatus } from "@/models/enums";
-import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
+import dbConnect from "@/lib/mongodb";
 
-export async function GET(request: NextRequest) {
-  try {
-    const { userId: clerkUserId } = await auth();
-    if (!clerkUserId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    await dbConnect();
-
-    // Find the salon owner
-    const user = await User.findOne({ clerkUserId });
-    if (!user || user.type !== UserType.SALON_OWNER) {
-      return NextResponse.json({ error: "Forbidden: User is not a salon owner" }, { status: 403 });
-    }
-
-    // Get query parameters
-    const searchParams = request.nextUrl.searchParams;
-    const fromDate = searchParams.get("from");
-    const toDate = searchParams.get("to");
-    const serviceType = searchParams.get("service");
-
-    if (!fromDate) {
-      return NextResponse.json({ error: "From date is required" }, { status: 400 });
-    }
-
-    const dateFrom = new Date(fromDate);
-    const dateTo = toDate ? new Date(toDate) : new Date();
-
-    // Calculate previous period for comparison
-    const daysDiff = Math.ceil((dateTo.getTime() - dateFrom.getTime()) / (1000 * 60 * 60 * 24));
-    const previousFrom = subDays(dateFrom, daysDiff);
-    const previousTo = subDays(dateFrom, 1);
-
-    // Get salon context
-    const salonContext = await SalonContext.findOne({ userId: user._id });
-    if (!salonContext) {
-      return NextResponse.json({ error: "Salon not found" }, { status: 404 });
-    }
-
-    // Build appointment filters
-    const baseFilter = {
-      salonId: user._id,
-      status: AppointmentStatus.CONFIRMED,
-      date: {
-        $gte: startOfDay(dateFrom),
-        $lte: endOfDay(dateTo)
-      }
-    };
-
-    const previousPeriodFilter = {
-      salonId: user._id,
-      status: AppointmentStatus.CONFIRMED,
-      date: {
-        $gte: startOfDay(previousFrom),
-        $lte: endOfDay(previousTo)
-      }
-    };
-
-    // Get services for filtering
-    let serviceFilter = {};
-    if (serviceType && serviceType !== "all") {
-      const services = await Service.find({ 
-        userId: user._id, 
-        type: serviceType 
-      }).select('_id');
-      serviceFilter = { serviceId: { $in: services.map(s => s._id) } };
-    }
-
-    // Fetch current period appointments
-    const currentAppointments = await AppointmentModel.find({
-      ...baseFilter,
-      ...serviceFilter
-    }).populate('serviceId', 'title type price');
-
-    // Fetch previous period appointments
-    const previousAppointments = await AppointmentModel.find({
-      ...previousPeriodFilter,
-      ...serviceFilter
-    }).populate('serviceId', 'title type price');
-
-    // Helper function to get appointment amount
-    const getAppointmentAmount = (appointment: any) => {
-      // Try different possible field names for the amount
-      return appointment.totalAmount || 
-             appointment.amount || 
-             appointment.price || 
-             (appointment.serviceId && appointment.serviceId.price) || 
-             0;
-    };
-
-    // Calculate metrics
-    const totalRevenue = currentAppointments.reduce((sum, apt) => {
-      return sum + getAppointmentAmount(apt);
-    }, 0);
-
-    const totalAppointments = currentAppointments.length;
-
-    const previousRevenue = previousAppointments.reduce((sum, apt) => {
-      return sum + getAppointmentAmount(apt);
-    }, 0);
-
-    const previousAppointmentCount = previousAppointments.length;
-
-    // Calculate new clients (first-time clients in the period)
-    const clientIds = currentAppointments.map(apt => apt.clientId.toString());
-    const uniqueClients = [...new Set(clientIds)];
-    
-    // Find clients who had their first appointment in this period
-    const newClients = [];
-    for (const clientId of uniqueClients) {
-      const firstAppointment = await AppointmentModel.findOne({
-        clientId,
-        salonId: user._id,
-        status: AppointmentStatus.CONFIRMED
-      }).sort({ date: 1 });
-      
-      if (firstAppointment && isWithinInterval(firstAppointment.date, { start: dateFrom, end: dateTo })) {
-        newClients.push(clientId);
-      }
-    }
-
-    // Calculate previous period new clients
-    const previousClientIds = previousAppointments.map(apt => apt.clientId.toString());
-    const previousUniqueClients = [...new Set(previousClientIds)];
-    const previousNewClients = [];
-    
-    for (const clientId of previousUniqueClients) {
-      const firstAppointment = await AppointmentModel.findOne({
-        clientId,
-        salonId: user._id,
-        status: AppointmentStatus.CONFIRMED
-      }).sort({ date: 1 });
-      
-      if (firstAppointment && isWithinInterval(firstAppointment.date, { start: previousFrom, end: previousTo })) {
-        previousNewClients.push(clientId);
-      }
-    }
-
-    // Calculate popular services
-    const serviceStats = currentAppointments.reduce((acc, appointment) => {
-      const service = appointment.serviceId as any;
-      if (service && service.title) {
-        const serviceTitle = service.title;
-        if (!acc[serviceTitle]) {
-          acc[serviceTitle] = { 
-            service: serviceTitle,
-            count: 0, 
-            revenue: 0,
-            type: service.type 
-          };
+export async function GET(request: Request) {
+    try {
+        const { userId: clerkUserId } = await auth();
+        if (!clerkUserId) {
+            return new NextResponse("Unauthorized", { status: 401 });
         }
-        acc[serviceTitle].count++;
-        acc[serviceTitle].revenue += getAppointmentAmount(appointment);
-      }
-      return acc;
-    }, {} as Record<string, { service: string; count: number; revenue: number; type: string }>);
 
-    const popularServices = Object.values(serviceStats)
-      .sort((a, b) => b.count - a.count);
+        await dbConnect();
+        const user = await User.findOne({ clerkUserId });
 
-    // Calculate percentage changes
-    const revenueChange = previousRevenue > 0 
-      ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 
-      : totalRevenue > 0 ? 100 : 0;
-    
-    const appointmentsChange = previousAppointmentCount > 0 
-      ? ((totalAppointments - previousAppointmentCount) / previousAppointmentCount) * 100 
-      : totalAppointments > 0 ? 100 : 0;
+        if (!user || user.type !== UserType.SALON_OWNER) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
 
-    const newClientsChange = newClients.length - previousNewClients.length;
+        const { searchParams } = new URL(request.url);
+        const fromDate = searchParams.get('from') ? new Date(searchParams.get('from')!) : undefined;
+        const toDate = searchParams.get('to') ? new Date(searchParams.get('to')!) : undefined;
+        const selectedService = searchParams.get('service');
 
-    // Get customer satisfaction from salon context
-    const customerSatisfaction = salonContext.reviewScore || 4.5;
+        // Current period query
+        const currentMatchQuery = {
+            salonId: user._id,
+            ...(fromDate && toDate && {
+                createdAt: {
+                    $gte: fromDate,
+                    $lte: new Date(toDate.setHours(23, 59, 59, 999))
+                }
+            }),
+            ...(selectedService && selectedService !== 'all' && {
+                'service.type': selectedService.toUpperCase()
+            })
+        };
 
-    const reportData = {
-      totalRevenue,
-      totalAppointments,
-      newClients: newClients.length,
-      customerSatisfaction,
-      revenueChange,
-      appointmentsChange,
-      newClientsChange,
-      popularServices,
-      dateRange: {
-        from: dateFrom,
-        to: dateTo
-      }
-    };
+        // Previous period query for comparison
+        const periodDays = fromDate && toDate ? 
+            Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) : 30;
+        
+        const previousFromDate = fromDate ? new Date(fromDate.getTime() - (periodDays * 24 * 60 * 60 * 1000)) : undefined;
+        const previousToDate = fromDate || undefined;
 
-    return NextResponse.json(reportData);
+        const previousMatchQuery = {
+            salonId: user._id,
+            ...(previousFromDate && previousToDate && {
+                createdAt: {
+                    $gte: previousFromDate,
+                    $lte: previousToDate
+                }
+            }),
+            ...(selectedService && selectedService !== 'all' && {
+                'service.type': selectedService.toUpperCase()
+            })
+        };
 
-  } catch (error) {
-    console.error("Error generating reports:", error);
-    return NextResponse.json(
-      { error: "Failed to generate reports" },
-      { status: 500 }
-    );
-  }
+        // Get current period stats
+        const currentStats = await Appointment.aggregate([
+            {
+                $lookup: {
+                    from: "services",
+                    localField: "serviceId",
+                    foreignField: "_id",
+                    as: "service"
+                }
+            },
+            { 
+                $unwind: {
+                    path: "$service",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            { $match: currentMatchQuery },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { 
+                        $sum: { 
+                            $ifNull: ["$service.price", 0] 
+                        }
+                    },
+                    totalAppointments: { $sum: 1 },
+                    uniqueClients: { $addToSet: "$clientId" }
+                }
+            }
+        ]);
+
+        // Get previous period stats
+        const previousStats = await Appointment.aggregate([
+            {
+                $lookup: {
+                    from: "services",
+                    localField: "serviceId",
+                    foreignField: "_id",
+                    as: "service"
+                }
+            },
+            { 
+                $unwind: {
+                    path: "$service",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            { $match: previousMatchQuery },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { 
+                        $sum: { 
+                            $ifNull: ["$service.price", 0] 
+                        }
+                    },
+                    totalAppointments: { $sum: 1 },
+                    uniqueClients: { $addToSet: "$clientId" }
+                }
+            }
+        ]);
+
+        // Get popular services
+        const popularServices = await Appointment.aggregate([
+            {
+                $lookup: {
+                    from: "services",
+                    localField: "serviceId",
+                    foreignField: "_id",
+                    as: "service"
+                }
+            },
+            { 
+                $unwind: {
+                    path: "$service",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            { $match: currentMatchQuery },
+            {
+                $group: {
+                    _id: "$service.type",
+                    count: { $sum: 1 },
+                    revenue: { $sum: "$service.price" }
+                }
+            },
+            { $sort: { count: -1 } },
+            { $limit: 10 },
+            {
+                $project: {
+                    service: { $toLower: "$_id" },
+                    count: 1,
+                    revenue: 1,
+                    _id: 0
+                }
+            }
+        ]);
+
+        const current = currentStats[0] || {
+            totalRevenue: 0,
+            totalAppointments: 0,
+            uniqueClients: []
+        };
+
+        const previous = previousStats[0] || {
+            totalRevenue: 0,
+            totalAppointments: 0,
+            uniqueClients: []
+        };
+
+        // Calculate percentage changes
+        const revenueChange = previous.totalRevenue > 0 
+            ? ((current.totalRevenue - previous.totalRevenue) / previous.totalRevenue) * 100 
+            : current.totalRevenue > 0 ? 1000 : 0; // Show as significant increase if no previous data
+
+        const appointmentsChange = previous.totalAppointments > 0 
+            ? ((current.totalAppointments - previous.totalAppointments) / previous.totalAppointments) * 100 
+            : current.totalAppointments > 0 ? 1000 : 0;
+
+        const newClientsChange = current.uniqueClients.length - previous.uniqueClients.length;
+
+        return NextResponse.json({
+            totalRevenue: current.totalRevenue,
+            totalAppointments: current.totalAppointments,
+            newClients: current.uniqueClients.length,
+            customerSatisfaction: 4.8, // This would come from a reviews collection
+            revenueChange,
+            appointmentsChange,
+            newClientsChange,
+            popularServices: popularServices.map(service => ({
+                service: service.service || 'unknown',
+                count: service.count,
+                revenue: service.revenue
+            }))
+        });
+
+    } catch (error) {
+        console.error("[REPORTS_GET]", error);
+        return new NextResponse("Internal error", { status: 500 });
+    }
 }
