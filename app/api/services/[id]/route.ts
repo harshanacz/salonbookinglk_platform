@@ -26,7 +26,7 @@ interface SalonContextType {
   numberOfReviewers: number;
   profilePictureUrl?: string;
   businessHours: BusinessHours[];
-
+  isVerified?: boolean;
 }
 
 export async function GET(
@@ -98,6 +98,7 @@ export async function GET(
           numberOfReviewers: rawSalonContext.numberOfReviewers || 0,
           profilePictureUrl: rawSalonContext.profilePictureUrl,
           businessHours: rawSalonContext.businessHours || [],
+          isVerified: rawSalonContext.isVerified || false,
         };
       }
     }
@@ -144,6 +145,7 @@ export async function GET(
         bestSeller: service.popularityScore > 10,
         profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
         todaysClosingTime: openUntil,
+        isVerified: salonContext?.isVerified || false,
       },
       staffAssigned: service.staffAssigned || [],
     };
