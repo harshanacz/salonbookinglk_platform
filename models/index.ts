@@ -3,13 +3,15 @@ import User from './User';
 import Service from './Service';
 import Appointment from './Appointment';
 import AdminActivity from './AdminActivity';
+import Rating from './Rating';
 
 // Export all models
 export {
   User,
   Service,
   Appointment,
-  AdminActivity
+  AdminActivity,
+  Rating
 };
 
 // Helper function to check if a model is registered
