@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import "@/styles/pdf-report.css";
 import {
   Card,
   CardContent,
@@ -26,8 +27,10 @@ import {
 import {
   CalendarIcon,
   Download,
+  Loader2,
 } from "lucide-react";
 import { format, subDays, eachDayOfInterval, parseISO } from "date-fns";
+import { generatePdf } from "@/utils/generatePdf";
 import {
   LineChart,
   Line,
@@ -101,6 +104,9 @@ export default function ReportsPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [showSummaryTable, setShowSummaryTable] = useState(false);
+  const reportContentRef = useRef<HTMLDivElement>(null);
 
   // Generate mock daily data based on date range
   const generateDailyData = (revenue: number, appointments: number) => {
@@ -172,30 +178,63 @@ export default function ReportsPage() {
     return `${sign}${value.toFixed(1)}%`;
   };
 
-  const exportReport = async () => {
-    try {
-      const params = new URLSearchParams({
-        from: dateRange.from!.toISOString(),
-        ...(dateRange.to && { to: dateRange.to.toISOString() }),
-        ...(selectedService !== "all" && { service: selectedService }),
-        format: 'csv'
-      });
+  const handleExportPdf = async () => {
+    if (!reportContentRef.current || !reportData) return;
 
-      const response = await fetch(`/api/reports/export?${params}`);
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `salon-report-${format(dateRange.from!, 'yyyy-MM-dd')}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      }
+    try {
+      setIsPdfLoading(true);
+
+      // Create a summary object with all string values
+      const summary = {
+        "Total Revenue": `LKR ${reportData.totalRevenue.toLocaleString()}`,
+        "Total Appointments": reportData.totalAppointments.toLocaleString(),
+        "New Clients": reportData.newClients.toString(),
+        "Customer Satisfaction": `${reportData.customerSatisfaction.toFixed(1)}/5`,
+      };
+
+      // Show summary table before generating PDF
+      setShowSummaryTable(true);
+
+      // Wait a moment for the table to render
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      // Generate the file name based on date range and service
+      const fromDate = format(dateRange.from, "yyyy-MM-dd");
+      const toDate = dateRange.to
+        ? format(dateRange.to, "yyyy-MM-dd")
+        : format(new Date(), "yyyy-MM-dd");
+
+      const serviceName = selectedService === "all" 
+        ? "All-Services" 
+        : selectedService.replace(/\s+/g, "-");
+
+      const filename = `Salon-Owner-Report-${serviceName}-${fromDate}-to-${toDate}.pdf`;
+
+      // Generate the subtitle based on service selection
+      const subtitle = selectedService === "all"
+        ? "Report for All Services"
+        : `Report for ${selectedService}`;
+
+      await generatePdf(reportContentRef.current, {
+        filename,
+        title: "SalonBooking.lk - Salon Owner Report",
+        subtitle,
+        dateRange: {
+          from: dateRange.from,
+          to: dateRange.to,
+        },
+        summary,
+        companyDetails: {
+          name: "SalonBooking.lk",
+          website: "www.salonbooking.lk",
+        },
+      });
     } catch (error) {
-      console.error('Error exporting report:', error);
+      console.error("Error generating PDF:", error);
+    } finally {
+      // Hide summary table after PDF generation
+      setShowSummaryTable(false);
+      setIsPdfLoading(false);
     }
   };
 
@@ -204,9 +243,17 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Reports</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Button onClick={exportReport} className="w-full sm:w-auto">
-            <Download className="mr-2 h-4 w-4" />
-            Export Report
+          <Button 
+            onClick={handleExportPdf}
+            disabled={isLoading || !reportData || isPdfLoading}
+            className="w-full sm:w-auto"
+          >
+            {isPdfLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {isPdfLoading ? "Generating PDF..." : "Export Report"}
           </Button>
         </div>
       </div>
@@ -286,7 +333,69 @@ export default function ReportsPage() {
       {isLoading ? (
         <div className="text-center py-8">Loading reports...</div>
       ) : (
-        <>
+        <div ref={reportContentRef} className="space-y-6">
+          {/* Company Header (Only visible when generating PDF) */}
+          {showSummaryTable && (
+            <div className="mb-2">
+              <div className="text-center mb-1 pdf-header">
+                <h2 className="text-3xl font-bold">SalonBooking.lk - Salon Owner Report</h2>
+              </div>
+              <div className="text-center mb-2">
+                <p className="text-lg font-medium text-muted-foreground">
+                  {selectedService === "all"
+                    ? "Report for All Services"
+                    : `Report for ${selectedService}`} - Period: {format(dateRange.from, "LLL dd, y")} -{" "}
+                  {dateRange.to
+                    ? format(dateRange.to, "LLL dd, y")
+                    : format(new Date(), "LLL dd, y")}
+                </p>
+              </div>
+              
+              {/* Summary and Popular Services */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                <div className="border rounded-md p-2 pdf-section">
+                  <h4 className="font-medium mb-3">Summary</h4>
+                  <table className="w-full pdf-report-table">
+                    <tbody>
+                      <tr><td>Total Revenue:</td><td>LKR {reportData.totalRevenue.toLocaleString()}</td></tr>
+                      <tr><td>Total Appointments:</td><td>{reportData.totalAppointments.toLocaleString()}</td></tr>
+                      <tr><td>New Clients:</td><td>{reportData.newClients}</td></tr>
+                      <tr><td>Customer Satisfaction:</td><td>{reportData.customerSatisfaction.toFixed(1)}/5</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Popular Services - Show top 5 services */}
+                {reportData.popularServices && reportData.popularServices.length > 0 && (
+                  <div className="border rounded-md p-2 pdf-section">
+                    <h4 className="font-medium mb-3">Most Popular Services</h4>
+                    <table className="w-full pdf-report-table">
+                      <thead>
+                        <tr><th>Service</th><th>Bookings</th><th>Revenue</th></tr>
+                      </thead>
+                      <tbody>
+                        {reportData.popularServices.slice(0, 5).map((service, index) => (
+                          <tr key={index}>
+                            <td className="capitalize">{service.service}</td>
+                            <td>{service.count}</td>
+                            <td>LKR {service.revenue.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              
+              <div className="text-center text-xs text-muted-foreground mt-2 pdf-footer">
+                <p>
+                  © {new Date().getFullYear()} SalonBooking.lk | Generated on{" "}
+                  {format(new Date(), "PP")}
+                </p>
+              </div>
+            </div>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -494,7 +603,7 @@ export default function ReportsPage() {
               </Card>
             </TabsContent>
           </Tabs>
-        </>
+        </div>
       )}
     </div>
   );
