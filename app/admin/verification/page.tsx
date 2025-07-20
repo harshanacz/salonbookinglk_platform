@@ -15,10 +15,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 
@@ -40,15 +41,29 @@ type Verification = {
   status: string;
 };
 
+interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 const Page = () => {
   const [verifications, setVerifications] = React.useState<Verification[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [pagination, setPagination] = React.useState<PaginationInfo>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    pages: 0,
+  });
 
-  const fetchVerifications = async () => {
+  const fetchVerifications = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/verifications?status=pending");
+      const currentLimit = pagination.limit || 10;
+      const response = await fetch(`/api/admin/verifications?status=pending&page=${page}&limit=${currentLimit}`);
       
       if (!response.ok) {
         throw new Error("Failed to fetch verifications");
@@ -56,6 +71,12 @@ const Page = () => {
       
       const data = await response.json();
       setVerifications(data.verifications || []);
+      setPagination(data.pagination || {
+        total: 0,
+        page: page,
+        limit: currentLimit,
+        pages: 0,
+      });
     } catch (err) {
       console.error("Error fetching verifications:", err);
       setError("Failed to load verification requests");
@@ -67,6 +88,10 @@ const Page = () => {
   React.useEffect(() => {
     fetchVerifications();
   }, []);
+
+  const handlePageChange = (newPage: number) => {
+    fetchVerifications(newPage);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -106,7 +131,7 @@ const Page = () => {
           <CardContent className="flex items-center justify-center h-48">
             <div className="text-center">
               <p className="text-red-500 mb-4">{error}</p>
-              <Button onClick={fetchVerifications}>Try Again</Button>
+              <Button onClick={() => fetchVerifications()}>Try Again</Button>
             </div>
           </CardContent>
         </Card>
@@ -123,7 +148,7 @@ const Page = () => {
         <CardHeader>
           <CardTitle>Pending Approval</CardTitle>
           <CardDescription>
-            Review and approve salon verification requests ({verifications.length} pending)
+            Review and approve salon verification requests
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,6 +221,38 @@ const Page = () => {
             </div>
           )}
         </CardContent>
+        {!loading && !error && pagination.pages > 1 && (
+          <CardFooter className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              Showing {(pagination.page - 1) * pagination.limit + 1}-
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} verification requests
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Previous Page</span>
+              </Button>
+              <div className="text-sm font-medium">
+                Page {pagination.page} of {pagination.pages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Next Page</span>
+              </Button>
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   );

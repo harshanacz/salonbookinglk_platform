@@ -228,9 +228,8 @@ export default function SelectTime() {
       return;
     }
     
-    // Fetch extra services before showing popup
-    await fetchExtraServices();
-    setShowPopup(true);
+    // Skip extra services and go directly to confirmation/payment
+    navigateToConfirm();
   };
 
   // Navigate to confirmation page
@@ -434,7 +433,7 @@ export default function SelectTime() {
                     disabled={!selectedTimeSlot}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                   >
-                    Continue to Extras & Confirm
+                    Continue to Payment
                   </Button>
                 </div>
               </Card>
