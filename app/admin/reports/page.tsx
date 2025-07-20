@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import "@/styles/pdf-report.css";
 import {
   Card,
   CardContent,
