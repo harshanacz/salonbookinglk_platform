@@ -154,6 +154,37 @@ function ComplaintViewContent() {
     }
   };
 
+  const handleNotify = async () => {
+    if (!complaintData) return;
+
+    try {
+      // Log admin activity for accessing notifications from complaint view
+      await fetch('/api/admin/log-activity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'COMPLAINT_MANAGEMENT',
+          target: complaintData.complainant.email || `complaint: ${complaintData.complainant.name}`,
+          details: `Accessed notifications to send message regarding complaint "${complaintData.subject}" from ${complaintData.complainant.name}`,
+          metadata: {
+            complaintId: complaintData.id,
+            complainantName: complaintData.complainant.name,
+            complainantEmail: complaintData.complainant.email,
+            complaintSubject: complaintData.subject,
+            complaintCategory: complaintData.category,
+            complaintStatus: complaintData.status,
+            action: 'notify_access',
+            accessedAt: new Date().toISOString()
+          }
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to log notify activity:', error);
+    }
+  };
+
   const handleDismiss = () => {
     updateComplaintStatus('closed', 'Closed');
   };
@@ -381,6 +412,7 @@ function ComplaintViewContent() {
           <Link href="/admin/notifications">
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              onClick={handleNotify}
             >
               <Bell className="h-4 w-4" />
               Notify

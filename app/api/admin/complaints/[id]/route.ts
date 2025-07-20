@@ -5,6 +5,8 @@ import User from "@/models/User";
 import Complaint from "@/models/complaint";
 import Appointment from "@/models/Appointment";
 import SalonContext from "@/models/SalonContext";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function GET(
   request: NextRequest,
@@ -177,6 +179,30 @@ export async function PATCH(
       );
     }
 
+    // Get current complaint to track previous status
+    const currentComplaint = await Complaint.findById(complaintId)
+      .populate({
+        path: 'userId',
+        select: 'userName email'
+      })
+      .populate({
+        path: 'appointmentId',
+        select: 'serviceId',
+        populate: {
+          path: 'serviceId',
+          select: 'name title'
+        }
+      });
+
+    if (!currentComplaint) {
+      return NextResponse.json(
+        { error: "Complaint not found" },
+        { status: 404 }
+      );
+    }
+
+    const previousStatus = currentComplaint.status;
+
     // Update complaint status
     const updatedComplaint = await Complaint.findByIdAndUpdate(
       complaintId,
@@ -192,6 +218,42 @@ export async function PATCH(
         { error: "Complaint not found" },
         { status: 404 }
       );
+    }
+
+    // Log admin activity
+    try {
+      const adminInfo = await getAdminInfo();
+      if (adminInfo) {
+        const complainantName = (currentComplaint as any).userId?.userName || 'Unknown User';
+        const complainantEmail = (currentComplaint as any).userId?.email;
+        const serviceName = (currentComplaint as any).appointmentId?.serviceId?.name || 
+                           (currentComplaint as any).appointmentId?.serviceId?.title || 'Unknown Service';
+        
+        // Use complainant email as target, fallback to complaint description
+        const target = complainantEmail || `complaint: ${complainantName} - ${serviceName}`;
+        
+        logAdminActivity({
+          adminId: adminInfo.adminId,
+          adminName: adminInfo.adminName,
+          adminEmail: adminInfo.adminEmail,
+          action: AdminActionType.COMPLAINT_MANAGEMENT,
+          target: target,
+          details: `Changed complaint status from ${previousStatus} to ${status} for complainant ${complainantName} (Service: ${serviceName})`,
+          metadata: {
+            complaintId: complaintId,
+            complainantName,
+            complainantEmail,
+            serviceName,
+            previousStatus,
+            newStatus: status,
+            complaintSubject: currentComplaint.subject,
+            complaintCategory: currentComplaint.category,
+            updatedAt: new Date().toISOString()
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to log admin activity:', error);
     }
 
     console.log(`[ADMIN_COMPLAINT_UPDATE] Complaint ${complaintId} status updated to: ${status}`);
