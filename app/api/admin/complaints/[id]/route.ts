@@ -147,3 +147,64 @@ export async function GET(
     );
   }
 }
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+    const user = await User.findOne({ clerkUserId: userId });
+
+    if (!user || !["ADMIN", "SUPER_ADMIN"].includes(user.type)) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const complaintId = params.id;
+    const { status } = await request.json();
+
+    // Validate status
+    const validStatuses = ['pending', 'in-progress', 'resolved', 'closed'];
+    if (!status || !validStatuses.includes(status)) {
+      return NextResponse.json(
+        { error: "Invalid status. Must be one of: pending, in-progress, resolved, closed" },
+        { status: 400 }
+      );
+    }
+
+    // Update complaint status
+    const updatedComplaint = await Complaint.findByIdAndUpdate(
+      complaintId,
+      { 
+        status: status,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    if (!updatedComplaint) {
+      return NextResponse.json(
+        { error: "Complaint not found" },
+        { status: 404 }
+      );
+    }
+
+    console.log(`[ADMIN_COMPLAINT_UPDATE] Complaint ${complaintId} status updated to: ${status}`);
+
+    return NextResponse.json({
+      message: "Complaint status updated successfully",
+      status: status
+    });
+  } catch (error) {
+    console.error("Error updating complaint status:", error);
+    return NextResponse.json(
+      { error: "Failed to update complaint status" },
+      { status: 500 }
+    );
+  }
+}

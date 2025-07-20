@@ -323,8 +323,8 @@ export default function ComplaintsPage() {
                           >
                             Update status
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Notify client</DropdownMenuItem>
-                          <DropdownMenuItem>Notify salon</DropdownMenuItem>
+                          {/* <DropdownMenuItem>Notify client</DropdownMenuItem>
+                          <DropdownMenuItem>Notify salon</DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -49,6 +49,7 @@ export default function ViewComplaint() {
   const { toast } = useToast();
   const [complaintData, setComplaintData] = useState<ComplaintData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   const complaintId = searchParams.get("id");
@@ -92,6 +93,72 @@ export default function ViewComplaint() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const updateComplaintStatus = async (newStatus: string, statusLabel: string) => {
+    if (!complaintData) return;
+    
+    // Prevent updates on already closed/resolved complaints
+    if (complaintData.status === 'Closed' || complaintData.status === 'Resolved') {
+      toast({
+        title: "Cannot Update",
+        description: "This complaint has already been closed or resolved.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      console.log(`[VIEW_COMPLAINT] Updating complaint ${complaintData.id} to status: ${newStatus}`);
+      
+      const response = await fetch(`/api/admin/complaints/${complaintData.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('[VIEW_COMPLAINT] Error updating status:', errorData);
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('[VIEW_COMPLAINT] Status update result:', result);
+      
+      // Update local state
+      setComplaintData(prev => prev ? {
+        ...prev,
+        status: statusLabel,
+        updatedAt: new Date().toISOString()
+      } : null);
+      
+      toast({
+        title: "Success",
+        description: `Complaint has been ${statusLabel.toLowerCase()}.`,
+        variant: "default",
+      });
+    } catch (error) {
+      console.error('[VIEW_COMPLAINT] Error updating complaint status:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : `Failed to ${statusLabel.toLowerCase()} complaint. Please try again.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDismiss = () => {
+    updateComplaintStatus('closed', 'Closed');
+  };
+
+  const handleResolve = () => {
+    updateComplaintStatus('resolved', 'Resolved');
   };
 
   const getStatusColor = (status: string) => {
@@ -269,23 +336,55 @@ export default function ViewComplaint() {
               </p>
             </div>
           </div>
+
+          {/* Status update notification */}
+          {(complaintData.status === 'Closed' || complaintData.status === 'Resolved') && (
+            <div className={`p-4 rounded-lg border-l-4 ${
+              complaintData.status === 'Resolved' 
+                ? 'bg-green-50 border-green-400 text-green-800' 
+                : 'bg-gray-50 border-gray-400 text-gray-800'
+            }`}>
+              <div className="flex items-center">
+                {complaintData.status === 'Resolved' ? (
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                ) : (
+                  <XCircle className="h-5 w-5 mr-2" />
+                )}
+                <p className="font-medium">
+                  This complaint has been {complaintData.status.toLowerCase()}.
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
 
         <CardFooter className="flex flex-wrap gap-4 justify-end">
-          <Button variant="outline" className="flex items-center gap-2">
-            <XCircle className="h-4 w-4" />
-            Dismiss
-          </Button>
-          <Button variant="default" className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            Resolve
-          </Button>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={handleDismiss}
+            disabled={isUpdating || complaintData.status === 'Closed' || complaintData.status === 'Resolved'}
           >
-            <Bell className="h-4 w-4" />
-            Notify
+            <XCircle className="h-4 w-4" />
+            {isUpdating ? 'Updating...' : 'Dismiss'}
           </Button>
+          <Button 
+            variant="default" 
+            className="flex items-center gap-2"
+            onClick={handleResolve}
+            disabled={isUpdating || complaintData.status === 'Closed' || complaintData.status === 'Resolved'}
+          >
+            <CheckCircle className="h-4 w-4" />
+            {isUpdating ? 'Updating...' : 'Resolve'}
+          </Button>
+          <Link href="/admin/notifications">
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            >
+              <Bell className="h-4 w-4" />
+              Notify
+            </Button>
+          </Link>
         </CardFooter>
       </Card>
     </div>
