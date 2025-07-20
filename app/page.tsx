@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import HeroSection from "@/components/user/Home/hero-section";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Head from "next/head";
+import Image from "next/image";
 
 // Define service interface
 interface Service {
@@ -31,6 +33,7 @@ function HomeContent() {
   const [popularServices, setPopularServices] = useState<Service[]>([]);
   const [topRatedServices, setTopRatedServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -100,11 +103,22 @@ function HomeContent() {
       {/* Popular services section with enhanced UI */}
       <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900">
-              Popular Services
-            </h2>
-            <p className="text-gray-500 mt-2">Most booked services by our customers</p>
+          <div className="flex items-center">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl sm:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-700 to-purple-900">
+                  Popular Services
+                </h2>
+                <button
+                  onClick={() => setShowHelpModal(true)}
+                  className="w-6 h-6 bg-purple-100 hover:bg-purple-200 rounded-full flex items-center justify-center text-purple-600 hover:text-purple-700 transition-colors"
+                  title="Help"
+                >
+                  <span className="text-sm font-semibold">?</span>
+                </button>
+              </div>
+              <p className="text-gray-500 mt-2">Most booked services by our customers</p>
+            </div>
           </div>
           
           <Link href="/search" className="text-purple-700 font-medium hover:text-purple-800 hover:underline flex items-center">
@@ -218,23 +232,139 @@ function HomeContent() {
         </div>
         <StylesGallery />
       </section>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-900">Help - Popular Services</h3>
+              <button
+                onClick={() => setShowHelpModal(false)}
+                className="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:text-gray-700 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="relative w-full h-auto">
+                <Image
+                  src="/dev/Add a heading.png"
+                  alt="Help - Popular Services Guide"
+                  width={800}
+                  height={600}
+                  className="w-full h-auto rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Home() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">
-            Loading...
-          </h1>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+    <>
+      <Head>
+        <title>SalonBooking.lk - Book Premium Salon Services in Sri Lanka</title>
+        <meta 
+          name="description" 
+          content="Sri Lanka's premier salon booking platform. Find and book beauty services, haircuts, facials, massages and more at top-rated salons across Sri Lanka." 
+        />
+        <meta 
+          name="keywords" 
+          content="salon booking Sri Lanka, beauty services, haircut booking, facial treatments, massage therapy, spa services, Colombo salons" 
+        />
+        <link rel="canonical" href="https://salonbooking.lk" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="SalonBooking.lk - Book Premium Salon Services in Sri Lanka" />
+        <meta property="og:description" content="Sri Lanka's premier salon booking platform. Find and book beauty services at top-rated salons." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://salonbooking.lk" />
+        <meta property="og:image" content="https://salonbooking.lk/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="SalonBooking.lk - Book Premium Salon Services in Sri Lanka" />
+        <meta name="twitter:description" content="Sri Lanka's premier salon booking platform. Find and book beauty services at top-rated salons." />
+        <meta name="twitter:image" content="https://salonbooking.lk/twitter-image.jpg" />
+        
+        {/* Local Business Schema */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "LocalBusiness",
+              "@id": "https://salonbooking.lk",
+              "name": "SalonBooking.lk",
+              "description": "Sri Lanka's premier salon booking platform connecting customers with top-rated beauty salons and wellness centers.",
+              "url": "https://salonbooking.lk",
+              "telephone": "+94-11-123-4567", // Replace with actual phone
+              "address": {
+                "@type": "PostalAddress",
+                "addressCountry": "LK",
+                "addressRegion": "Western Province"
+              },
+              "areaServed": {
+                "@type": "Country",
+                "name": "Sri Lanka"
+              },
+              "serviceType": [
+                "Hair Salon",
+                "Beauty Salon", 
+                "Spa Services",
+                "Massage Therapy",
+                "Nail Salon",
+                "Skincare Services"
+              ],
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": "Salon Services",
+                "itemListElement": [
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Hair Cut & Styling"
+                    }
+                  },
+                  {
+                    "@type": "Offer", 
+                    "itemOffered": {
+                      "@type": "Service",
+                      "name": "Facial Treatments"
+                    }
+                  },
+                  {
+                    "@type": "Offer",
+                    "itemOffered": {
+                      "@type": "Service", 
+                      "name": "Massage Therapy"
+                    }
+                  }
+                ]
+              }
+            })
+          }}
+        />
+      </Head>
+      
+      <Suspense fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold mb-4">
+              Loading...
+            </h1>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          </div>
         </div>
-      </div>
-    }>
-      <HomeContent />
-    </Suspense>
+      }>
+        <HomeContent />
+      </Suspense>
+    </>
   );
 }
