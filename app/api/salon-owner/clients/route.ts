@@ -4,6 +4,9 @@ import Appointment from "@/models/Appointment";
 import User, { UserType } from "@/models/User";
 import dbConnect from "@/lib/mongodb";
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   try {
     const { userId: clerkUserId } = await auth();

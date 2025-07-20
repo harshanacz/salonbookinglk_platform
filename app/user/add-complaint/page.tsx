@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +16,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ComplaintForm() {
+function ComplaintFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [appointmentId, setAppointmentId] = useState<string | null>(null);
@@ -159,5 +160,21 @@ export default function ComplaintForm() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function ComplaintForm() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-6">
+        <Skeleton className="h-8 w-48 mb-6" />
+        <div className="space-y-6">
+          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    }>
+      <ComplaintFormContent />
+    </Suspense>
   );
 }
