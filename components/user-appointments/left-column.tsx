@@ -237,9 +237,19 @@ const LeftColumn: React.FC<LeftColumnProps> = ({
                       {getRatingButtonText(appointment)}
                     </button>
                   )}
-                  <Link href="/book" className="text-black underline text-xs">
-                    {appointment.status === 'canceled' ? 'Rebook' : 'Complain'}
-                  </Link>
+                  {appointment.status === 'completed' && (
+                    <Link 
+                      href={`/user/add-complaint?appointmentId=${appointment.appointmentId}`} 
+                      className="text-black underline text-xs"
+                    >
+                      Complain
+                    </Link>
+                  )}
+                  {appointment.status === 'canceled' && (
+                    <Link href="/salons" className="text-black underline text-xs">
+                      Rebook
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

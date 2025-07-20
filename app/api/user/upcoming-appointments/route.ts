@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 import Appointment from "@/models/Appointment";
 import User from "@/models/User";
 import Staff from "@/models/Staff";
+import Service from "@/models/Service";
 
 export async function GET(request: NextRequest) {
   try {
