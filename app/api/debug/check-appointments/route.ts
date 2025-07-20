@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import connectToDatabase from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
-import AppointmentModel from "@/models/Appointment";
+import Appointment from "@/models/Appointment";
 import { AppointmentStatus } from "@/models/enums";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     // Get user data
     const user = await User.findOne({ clerkUserId: userId });
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check for ongoing appointments
-    const ongoingAppointments = await AppointmentModel.find({
+    const ongoingAppointments = await Appointment.find({
       $or: [
         { salonId: user._id },
         { userId: user._id }
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       .populate("serviceId", "name");
 
     // Check all appointments for this salon
-    const allAppointments = await AppointmentModel.find({
+    const allAppointments = await Appointment.find({
       $or: [
         { salonId: user._id },
         { userId: user._id }
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
       ongoingAppointmentsCount: ongoingAppointments.length,
       ongoingAppointments: ongoingAppointments.map(apt => ({
         id: apt._id,
-        clientName: apt.clientId?.name || 'Unknown',
-        serviceName: apt.serviceId?.name || 'Unknown',
+        clientName: (apt.clientId && typeof apt.clientId === 'object' && 'name' in apt.clientId) ? (apt.clientId as { name: string }).name : 'Unknown',
+        serviceName: (apt.serviceId && typeof apt.serviceId === 'object' && 'name' in apt.serviceId) ? (apt.serviceId as { name: string }).name : 'Unknown',
         date: apt.date,
         status: apt.status
       })),

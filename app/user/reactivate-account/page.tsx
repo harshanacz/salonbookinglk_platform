@@ -1,14 +1,14 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { CheckCircle, Loader2, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export default function AccountReactivationPage() {
+function AccountReactivationContent() {
   // State to store user's email address
   const [email, setEmail] = useState("")
 
@@ -163,5 +163,13 @@ export default function AccountReactivationPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AccountReactivationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+      <AccountReactivationContent />
+    </Suspense>
   )
 }
