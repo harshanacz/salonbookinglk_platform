@@ -326,9 +326,9 @@ export default function AdminReportsPage() {
       const summary = {
         "Total Revenue": `LKR ${reportData.stats.totalRevenue.toLocaleString()}`,
         "Total Appointments": reportData.stats.totalAppointments.toLocaleString(),
-        "Active Salons": (reportData.stats.verified || reportData.stats.activeSalons || 0).toString(),
-        "New Salons This Month": (reportData.stats.newSalonsThisMonth || 0).toString(),
-        "Customer Satisfaction": `${reportData.stats.customerSatisfaction}/5`,
+        "Verified Salons": (reportData.stats.verified || reportData.stats.activeSalons || 0).toString(),
+        "Total Salons": (reportData.stats.totalSalons || 0).toString(),
+        "Lost Revenue": `LKR ${(reportData.stats.lostRevenue || 0).toLocaleString()}`,
       };
 
       // Show summary table before generating PDF
@@ -560,30 +560,23 @@ export default function AdminReportsPage() {
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">Active Salons</td>
+                        <td className="py-2">Verified Salons</td>
                         <td className="text-right py-2">
                           {reportData?.stats.verified || reportData?.stats.activeSalons || 0}
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">New Salons This Month</td>
+                        <td className="py-2">Total Salons</td>
                         <td className="text-right py-2">
-                          {reportData?.stats.newSalonsThisMonth || 0}
+                          {reportData?.stats.totalSalons || 0}
                         </td>
                       </tr>
                       <tr className="border-b">
-                        <td className="py-2">Customer Satisfaction</td>
-                        <td className="text-right py-2">
-                          {reportData?.stats.customerSatisfaction}/5
+                        <td className="py-2">Lost Revenue (Cancelled)</td>
+                        <td className="text-right py-2 text-red-600">
+                          LKR {(reportData?.stats.lostRevenue || 0).toLocaleString()}
                         </td>
-                      </tr>                        {reportData?.stats.lostRevenue && reportData.stats.lostRevenue > 0 && (
-                        <tr className="border-b">
-                          <td className="py-2">Lost Revenue (Cancelled)</td>
-                          <td className="text-right py-2 text-red-600">
-                            LKR {reportData.stats.lostRevenue.toLocaleString()}
-                          </td>
-                        </tr>
-                      )}
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -658,7 +651,7 @@ export default function AdminReportsPage() {
                 )}
               </div>
               
-              {/* Popular Services - Always show top 10 services with salon names */}
+              {/* Popular Services - Always show top 8 services with salon names */}
               {reportData?.popularServices &&
                 reportData.popularServices.length > 0 && (
                   <div className="border rounded-md p-2 mb-3 pdf-section">
@@ -674,7 +667,7 @@ export default function AdminReportsPage() {
                       </thead>
                       <tbody>
                         {reportData.popularServices
-                          .slice(0, 10)
+                          .slice(0, 8)
                           .map((service, index) => (
                             <tr key={index} className="border-b">
                               <td className="py-2">{service.title}</td>
@@ -731,7 +724,7 @@ export default function AdminReportsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Active Salons
+                  Verified Salons
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -739,45 +732,27 @@ export default function AdminReportsPage() {
                   {reportData?.stats.verified || reportData?.stats.activeSalons || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  +{reportData?.stats.newSalonsThisMonth || 0} new this month
+                  Total: {reportData?.stats.totalSalons || 0} salons
                 </p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Customer Satisfaction
+                  Lost Revenue (Cancelled Appointments)
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {reportData?.stats.customerSatisfaction}/5
+                  LKR {(reportData?.stats.lostRevenue || 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Based on customer reviews
+                  Potential revenue from {reportData.appointmentsData?.cancelled || 0} cancelled appointments
                 </p>
               </CardContent>
             </Card>
           </div>
           
-          {/* Lost Revenue Card - Show only if there's cancelled revenue */}
-          {reportData?.stats.lostRevenue && reportData.stats.lostRevenue > 0 && (
-            <Card className="border-red-200 bg-red-50">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-red-800">
-                  Lost Revenue (Cancelled Appointments)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">
-                  LKR {reportData.stats.lostRevenue.toLocaleString()}
-                </div>
-                <p className="text-xs text-red-600">
-                  Potential revenue from {reportData.appointmentsData?.cancelled || 0} cancelled appointments
-                </p>
-              </CardContent>
-            </Card>
-          )}
           <Tabs defaultValue="revenue">
             <TabsList>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
@@ -835,7 +810,7 @@ export default function AdminReportsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Popular Services</CardTitle>
-                  <CardDescription>Top 10 most booked services with salon information</CardDescription>
+                  <CardDescription>Top 8 most booked services with salon information</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {reportData?.popularServices.length ? (
