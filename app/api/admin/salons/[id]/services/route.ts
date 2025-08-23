@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import Service from "@/models/Service";
+import Appointment from "@/models/Appointment";
 import mongoose from "mongoose";
 import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
 import { getAdminInfo } from "@/utils/adminActivityMiddleware";
@@ -101,6 +102,38 @@ export async function GET(
     const total = await Service.countDocuments(query);
     console.log("[ADMIN_SALON_SERVICES_GET] Total services found:", total);
 
+    // Get service IDs for booking count calculation
+    const serviceIds = services.map(service => service._id);
+    
+    // Calculate booking counts for all services using aggregation for better performance
+    console.log("[ADMIN_SALON_SERVICES_GET] Calculating booking counts for services...");
+    let bookingCountMap = new Map();
+    
+    try {
+      const bookingCounts = await Appointment.aggregate([
+        {
+          $match: {
+            serviceId: { $in: serviceIds }
+          }
+        },
+        {
+          $group: {
+            _id: "$serviceId",
+            bookingCount: { $sum: 1 }
+          }
+        }
+      ]);
+      
+      // Convert booking counts to a map for easy lookup
+      bookingCounts.forEach(item => {
+        bookingCountMap.set(item._id.toString(), item.bookingCount);
+      });
+      console.log("[ADMIN_SALON_SERVICES_GET] Booking counts calculated for", bookingCounts.length, "services");
+    } catch (bookingError) {
+      console.error("[ADMIN_SALON_SERVICES_GET] Error calculating booking counts:", bookingError);
+      // Continue without booking counts if there's an error
+    }
+
     // Transform services to match the expected format
     const formattedServices = services.map(service => {
       // Handle populated salonContextId safely
@@ -109,6 +142,9 @@ export async function GET(
         'name' in service.salonContextId 
           ? (service.salonContextId as any).name 
           : 'Unknown';
+
+      // Get actual booking count from appointments
+      const actualBookingCount = bookingCountMap.get(service._id.toString()) || 0;
 
       return {
         id: service._id.toString(),
@@ -119,7 +155,7 @@ export async function GET(
         type: service.type,
         status: service.status,
         images: service.images || [],
-        bookings: service.bookings || 0,
+        bookings: actualBookingCount, // Use calculated booking count
         views: service.views || 0,
         averageRating: service.averageRating || 0,
         reviewCount: service.reviewCount || 0,
