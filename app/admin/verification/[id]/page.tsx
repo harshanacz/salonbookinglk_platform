@@ -268,11 +268,6 @@ export default function VerifyDocuments() {
                 <div className="text-muted-foreground">Contact Number:</div>
                 <div>{verification.phoneNumber}</div>
               </div>
-
-              <div className="grid grid-cols-[150px_1fr] gap-3 items-baseline">
-                <div className="text-muted-foreground">Salon Address:</div>
-                <div className="whitespace-pre-line">{verification.address}</div>
-              </div>
             </div>
 
             <div className="space-y-3">
