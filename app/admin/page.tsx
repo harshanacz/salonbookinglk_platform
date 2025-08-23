@@ -92,7 +92,8 @@ const Page = () => {
   const [stats, setStats] = useState(dashboardData.stats);
   const [lastMonthSalons, setLastMonthSalons] = useState(0);
   const [pendingServicesCount, setPendingServicesCount] = useState(0);
-  const [newServicesToday, setNewServicesToday] = useState(0);
+  const [newServicesThisWeek, setNewServicesThisWeek] = useState(0);
+  const [complaintsLoading, setComplaintsLoading] = useState(true);
 
   useEffect(() => {
     // Debug flag to track API calls completion
@@ -100,12 +101,13 @@ const Page = () => {
       salons: false,
       services: false,
       users: false,
-      recentSalons: false
+      recentSalons: false,
+      complaints: false
     };
     
     // Helper function to log API status
     const logApiStatus = () => {
-      if (apiCalls.salons && apiCalls.services && apiCalls.users && apiCalls.recentSalons) {
+      if (apiCalls.salons && apiCalls.services && apiCalls.users && apiCalls.recentSalons && apiCalls.complaints) {
         console.log("All API calls completed. Stats data:", stats);
       }
     };    const fetchRecentSalons = async () => {
@@ -305,8 +307,11 @@ const Page = () => {
     };const fetchPendingServices = async () => {
       try {
         const response = await fetch("/api/admin/service-cards?limit=all");
+        
         if (response.ok) {
           const data = await response.json();
+          console.log("Service cards found:", data.length);
+          
           // Limit to the 5 most recent services for display
           setPendingServices(data.slice(0, 5));
 
@@ -317,13 +322,25 @@ const Page = () => {
           // Calculate services created today
           const today = new Date();
           today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
 
           const newToday = data.filter((service: any) => {
-            const serviceDate = new Date(service.startedDate);
-            return serviceDate >= today;
+            const serviceDate = new Date(service.createdAt);
+            return serviceDate >= today && serviceDate < tomorrow;
           }).length;
 
-          setNewServicesToday(newToday);
+          console.log("Services created today:", newToday);
+          
+          // Temporary debug for services
+          if (process.env.NODE_ENV === 'development') {
+            console.log('DEBUG - Services processing complete:', {
+              totalServices: data.length,
+              servicesToday: newToday,
+              sampleService: data[0]
+            });
+          }
+          setNewServicesThisWeek(newToday);
 
           // Update the stats
           setStats((prevStats) =>
@@ -341,7 +358,7 @@ const Page = () => {
             )
           );
         } else {
-          console.error("Failed to fetch pending services");
+          console.error("Failed to fetch pending services, status:", response.status);
         }
       } catch (error) {
         console.error("Error fetching service data:", error);      } finally {
@@ -351,10 +368,99 @@ const Page = () => {
       }
     };
 
+    const fetchComplaints = async () => {
+      try {
+        const response = await fetch("/api/admin/complaints");
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Complaints found:", data.length);
+          
+          // Ensure we have a valid array of complaints
+          const complaints = Array.isArray(data) ? data : [];
+          
+          // Count active complaints (pending, in-progress)
+          const activeComplaints = complaints.filter((complaint: any) => {
+            const status = complaint.status ? complaint.status.toString().toUpperCase() : '';
+            return status === 'PENDING' || status === 'IN_PROGRESS' || status === 'IN-PROGRESS';
+          }).length;
+          
+          // Count complaints resolved today (status = "RESOLVED" and updatedAt = today)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          
+          const resolvedToday = complaints.filter((complaint: any) => {
+            const status = complaint.status ? complaint.status.toString().toUpperCase() : '';
+            if (status !== 'RESOLVED') return false;
+            const updatedDate = new Date(complaint.updatedAt);
+            return updatedDate >= today && updatedDate < tomorrow;
+          }).length;
+
+          console.log(`Active complaints: ${activeComplaints}, Resolved today: ${resolvedToday}`);
+          
+          // Temporary debug alert
+          if (process.env.NODE_ENV === 'development') {
+            console.log('DEBUG - Complaints processing complete:', {
+              totalComplaints: complaints.length,
+              activeComplaints,
+              resolvedToday,
+              sampleStatus: complaints[0]?.status
+            });
+          }
+
+          // Update the complaints stats
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 4
+                ? {
+                    ...stat,
+                    value: activeComplaints,
+                    description: resolvedToday > 0 
+                      ? `${resolvedToday} resolved today`
+                      : "0 resolved today",
+                  }
+                : stat
+            )
+          );
+        } else {
+          console.error("Failed to fetch complaints, status:", response.status);
+          setStats((prevStats) =>
+            prevStats.map((stat) =>
+              stat.id === 4
+                ? {
+                    ...stat,
+                    description: "Failed to load complaints data",
+                  }
+                : stat
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching complaints:", error);
+        setStats((prevStats) =>
+          prevStats.map((stat) =>
+            stat.id === 4
+              ? {
+                  ...stat,
+                  description: "Error loading complaints data",
+                }
+              : stat
+          )
+        );
+      } finally {
+        setComplaintsLoading(false);
+        apiCalls.complaints = true;
+        logApiStatus();
+      }
+    };
+
     fetchRecentSalons();
     fetchPendingServices();
     fetchSalonsCount();
     fetchUsersCount();
+    fetchComplaints();
   }, []);
 
   // Function to format date
