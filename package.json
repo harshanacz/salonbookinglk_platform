@@ -1,7 +1,10 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
-  "private": true,
+  "name": "salonbooking-lk",
+  "version": "1.0.0",
+  "description": "A comprehensive salon management platform for booking appointments and managing salon operations",
+  "keywords": ["salon", "booking", "appointment", "nextjs", "react", "mongodb"],
+  "author": "Your Name",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

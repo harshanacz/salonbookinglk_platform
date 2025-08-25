@@ -50,7 +50,7 @@ The project follows a modular structure with separate directories for each featu
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/salonbooking.lk.git
+   git clone https://github.com/your-username/salonbooking.lk.git
    ```
 
 2. Navigate to the project directory:
@@ -63,12 +63,26 @@ The project follows a modular structure with separate directories for each featu
    npm install
    ```
 
-4. Set up environment variables by creating a `.env` file in the root directory. Refer to `.env.example` for required variables.
+4. Set up environment variables by creating a `.env.local` file in the root directory. Copy the contents from `.env.example` and fill in your actual values:
+   ```bash
+   cp .env.example .env.local
+   ```
 
 5. Start the development server:
    ```bash
    npm run dev
    ```
+
+## Environment Setup
+
+Before running the application, you need to set up the following services:
+
+1. **MongoDB Database** - Create a MongoDB Atlas cluster or local MongoDB instance
+2. **Clerk Authentication** - Set up a Clerk account for user authentication
+3. **Upstash Redis** - Create a Redis database for caching and session management
+4. **Stripe** - Set up Stripe for payment processing
+5. **Google Maps API** - Get a Google Maps API key for location services
+6. **SMTP Email** - Configure email service for notifications
 
 ## Usage
 
@@ -86,10 +100,18 @@ Start the production server:
 npm start
 ```
 
+## Security
+
+- All sensitive data is stored in environment variables
+- Never commit `.env` files to version control
+- Use strong passwords and API keys
+- Enable 2FA on all service accounts
+- Regularly rotate API keys and secrets
+
 ## Contributing
 
 ...
 
 ## License
 
-<!-- This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details. -->
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
