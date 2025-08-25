@@ -6,6 +6,7 @@ import Staff from "@/models/Staff";
 import Service from "@/models/Service";
 import User from "@/models/User";
 import AppointmentModel, { IAppointment } from "@/models/Appointment";
+import Service from "@/models/Service";
 import { AppointmentStatus, PaymentMethod } from "@/models/enums";
 import mongoose from "mongoose";
 
@@ -15,29 +16,72 @@ interface AppointmentDocument extends IAppointment {}
 // Type assertion for the Appointment model
 const Appointment = AppointmentModel as mongoose.Model<AppointmentDocument>;
 
-// In-memory storage for simple implementations
-let inMemoryAppointments: any[] = [];
-
 export async function GET(req: NextRequest) {
-  await dbConnect();
-  // Optionally, filter by salonId if provided as a query param
-  const { searchParams } = new URL(req.url);
-  const salonId = searchParams.get("salonId");
+  try {
+    await dbConnect();
+    
+    // Get authenticated user
+    const clerkUser = await currentUser();
+    if (!clerkUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  let filter: any = {};
-  if (salonId && mongoose.Types.ObjectId.isValid(salonId)) {
-    filter.salonId = salonId;
-  }
 
-  // Populate client, service, and staff for display
-  const appointments = await Appointment.find(filter)
-    .populate("clientId", "name phone")
-    .populate("serviceId", "name")
-    .populate("staffId", "name") 
+    // Find the salon owner's user record
+    const salonOwner = await User.findOne({ clerkUserId: clerkUser.id });
+    if (!salonOwner) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Find the salon context for this owner
+    const salonContext = await SalonContext.findOne({ userId: salonOwner._id });
+    if (!salonContext) {
+      return NextResponse.json({ error: "Salon not found" }, { status: 404 });
+    }
+
+
+    // Get appointments for this salon
+    const appointments = await Appointment.find({ 
+      salonContextId: salonContext._id 
+    })
+    .populate({
+      path: "clientId",
+      model: User,
+      select: "userName email phone",
+      options: { strictPopulate: false }
+    })
+    .populate({
+      path: "serviceId", 
+      model: Service,
+      select: "title name price duration",
+      options: { strictPopulate: false }
+    })
+    .populate({
+      path: "staffId",
+      model: Staff, 
+      select: "name role",
+      options: { strictPopulate: false }
+    })
     .sort({ date: -1, time: 1 });
 
-  return NextResponse.json({ appointments });
+    console.log("Fetched appointments:", appointments.length);
+    console.log("Sample appointment:", appointments[0] ? {
+      clientId: appointments[0].clientId,
+      serviceId: appointments[0].serviceId,
+      staffId: appointments[0].staffId
+    } : "No appointments");
+
+    return NextResponse.json({ appointments });
+    
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch appointments" }, 
+      { status: 500 }
+    );
+  }
 }
+
 
 export async function POST(req: NextRequest) {
   try {
