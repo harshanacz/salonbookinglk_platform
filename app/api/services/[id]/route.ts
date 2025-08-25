@@ -26,7 +26,7 @@ interface SalonContextType {
   numberOfReviewers: number;
   profilePictureUrl?: string;
   businessHours: BusinessHours[];
-
+  isVerified?: boolean;
 }
 
 export async function GET(
@@ -51,7 +51,7 @@ export async function GET(
     // Fetch the service with populated user data (salon owner)
     const service = await Service.findById(id).populate({
       path: "userId",
-      select: "userName businessName _id type",
+      select: "userName businessName _id type isActive",
       model: User,
     }).lean({ virtuals: true });
     
@@ -61,6 +61,19 @@ export async function GET(
       console.log(`[Service API] Service not found with ID: ${id}`);
       return NextResponse.json(
         { error: "Service not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if the salon owner is active
+    if (
+      !service.userId ||
+      typeof service.userId !== "object" ||
+      !(service.userId as any).isActive
+    ) {
+      console.log(`[Service API] Service belongs to deactivated salon owner: ${id}`);
+      return NextResponse.json(
+        { error: "Service not available" },
         { status: 404 }
       );
     }
@@ -85,6 +98,7 @@ export async function GET(
           numberOfReviewers: rawSalonContext.numberOfReviewers || 0,
           profilePictureUrl: rawSalonContext.profilePictureUrl,
           businessHours: rawSalonContext.businessHours || [],
+          isVerified: rawSalonContext.isVerified || false,
         };
       }
     }
@@ -131,6 +145,7 @@ export async function GET(
         bestSeller: service.popularityScore > 10,
         profilePictureUrl: salonContext?.profilePictureUrl || "/placeholder.svg?height=100&width=100",
         todaysClosingTime: openUntil,
+        isVerified: salonContext?.isVerified || false,
       },
       staffAssigned: service.staffAssigned || [],
     };

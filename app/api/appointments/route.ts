@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import dbConnect from "@/lib/mongodb";
 import SalonContext from "@/models/SalonContext";
 import Staff from "@/models/Staff";
+import Service from "@/models/Service";
 import User from "@/models/User";
 import AppointmentModel, { IAppointment } from "@/models/Appointment";
 import Service from "@/models/Service";
@@ -25,6 +26,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+
     // Find the salon owner's user record
     const salonOwner = await User.findOne({ clerkUserId: clerkUser.id });
     if (!salonOwner) {
@@ -36,6 +38,7 @@ export async function GET(req: NextRequest) {
     if (!salonContext) {
       return NextResponse.json({ error: "Salon not found" }, { status: 404 });
     }
+
 
     // Get appointments for this salon
     const appointments = await Appointment.find({ 

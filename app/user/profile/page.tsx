@@ -91,12 +91,29 @@ export default function UserProfile() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         if (reader.result) {
-          setProfileImage(reader.result as string);
+          const base64Image = reader.result as string;
+          setProfileImage(base64Image);
 
-          // Here you would typically upload the image to your server
-          // and update the profile image URL
+          // Save the image to the database immediately
+          try {
+            const response = await fetch("/api/user/profile", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                profileImage: base64Image,
+              }),
+            });
+
+            if (!response.ok) {
+              console.error("Failed to save profile image");
+            }
+          } catch (error) {
+            console.error("Error saving profile image:", error);
+          }
         }
       };
       reader.readAsDataURL(file);

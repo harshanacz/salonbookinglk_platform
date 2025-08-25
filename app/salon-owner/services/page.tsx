@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Edit, Eye, MoreHorizontal, Plus, Trash2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ interface Service {
   image: string;
   price: number;
   status: string;
-  impressions: number;
+  viewsCount: number;
   clicks: number;
   appointments: number;
   staffAssigned: number;
@@ -48,6 +48,7 @@ export default function ServicesManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -82,6 +83,41 @@ export default function ServicesManagement() {
     }
   };
 
+  const handleSyncViews = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/salon-owner/services/sync-views", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to sync views");
+      }
+      
+      const result = await res.json();
+      toast({ 
+        title: "Views synced successfully", 
+        description: `Synced ${result.successfulSyncs} out of ${result.totalServices} services` 
+      });
+      
+      // Reload services to get updated view counts
+      const servicesRes = await fetch("/api/salon-owner/services");
+      if (servicesRes.ok) {
+        const data: Service[] = await servicesRes.json();
+        setServices(data);
+      }
+    } catch (err: any) {
+      toast({ 
+        title: "Sync failed", 
+        description: err.message, 
+        variant: "destructive" 
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const filteredServices = services
     .filter(
       (svc) =>
@@ -102,6 +138,15 @@ export default function ServicesManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Your Services</h1>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="w-full sm:w-auto" 
+            onClick={handleSyncViews}
+            disabled={syncing}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} /> 
+            {syncing ? 'Syncing...' : 'Sync Views'}
+          </Button>
           <Button className="w-full sm:w-auto" asChild>
             <Link href="/salon-owner/services/create">
               <Plus className="mr-2 h-4 w-4" /> Add New Service
@@ -147,9 +192,7 @@ export default function ServicesManagement() {
                           <Checkbox />
                         </TableHead>
                         <TableHead>Service</TableHead>
-                        <TableHead>Impressions</TableHead>
-                        <TableHead>Clicks</TableHead>
-                        <TableHead>Appointments</TableHead>
+                        <TableHead>Views</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -179,9 +222,7 @@ export default function ServicesManagement() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{service.impressions}</TableCell>
-                          <TableCell>{service.clicks}</TableCell>
-                          <TableCell>{service.appointments}</TableCell>
+                          <TableCell>{service.viewsCount || 0}</TableCell>
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>

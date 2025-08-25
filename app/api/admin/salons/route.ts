@@ -4,6 +4,9 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import SalonContext from "@/models/SalonContext";
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     // Check if user is authenticated

@@ -23,7 +23,7 @@ export const useAppointmentDataManager = () => {
   ) => {
     // Check if this appointment is already in past appointments to prevent duplicates
     const isAlreadyInPast = pastAppointments.some(pastApp => 
-      pastApp.id === parseInt(appointment.id) || 
+      pastApp.id === appointment.id || 
       (pastApp.name === appointment.services.map(s => s.name).join(", ") && 
        pastApp.price === appointment.price &&
        pastApp.date === formatDate(appointment.date))
@@ -35,12 +35,18 @@ export const useAppointmentDataManager = () => {
     }
     
     const pastAppointment: PastAppointment = {
-      id: parseInt(appointment.id), // Use the original appointment ID to prevent duplicates
+      id: appointment.id, // Keep as string ID
+      appointmentId: appointment.id, // Add the required appointmentId
+      serviceId: appointment.services[0]?.id || '', // Use first service ID
+      salonId: appointment.salonId || '', // Use salon ID if available
       name: appointment.services.map(s => s.name).join(", "),
+      salonName: appointment.salon, // Add salon name
       price: appointment.price,
       date: formatDate(appointment.date),
       image: appointment.image,
-      status: status
+      status: status,
+      time: appointment.appointmentTime, // Add appointment time
+      currentRating: null // No rating initially
     };
     
     setPastAppointments(prev => {

@@ -3,13 +3,23 @@ import User from './User';
 import Service from './Service';
 import Appointment from './Appointment';
 import AdminActivity from './AdminActivity';
+import Rating from './Rating';
+import Staff from './Staff';
+import SalonContext from './SalonContext';
+import Complaint from './complaint';
+import Notifications from './Notifications';
 
 // Export all models
 export {
   User,
   Service,
   Appointment,
-  AdminActivity
+  AdminActivity,
+  Rating,
+  Staff,
+  SalonContext,
+  Complaint,
+  Notifications
 };
 
 // Helper function to check if a model is registered
@@ -24,7 +34,7 @@ export const getRegisteredModels = (): string[] => {
 
 // Optional: Add a function to ensure models are registered
 export const ensureModelsRegistered = () => {
-  const requiredModels = ['User', 'Service', 'Appointment', 'AdminActivity'];
+  const requiredModels = ['User', 'Service', 'Appointment', 'AdminActivity', 'Staff', 'SalonContext', 'Complaint', 'Rating', 'Notifications'];
   const missingModels = requiredModels.filter(model => !isModelRegistered(model));
   
   if (missingModels.length > 0) {

@@ -44,6 +44,7 @@ export default function ManageAppointments() {
       } catch (error) {
         console.error("Error fetching appointments:", error);
         setError("Failed to fetch appointments");
+
       } finally {
         setLoading(false);
       }

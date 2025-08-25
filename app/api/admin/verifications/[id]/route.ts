@@ -4,6 +4,8 @@ import dbConnect from "@/lib/mongodb";
 import User, { UserType } from "@/models/User";
 import SalonContext from "@/models/SalonContext";
 import mongoose from "mongoose";
+import { logAdminActivity, AdminActionType } from "@/lib/adminActivityLogger";
+import { getAdminInfo } from "@/utils/adminActivityMiddleware";
 
 export async function GET(
   req: Request,
@@ -94,16 +96,52 @@ export async function PATCH(
     }
 
     // Find the salon context
-    const salonContext = await SalonContext.findById(id);
+    const salonContext = await SalonContext.findById(id).populate('userId', 'email userName businessName');
     
     if (!salonContext) {
       return NextResponse.json({ message: "Verification not found" }, { status: 404 });
     }
 
+    const user = salonContext.userId as any;
+
+    // Helper function to log admin activity
+    const logVerificationActivity = async (actionType: 'approved' | 'rejected', previousStatus: boolean, newStatus: string) => {
+      try {
+        const adminInfo = await getAdminInfo();
+        if (adminInfo) {
+          const target = user?.email || `salon: ${salonContext.businessName || 'Unknown'}`;
+          
+          logAdminActivity({
+            adminId: adminInfo.adminId,
+            adminName: adminInfo.adminName,
+            adminEmail: adminInfo.adminEmail,
+            action: AdminActionType.SALON_VERIFICATION,
+            target: target,
+            details: `${actionType === 'approved' ? 'Approved' : 'Rejected'} salon verification for "${salonContext.businessName}"`,
+            metadata: {
+              salonContextId: salonContext._id.toString(),
+              salonName: salonContext.businessName,
+              ownerName: salonContext.ownerName,
+              salonEmail: user?.email,
+              action: actionType,
+              previousStatus: previousStatus ? 'verified' : 'pending',
+              newStatus: newStatus
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to log admin activity:', error);
+      }
+    };
+
     if (action === "approve") {
       // Approve the verification
+      const previousStatus = salonContext.isVerified;
       salonContext.isVerified = true;
       await salonContext.save();
+
+      // Log admin activity
+      await logVerificationActivity('approved', previousStatus, 'verified');
 
       return NextResponse.json({ 
         message: "Salon verification approved successfully",
@@ -112,9 +150,13 @@ export async function PATCH(
     } else if (action === "reject") {
       // For rejection, we can either remove the document or add a rejection status
       // For now, let's just reset the verification status
+      const previousStatus = salonContext.isVerified;
       salonContext.isVerified = false;
       // Optionally, you might want to add a rejection reason or timestamp
       await salonContext.save();
+
+      // Log admin activity
+      await logVerificationActivity('rejected', previousStatus, 'rejected');
 
       return NextResponse.json({ 
         message: "Salon verification rejected",

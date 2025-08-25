@@ -13,6 +13,7 @@ export interface Service {
 export interface Appointment {
   id: string;
   salon: string;
+  salonId?: string; // Add salon ID for rating functionality
   date: Date;
   price: number;
   image: string;
@@ -25,12 +26,23 @@ export interface Appointment {
 }
 
 export interface PastAppointment {
-  id: number;
+  id: string;
+  appointmentId: string;
+  serviceId: string;
+  salonId: string;
   name: string;
+  salonName?: string;
   price: number;
   date: string;
   image: string;
   status?: 'completed' | 'canceled';
+  time?: string;
+  currentRating?: {
+    ratingId: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+  } | null;
 }
 
 export enum PaymentMethod {

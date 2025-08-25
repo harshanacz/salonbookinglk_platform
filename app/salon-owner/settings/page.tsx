@@ -101,17 +101,39 @@ export default function SalonSettings() {
   // Geocoder to convert coordinates to address
   const geocodeLocation = async (lat: number, lng: number): Promise<string> => {
     try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        return data.results[0].formatted_address;
+      // First try with Google Maps API if available
+      if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+        
+        if (data.status === "OK" && data.results && data.results.length > 0) {
+          return data.results[0].formatted_address;
+        } else {
+          console.warn("Google Geocoding failed:", data.status, data.error_message);
+        }
       }
-      return "";
+
+      // Fallback to Nominatim (OpenStreetMap) - free alternative
+      try {
+        const nominatimResponse = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+        );
+        const nominatimData = await nominatimResponse.json();
+        
+        if (nominatimData.display_name) {
+          return nominatimData.display_name;
+        }
+      } catch (nominatimError) {
+        console.warn("Nominatim geocoding failed:", nominatimError);
+      }
+
+      // Last resort: return coordinates
+      return `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     } catch (error) {
       console.error("Geocoding error:", error);
-      return "";
+      return `Location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
     }
   };
 
@@ -226,6 +248,7 @@ export default function SalonSettings() {
 
         // Get formatted address if location exists
         if (salonDataResponse.location && salonDataResponse.location.lat && salonDataResponse.location.lng) {
+          setFormattedAddress("Loading address...");
           const address = await geocodeLocation(
             salonDataResponse.location.lat,
             salonDataResponse.location.lng
@@ -560,7 +583,7 @@ export default function SalonSettings() {
                 <Label htmlFor="salon-address">Address</Label>
                 <Input
                   id="salon-address"
-                  value={formattedAddress || (salonData?.location ? `Lat: ${salonData.location.lat}, Lng: ${salonData.location.lng}` : "")}
+                  value={formattedAddress || (salonData?.location ? "Loading address..." : "No address available")}
                   readOnly
                   className="bg-gray-50 cursor-not-allowed"
                 />

@@ -34,6 +34,10 @@ export default function AdminSettingsPage() {
     fullName: "",
     email: "",
   });
+  const [originalSettings, setOriginalSettings] = useState<AdminSettings>({
+    fullName: "",
+    email: "",
+  });
   const [passwordData, setPasswordData] = useState<PasswordData>({
     currentPassword: "",
     newPassword: "",
@@ -50,6 +54,7 @@ export default function AdminSettingsPage() {
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
+        setOriginalSettings(data); 
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -74,6 +79,8 @@ export default function AdminSettingsPage() {
           title: "Settings saved",
           description: "Your changes have been successfully saved.",
         });
+
+        setOriginalSettings(settings);
       } else {
         throw new Error("Failed to save settings");
       }
@@ -87,6 +94,9 @@ export default function AdminSettingsPage() {
       setIsLoading(false);
     }
   };
+
+  // Check if settings have changed
+  const hasSettingsChanged = settings.fullName !== originalSettings.fullName;
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -185,7 +195,7 @@ export default function AdminSettingsPage() {
                 />
                 {/* <p className="text-sm text-gray-500">Email cannot be changed for security reasons</p> */}
               </div>
-              <Button onClick={handleSave} disabled={isLoading}>
+              <Button onClick={handleSave} disabled={isLoading || !hasSettingsChanged}>
                 <Save className="mr-2 h-4 w-4" /> 
                 {isLoading ? "Saving..." : "Save Changes"}
               </Button>

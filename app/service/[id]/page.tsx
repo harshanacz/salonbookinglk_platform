@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Heart, MapPin, Share2, Star, Phone, Clock, Check } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ServiceCard } from "@/components/service-card";
+import { RatingDisplay } from "@/components/ui/rating-display";
 import { useCheckoutStore } from "@/store/checkoutStore";
 import { useRouter } from "next/navigation";
 import { useFavoritesStore } from "@/store/favoritesStore";
@@ -39,6 +41,7 @@ interface ServiceData {
     bestSeller: boolean;
     profilePictureUrl: string;
     todaysClosingTime: string;
+    isVerified?: boolean;
     workingHours: Array<{
       day: string;
       isWorking: boolean;
@@ -73,6 +76,28 @@ interface RelatedService {
   location: string;
 }
 
+interface ServiceRating {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user: {
+    name: string;
+  };
+}
+
+interface RatingStatistics {
+  averageRating: number;
+  totalRatings: number;
+  distribution: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
+}
+
 export default function ServicePage(props: ServicePageProps) {
   const { params } = props;
   const router = useRouter();
@@ -83,7 +108,10 @@ export default function ServicePage(props: ServicePageProps) {
   const [service, setService] = useState<ServiceData | null>(null);
   const [relatedServices, setRelatedServices] = useState<RelatedService[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
+  const [serviceRatings, setServiceRatings] = useState<ServiceRating[]>([]);
+  const [ratingStatistics, setRatingStatistics] = useState<RatingStatistics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSalon, setSelectedSalon] = useState<any>(null);
@@ -153,6 +181,9 @@ export default function ServicePage(props: ServicePageProps) {
 
         // Track the service view
         trackServiceView(params.id);
+
+        // Fetch service ratings
+        fetchServiceRatings(params.id);
       } catch (err) {
         console.error("Error fetching service:", err);
         setError("Failed to load service details. Please try again later.");
@@ -163,6 +194,24 @@ export default function ServicePage(props: ServicePageProps) {
 
     fetchServiceData();
   }, [params.id, geocodeLocation]);
+
+  // Fetch service ratings
+  const fetchServiceRatings = async (serviceId: string) => {
+    try {
+      setRatingsLoading(true);
+      const response = await fetch(`/api/services/${serviceId}/ratings?limit=5`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setServiceRatings(data.ratings);
+        setRatingStatistics(data.statistics);
+      }
+    } catch (error) {
+      console.error("Error fetching service ratings:", error);
+    } finally {
+      setRatingsLoading(false);
+    }
+  };
 
   // Function to track service view
   const trackServiceView = async (serviceId: string) => {
@@ -373,7 +422,18 @@ export default function ServicePage(props: ServicePageProps) {
             <span className="text-gray-900">{service.title}</span>
           </nav>
 
-          <h1 className="text-2xl font-bold mb-6">{service.title}</h1>
+          <h1 className="text-2xl font-bold mb-2">{service.title}</h1>
+
+          {/* Service Rating */}
+          {ratingStatistics && ratingStatistics.totalRatings > 0 && (
+            <div className="mb-6">
+              <RatingDisplay 
+                rating={ratingStatistics.averageRating} 
+                totalRatings={ratingStatistics.totalRatings}
+                size="md"
+              />
+            </div>
+          )}
 
           <div className="relative aspect-video w-full mb-4 rounded-lg overflow-hidden">
             <Image
@@ -432,9 +492,16 @@ export default function ServicePage(props: ServicePageProps) {
                   />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">
-                    {service.salon.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-lg">
+                      {service.salon.name}
+                    </h3>
+                    {service.salon.isVerified && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0">
+                        ✓
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center">
                     <div className="flex items-center text-yellow-500 mr-1">
                       <Star className="h-4 w-4 fill-current" />
@@ -566,6 +633,93 @@ export default function ServicePage(props: ServicePageProps) {
             )}
           </div>
 
+          {/* Service Reviews Section */}
+          {ratingStatistics && ratingStatistics.totalRatings > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Reviews & Ratings</h2>
+              
+              {/* Rating Overview */}
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-gray-900">{ratingStatistics.averageRating}</div>
+                      <div className="flex items-center justify-center mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`h-4 w-4 ${
+                              star <= Math.round(ratingStatistics.averageRating)
+                                ? "fill-yellow-400 stroke-yellow-400"
+                                : "fill-gray-200 stroke-gray-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {ratingStatistics.totalRatings} reviews
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Rating Distribution */}
+                  <div className="space-y-1">
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = ratingStatistics.distribution[star as keyof typeof ratingStatistics.distribution];
+                      const percentage = ratingStatistics.totalRatings > 0 ? (count / ratingStatistics.totalRatings) * 100 : 0;
+                      return (
+                        <div key={star} className="flex items-center gap-2 text-sm">
+                          <span className="w-3">{star}</span>
+                          <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400" />
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-yellow-400 h-2 rounded-full"
+                              style={{ width: `${percentage}%` }}
+                            ></div>
+                          </div>
+                          <span className="text-gray-500 w-8">{count}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Individual Reviews */}
+              {serviceRatings.length > 0 && (
+                <div className="space-y-4">
+                  {serviceRatings.map((rating) => (
+                    <div key={rating.id} className="border-b border-gray-100 pb-4 last:border-b-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-gray-900">User</span>
+                          <span className="text-sm text-gray-500">
+                            on {new Date(rating.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-4 w-4 ${
+                                star <= rating.rating
+                                  ? "fill-yellow-400 stroke-yellow-400"
+                                  : "fill-gray-200 stroke-gray-200"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {rating.comment && (
+                        <p className="text-gray-700 text-sm">{rating.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <h2 className="text-xl font-semibold mb-4">
               Other Services at this Salon
@@ -594,7 +748,14 @@ export default function ServicePage(props: ServicePageProps) {
                 />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-lg">{service.salon.name}</h3>
+                  {service.salon.isVerified && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0">
+                      ✓
+                    </Badge>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                   <span className="text-sm">

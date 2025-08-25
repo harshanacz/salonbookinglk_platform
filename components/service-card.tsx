@@ -1,6 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RatingDisplay } from "@/components/ui/rating-display";
 import { Star, MapPin, Clock, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 interface ServiceCardProps {
   service: {
     id: string;
-    title: string;
+    title: string; 
     image: string;
     price: number;
     salon: string;
@@ -30,6 +32,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [salonName, setSalonName] = useState(service.salon || "Unknown Salon");
   const [salonLogo, setSalonLogo] = useState(service.salonLogo || "/placeholder-logo.svg");
+  const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(!!service.salonContextId);
   const [formattedAddress, setFormattedAddress] = useState<string>("");
 
@@ -80,6 +83,11 @@ export function ServiceCard({ service }: ServiceCardProps) {
         
         if (salonData && salonData.profilePictureUrl) {
           setSalonLogo(salonData.profilePictureUrl);
+        }
+
+        // Update verification status
+        if (salonData && typeof salonData.isVerified === 'boolean') {
+          setIsVerified(salonData.isVerified);
         }
 
         // If location coordinates are available, geocode them
@@ -175,8 +183,9 @@ export function ServiceCard({ service }: ServiceCardProps) {
         {/* Content */}
         <CardContent className="p-4 pb-2">
           {/* Salon information with logo */}
-          <div className="flex items-center justify-between mb-3">              <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="h-8 w-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200 relative flex-shrink-0">
                 <Image
                   src={salonLogo}
                   alt={salonName}
@@ -189,21 +198,28 @@ export function ServiceCard({ service }: ServiceCardProps) {
                   }}
                 />
               </div>
-              <span className="ml-2 text-sm font-medium line-clamp-1">
-                {isLoading ? (
-                  <span className="inline-block w-20 h-4 bg-gray-200 animate-pulse rounded"></span>
-                ) : (
-                  salonName
+              <div className="ml-2 flex items-center gap-1 min-w-0 flex-1">
+                <span className="text-sm font-medium line-clamp-1 flex-shrink">
+                  {isLoading ? (
+                    <span className="inline-block w-20 h-4 bg-gray-200 animate-pulse rounded"></span>
+                  ) : (
+                    salonName
+                  )}
+                </span>
+                {!isLoading && isVerified && (
+                  <Badge className="bg-green-100 text-green-800 border-green-200 text-xs px-1 py-0 flex-shrink-0">
+                    ✓
+                  </Badge>
                 )}
-              </span>
+              </div>
             </div>
             
             {/* Show reviews */}
-            <div className="flex items-center bg-yellow-50 text-xs px-2 py-1 rounded-full">
-              <Star className="h-3 w-3 fill-yellow-400 stroke-yellow-400 mr-1" />
-              <span className="font-medium">{service.reviews > 0 ? service.rating.toFixed(1) : "0"}</span>
-              <span className="text-gray-500 ml-1">({service.reviews})</span>
-            </div>
+            <RatingDisplay 
+              rating={service.rating} 
+              totalRatings={service.reviews}
+              size="sm"
+            />
           </div>
 
           {/* Title */}
